@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SobatSerabut - Pusat Akses & Unduh Aplikasi Resmi</title>
+  
+  <link rel="icon" type="image/svg+xml" href="/uploads/logo_icon.svg">
+  <meta name="theme-color" content="#0F172A">
+  <meta name="description" content="Pusat unduhan dan akses resmi SobatSerabut (Aplikasi Pemohon Layanan) dan Driver SobatSerabut (Aplikasi Mitra Kerja). Tersedia untuk Android, iOS, dan semua sistem operasi di dunia.">
+
+  <!-- Tailwind CSS -->
+  <script src="/vendor/tailwind/tailwind.min.js"></script>
+  <script>
+    if (!window.tailwind) {
+      document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+    }
+  </script>
+  <link rel="stylesheet" href="/vendor/fontawesome/all.min.css" />
+  
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    .glow-effect {
+      animation: pulseGlow 4s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-gradient-to-r from-blue-900/80 via-indigo-900/80 to-emerald-900/80 border-b border-slate-800 px-4 py-2 text-center text-xs">
+    <div class="max-w-4xl mx-auto flex items-center justify-center space-x-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+      <span class="font-bold text-white">Sistem Terpusat Aktif:</span>
+      <span class="text-slate-300 hidden sm:inline">Tersedia untuk semua ponsel di seluruh dunia via Web PWA &amp; APK Android Resmi.</span>
+      <span class="text-emerald-400 font-mono font-bold text-[11px] bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">ONLINE 24/7</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="max-w-4xl mx-auto w-full px-5 pt-8 pb-4 text-center space-y-3">
+    <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600/30 to-emerald-600/30 border border-slate-700/80 p-3 mx-auto shadow-2xl flex items-center justify-center">
+      <img src="/uploads/logo_icon.svg" alt="SobatSerabut Logo" class="w-14 h-14 object-contain">
+    </div>
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+        Sobat<span class="text-blue-500">Serabut</span> Ecosystem
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mt-1 leading-relaxed">
+        Marketplace Jasa Serabutan &amp; Pekerjaan Harian Terpercaya. Pilih aplikasi sesuai kebutuhan Anda di bawah ini:
+      </p>
+    </div>
+  </header>
+
+  <!-- Main App Selection Cards -->
+  <main class="max-w-4xl mx-auto w-full px-4 sm:px-6 py-4 space-y-6 flex-1">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      
+      <!-- CARD 1: PEMOHON LAYANAN (KLIEN) -->
+      <div class="relative rounded-3xl bg-gradient-to-b from-slate-900 to-slate-900/90 border-2 border-blue-500/40 p-6 shadow-2xl flex flex-col justify-between space-y-5 hover:border-blue-400 transition-all">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 font-extrabold text-[10px] tracking-wider uppercase border border-blue-500/40">
+              Pemohon Layanan
+            </span>
+            <span class="text-xs text-slate-400 font-mono"><i class="fa-solid fa-mobile-screen mr-1 text-blue-400"></i>v1.1.0</span>
+          </div>
+
+          <div class="flex items-start space-x-3.5">
+            <div class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-2xl flex-shrink-0 shadow-inner">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-black text-white">SobatSerabut</h2>
+              <p class="text-xs text-blue-300 font-semibold">Aplikasi E-Commerce SobatSerabut</p>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Pesan bantuan kilat: servis AC, pembersih rumah, pipa bocor, kelistrikan, angkut barang, belanja, dan ratusan jasa lainnya.
+              </p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-blue-400 text-[10px]"></i>
+              <span>Deteksi lokasi GPS otomatis untuk titik tugas</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-blue-400 text-[10px]"></i>
+              <span>Lacak posisi driver terdekat di peta real-time</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-blue-400 text-[10px]"></i>
+              <span>Pembayaran aman Rekber (DANA, GoPay, Transfer)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2.5 pt-2">
+          <!-- Buka Web / PWA -->
+          <a href="/" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl shadow-blue-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>Buka Aplikasi SobatSerabut (Web / PWA)</span>
+          </a>
+
+          <!-- Download APK Android -->
+          <a href="/download/client-apk" class="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
+            <i class="fa-brands fa-android text-emerald-400 text-sm"></i>
+            <span>Unduh APK Android Klien (Direct .apk)</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- CARD 2: PENYEDIA LAYANAN (DRIVER & MITRA) -->
+      <div class="relative rounded-3xl bg-gradient-to-b from-slate-900 to-slate-900/90 border-2 border-emerald-500/40 p-6 shadow-2xl flex flex-col justify-between space-y-5 hover:border-emerald-400 transition-all">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold text-[10px] tracking-wider uppercase border border-emerald-500/40">
+              Penyedia Layanan
+            </span>
+            <span class="text-xs text-slate-400 font-mono"><i class="fa-solid fa-id-badge mr-1 text-emerald-400"></i>v1.1.0</span>
+          </div>
+
+          <div class="flex items-start space-x-3.5">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl flex-shrink-0 shadow-inner">
+              <i class="fa-solid fa-motorcycle"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-black text-white">Driver SobatSerabut</h2>
+              <p class="text-xs text-emerald-300 font-semibold">Aplikasi Mitra Kerja &amp; Pengemudi</p>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Terima tugas serabutan di sekitar Anda, navigasi rute turn-by-turn, upload bukti kerja kamera, dan tarik saldo tunai instan.
+              </p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i>
+              <span>Verifikasi OTP Resmi &amp; Kamera Selfie KYC</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i>
+              <span>Sensor GPS HP Real-Time untuk radar orderan</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i>
+              <span>Pencairan saldo dompet ke DANA, OVO, &amp; Rekening Bank</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2.5 pt-2">
+          <!-- Buka Web / PWA (Android Browser & iOS Safari) -->
+          <a href="/driver" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-xl shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>Buka Aplikasi Mitra / Driver (Semua HP: Android &amp; iOS)</span>
+          </a>
+
+          <!-- Download APK Android Langsung -->
+          <a href="/download/driver-apk" class="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
+            <i class="fa-brands fa-android text-emerald-400 text-sm"></i>
+            <span>Unduh APK Android Mitra / Driver (Direct .apk)</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CARD 3: ADMIN DASHBOARD TERPUSAT -->
+    <div class="rounded-3xl bg-slate-900/70 border border-slate-800 p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl flex-shrink-0">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-extrabold text-white">Dasbor Admin Terpusat</h3>
+          <p class="text-[11px] text-slate-400">
+            Pemantauan GPS live driver, verifikasi KYC selfie/KTP, persetujuan rekber &amp; pencairan saldo terpusat.
+          </p>
+        </div>
+      </div>
+      <a href="/admin" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/30 flex items-center justify-center space-x-2 transition-all flex-shrink-0">
+        <i class="fa-solid fa-lock text-xs"></i>
+        <span>Buka Dasbor Admin</span>
+      </a>
+    </div>
+
+    <!-- ACCORDION / INSTRUCTIONS: CARA INSTAL DI SEMUA HP & OS -->
+    <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5 space-y-4">
+      <div class="flex items-center space-x-2 text-white font-extrabold text-sm">
+        <i class="fa-solid fa-circle-info text-blue-400"></i>
+        <span>Panduan Pemasangan di Seluruh HP &amp; Sistem Operasi</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        
+        <!-- PANDUAN ANDROID -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div class="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
+            <i class="fa-brands fa-android text-base"></i>
+            <span>Ponsel Android (Samsung, Xiaomi, Oppo, Vivo, dll)</span>
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-slate-400 text-[11px] leading-relaxed">
+            <li><strong>Instal APK Langsung:</strong> Klik tombol <em class="text-white">"Unduh APK Android"</em> di atas, buka file hasil unduhan, dan pilih Pasang/Install.</li>
+            <li><strong>Pasang Versi PWA:</strong> Buka aplikasi di Google Chrome, ketuk ikon titik tiga (⋮) di pojok kanan atas, lalu pilih <strong class="text-white">"Tambahkan ke Layar Utama"</strong> atau <strong class="text-white">"Instal Aplikasi"</strong>.</li>
+          </ol>
+        </div>
+
+        <!-- PANDUAN APPLE IOS (IPHONE / IPAD) -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div class="flex items-center space-x-2 text-sky-400 font-bold text-xs">
+            <i class="fa-brands fa-apple text-base"></i>
+            <span>Apple iPhone &amp; iPad (iOS Semua Versi)</span>
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-slate-400 text-[11px] leading-relaxed">
+            <li>Buka link aplikasi di peramban <strong>Safari</strong> iPhone Anda.</li>
+            <li>Ketuk tombol <strong>Share / Bagikan</strong> (ikon kotak dengan panah ke atas di bagian bawah layar).</li>
+            <li>Gulir ke bawah dan ketuk opsi <strong class="text-white">"Add to Home Screen" (Tambahkan ke Layar Utama)</strong>.</li>
+            <li>Ikon aplikasi akan terpasang di layar iPhone Anda layaknya aplikasi resmi dari App Store!</li>
+          </ol>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 py-4 px-4 text-center text-xs text-slate-500">
+    <p>&copy; 2026 PT Sobat Serabut Indonesia. Hak Cipta Dilindungi Undang-Undang.</p>
+    <p class="text-[10px] text-slate-600 mt-0.5">Sistem Terintegrasi Cloudflare Global Tunnel &amp; Socket.io Real-Time.</p>
+  </footer>
+
+</body>
+</html>

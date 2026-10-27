@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Foreground: Logo SobatSerabut (Perisai + Kunci) untuk Adaptive Icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Perisai utama -->
+    <path
+        android:fillColor="#1E3A8A"
+        android:strokeColor="#93C5FD"
+        android:strokeWidth="2"
+        android:pathData="M54,18 L86,32 L86,62 C86,80 54,92 54,92 C54,92 22,80 22,62 L22,32 Z" />
+
+    <!-- Kunci atas (lingkaran) -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,36 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0" />
+
+    <!-- Badan kunci -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M44,48 L64,48 L64,66 L44,66 Z" />
+
+    <!-- Lubang kunci -->
+    <path
+        android:fillColor="#1E3A8A"
+        android:pathData="M54,54 m-4,0 a4,4 0 1,1 8,0 L60,64 L48,64 L48,54 Z" />
+
+</vector>

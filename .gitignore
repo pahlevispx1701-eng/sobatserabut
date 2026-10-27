@@ -1,0 +1,12 @@
+node_modules/
+*.apk
+*.keystore
+build_temp/
+.idsig
+logs/
+*.log
+ngrok.log
+
+# Environment secrets
+backend/.env
+.env

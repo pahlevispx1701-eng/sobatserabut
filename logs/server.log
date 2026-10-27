@@ -1,0 +1,973 @@
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:4000
+    at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+    at listenInCluster (node:net:1998:12)
+    at node:net:2207:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1977:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 4000
+}
+
+Node.js v22.23.3
+Client connected: rnzZkxmTncF_kBtRAAAA
+Client connected: 8lBka5nETVGrO3GOAAAB
+Client connected: kiBnE5fpl_B6EGD6AAAC
+Client connected: tyZnWvj4mhRdc07NAAAD
+Client disconnected: rnzZkxmTncF_kBtRAAAA
+Client disconnected: 8lBka5nETVGrO3GOAAAB
+Client disconnected: kiBnE5fpl_B6EGD6AAAC
+Client disconnected: tyZnWvj4mhRdc07NAAAD
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: MZFkohpvOoxGMbDkAAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: TciVwM1JKKbEDwz_AAAA
+Client disconnected: TciVwM1JKKbEDwz_AAAA
+Client connected: A6BbbY6Sj8cXaimTAAAB
+Client disconnected: A6BbbY6Sj8cXaimTAAAB
+Client connected: JprxnxPzUymTZxwcAAAC
+Client disconnected: JprxnxPzUymTZxwcAAAC
+Client connected: aXvs9H3oVADkluLjAAAD
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: Oohj2B1x8gP5UqW5AAAA
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 081298765432 (081298765432)
+🔑 Kode OTP Nyata Dihasilkan: 772791
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6281298765432 (HP Penerima)
+🔑 Kode OTP: 772791
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6281298765432 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187160361 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 997,
+      remaining: 996,
+      used: 1
+    }
+  },
+  requestid: 1054481561,
+  status: true,
+  target: [ '6281298765432' ]
+}
+Client connected: pm9UinixUsuIBIf5AAAB
+Client disconnected: Oohj2B1x8gP5UqW5AAAA
+Client connected: 2lJtQZzhWMm5f9c4AAAC
+Client connected: jFJIEc2ggkWKqa-2AAAD
+Client disconnected: pm9UinixUsuIBIf5AAAB
+Client disconnected: jFJIEc2ggkWKqa-2AAAD
+Client connected: nRI3vxngzFxgsZ1HAAAE
+Client connected: xRY9jU3o0GNSdx6-AAAF
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 63g9_xahz5vtiCP1AAAA
+Client connected: IqI2ApK0HTgMpfxLAAAB
+Client connected: hFqviworDtmKV7KvAAAC
+Client disconnected: IqI2ApK0HTgMpfxLAAAB
+Client disconnected: hFqviworDtmKV7KvAAAC
+Client disconnected: 63g9_xahz5vtiCP1AAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: cCI5ECdNvzH9at_nAAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 2aOEOJYelTCXZluSAAAA
+Client connected: typ9I4GRZrGjNXkkAAAB
+Client connected: 6gVM3XkkC5rn6lQ3AAAC
+Client disconnected: 2aOEOJYelTCXZluSAAAA
+Client connected: 46J_TEE-_qH60TEMAAAD
+Client disconnected: 46J_TEE-_qH60TEMAAAD
+Client connected: MRs4BoK69M8mvyUfAAAE
+Client disconnected: typ9I4GRZrGjNXkkAAAB
+Client disconnected: 6gVM3XkkC5rn6lQ3AAAC
+Client connected: X-OOdkgM7Ade0edXAAAF
+Client connected: WaAtdnFqik61hZtYAAAG
+Client disconnected: X-OOdkgM7Ade0edXAAAF
+Client disconnected: MRs4BoK69M8mvyUfAAAE
+Client disconnected: WaAtdnFqik61hZtYAAAG
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 8v34SLN_xGM5SYQbAAAA
+Client disconnected: 8v34SLN_xGM5SYQbAAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: TOkUZDkWR7Y8imqdAAAA
+Client connected: brKyfcoLxGg4HyLcAAAB
+Client connected: OW6PPulfY9jLUn5bAAAC
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 4mTuK03cWLkCK2XVAAAA
+Client connected: yUMDIXLZB9cHbm4cAAAB
+Client connected: 8haXatC-hcun9bk6AAAC
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 081234567899 (081234567899)
+🔑 Kode OTP Nyata Dihasilkan: 258479
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6281234567899 (HP Penerima)
+🔑 Kode OTP: 258479
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6281234567899 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187563064 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 992,
+      remaining: 991,
+      used: 1
+    }
+  },
+  requestid: 1057620503,
+  status: true,
+  target: [ '6281234567899' ]
+}
+✅ [OTP PROCESSED] Kode 258479 dikirim ke 081234567899 via WhatsApp
+Client connected: EKVHd3v8lS9L-2IYAAAD
+Client disconnected: EKVHd3v8lS9L-2IYAAAD
+Client disconnected: yUMDIXLZB9cHbm4cAAAB
+Client disconnected: 8haXatC-hcun9bk6AAAC
+Client disconnected: 4mTuK03cWLkCK2XVAAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 081234567890 (081234567890)
+🔑 Kode OTP Nyata Dihasilkan: 821694
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6281234567890 (HP Penerima)
+🔑 Kode OTP: 821694
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6281234567890 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187590140 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 991,
+      remaining: 990,
+      used: 1
+    }
+  },
+  requestid: 1057879553,
+  status: true,
+  target: [ '6281234567890' ]
+}
+✅ [OTP PROCESSED] Kode 821694 dikirim ke 081234567890 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: SMS
+📱 Nomor Tujuan: 081234567890 (081234567890)
+🔑 Kode OTP Nyata Dihasilkan: 464280
+====================================================
+⚠️ SMS Gateway Twilio terkendala (No Twilio trial phone number is assigned for messaging to this destination number. Please add the 'to' number as a verified recipient.). Mengalihkan ke Bot WhatsApp Fonnte 087791201091...
+📱 [FALLBACK] OTP sukses dikirim via WhatsApp Bot 087791201091 ke 6281234567890: {
+  detail: 'success! message in queue',
+  id: [ 187590162 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 990,
+      remaining: 989,
+      used: 1
+    }
+  },
+  requestid: 1057879785,
+  status: true,
+  target: [ '6281234567890' ]
+}
+✅ [OTP PROCESSED] Kode 464280 dikirim ke 081234567890 via WhatsApp (dialihkan dari SMS)
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 081234567890 (081234567890)
+🔑 Kode OTP Nyata Dihasilkan: 111767
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6281234567890 (HP Penerima)
+🔑 Kode OTP: 111767
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6281234567890 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187592901 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 989,
+      remaining: 988,
+      used: 1
+    }
+  },
+  requestid: 1057903743,
+  status: true,
+  target: [ '6281234567890' ]
+}
+✅ [OTP PROCESSED] Kode 111767 dikirim ke 081234567890 via WhatsApp
+Client connected: vvXH-95r52UQnALMAAAA
+Client connected: T5-Zx3M1vNPM3pICAAAB
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 087735170386 (087735170386)
+🔑 Kode OTP Nyata Dihasilkan: 332071
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 332071
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187594851 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 988,
+      remaining: 987,
+      used: 1
+    }
+  },
+  requestid: 1057919177,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 332071 dikirim ke 087735170386 via WhatsApp
+Client disconnected: T5-Zx3M1vNPM3pICAAAB
+Client connected: GPoR5Naz5lK033qdAAAC
+Client connected: DsAz-_Vve_67tbFyAAAD
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 743556
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 743556
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187595374 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 987,
+      remaining: 986,
+      used: 1
+    }
+  },
+  requestid: 1057922790,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 743556 dikirim ke 6287735170386 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 956323
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 956323
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187595377 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 986,
+      remaining: 985,
+      used: 1
+    }
+  },
+  requestid: 1057922800,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 956323 dikirim ke 6287735170386 via WhatsApp
+Client disconnected: GPoR5Naz5lK033qdAAAC
+Client disconnected: DsAz-_Vve_67tbFyAAAD
+Client connected: d5nVDOs9t4EOA9N1AAAE
+Client connected: Ny9y2UqNfyzqsXCgAAAF
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 429431
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 429431
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187595465 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 985,
+      remaining: 984,
+      used: 1
+    }
+  },
+  requestid: 1057923586,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 429431 dikirim ke 6287735170386 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 121730
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 121730
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187595468 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 984,
+      remaining: 983,
+      used: 1
+    }
+  },
+  requestid: 1057923600,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 121730 dikirim ke 6287735170386 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 579241
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 579241
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187595580 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 983,
+      remaining: 982,
+      used: 1
+    }
+  },
+  requestid: 1057924903,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 579241 dikirim ke 6287735170386 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 662877
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 662877
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187595582 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 982,
+      remaining: 981,
+      used: 1
+    }
+  },
+  requestid: 1057924910,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 662877 dikirim ke 6287735170386 via WhatsApp
+Client disconnected: Ny9y2UqNfyzqsXCgAAAF
+Client connected: Aeuu1QwuP5AsmL1yAAAG
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 234872
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 234872
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187596256 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 981,
+      remaining: 980,
+      used: 1
+    }
+  },
+  requestid: 1057930293,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 234872 dikirim ke 6287735170386 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: +6287735170386 (6287735170386)
+🔑 Kode OTP Nyata Dihasilkan: 760356
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 760356
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187596257 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 980,
+      remaining: 979,
+      used: 1
+    }
+  },
+  requestid: 1057930305,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 760356 dikirim ke 6287735170386 via WhatsApp
+Client disconnected: d5nVDOs9t4EOA9N1AAAE
+Client disconnected: vvXH-95r52UQnALMAAAA
+Client disconnected: Aeuu1QwuP5AsmL1yAAAG
+Client connected: -2O94AhqXkCOAckIAAAH
+Client connected: O60ZyQTJ1ADEa66OAAAI
+Client connected: SJMWJL04Gfxgi833AAAJ
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 087735170386 (087735170386)
+🔑 Kode OTP Nyata Dihasilkan: 722765
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 722765
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187597122 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 979,
+      remaining: 978,
+      used: 1
+    }
+  },
+  requestid: 1057936179,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 722765 dikirim ke 087735170386 via WhatsApp
+Client disconnected: O60ZyQTJ1ADEa66OAAAI
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: uwgAlmsLEt21BQ66AAAA
+Client connected: uykN3kuNq9XhXHrhAAAB
+🔗 [GOOGLE CONNECT] Akun Google terhubung ke akun HP nyata: Ibu Rina Melati (081299887766)
+✅ [GOOGLE REGISTER] Pengguna baru didaftarkan via Google dengan nomor HP nyata: Ahmad Driver (087799112233)
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 087799112233 (087799112233)
+🔑 Kode OTP Nyata Dihasilkan: 303455
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287799112233 (HP Penerima)
+🔑 Kode OTP: 303455
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287799112233 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187600266 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 978,
+      remaining: 977,
+      used: 1
+    }
+  },
+  requestid: 1057954641,
+  status: true,
+  target: [ '6287799112233' ]
+}
+✅ [OTP PROCESSED] Kode 303455 dikirim ke 087799112233 via WhatsApp
+🔑 [PASSWORD RESET] Kata sandi untuk pengguna Ahmad Driver (087799112233) berhasil diperbarui.
+Client disconnected: uykN3kuNq9XhXHrhAAAB
+Client disconnected: uwgAlmsLEt21BQ66AAAA
+Client connected: rvg2200CXnNgdMh9AAAC
+Client connected: aBNSe2RFUct0VhkvAAAD
+Client connected: MOepVbQStQh-ZYQxAAAE
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Tujuan: 087735170386 (087735170386)
+🔑 Kode OTP Nyata Dihasilkan: 117722
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 117722
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 187605849 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 977,
+      remaining: 976,
+      used: 1
+    }
+  },
+  requestid: 1058000097,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 117722 dikirim ke 087735170386 via WhatsApp
+🔑 [PASSWORD RESET] Kata sandi untuk pengguna reza pahlevi (087735170386) berhasil diperbarui.
+Client disconnected: MOepVbQStQh-ZYQxAAAE
+Client connected: YOXdDRI9RE1a9QxEAAAF
+Client disconnected: aBNSe2RFUct0VhkvAAAD
+Client connected: oIneeVErhs1XWSDXAAAG
+Client disconnected: YOXdDRI9RE1a9QxEAAAF
+Client connected: pbVfjZHPtlB-wumHAAAH
+Client disconnected: pbVfjZHPtlB-wumHAAAH
+Client connected: EnI586AOKOtESATkAAAI
+Client disconnected: EnI586AOKOtESATkAAAI
+Client connected: T-xC7IuEQjn5u0cbAAAJ
+Client disconnected: T-xC7IuEQjn5u0cbAAAJ
+Client disconnected: rvg2200CXnNgdMh9AAAC
+Client disconnected: oIneeVErhs1XWSDXAAAG
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: sQ0Z9W0V3JtRFdIeAAAA
+Client connected: dIuaR57wYkqZQUDpAAAB
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: iwQEJjA4iKK3K5WnAAAA
+Client connected: sj8uRp-ZzUHc9Ob2AAAB
+Client connected: OXvWDDP5LZo2kSAMAAAC
+Client disconnected: iwQEJjA4iKK3K5WnAAAA
+Client connected: I5bIuakfDX6-U7SeAAAD
+Client disconnected: I5bIuakfDX6-U7SeAAAD
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 53q6Q0P92kalaBClAAAA
+Client connected: X1si-GOMsaGkSgqFAAAB
+Client connected: SEXwZ9Rfj7kkXv55AAAC
+Client disconnected: SEXwZ9Rfj7kkXv55AAAC
+Client disconnected: 53q6Q0P92kalaBClAAAA
+Client disconnected: X1si-GOMsaGkSgqFAAAB
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: YIczpbayIaoOiliWAAAA
+Client connected: T29DpLX0oHOSRcsLAAAB
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: _sMi6ZpppQ-yjcjqAAAA
+Client connected: Os2mH9iAWw69o4uvAAAB
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: ZWvm7Wbe_AFFuXlEAAAA
+Client disconnected: ZWvm7Wbe_AFFuXlEAAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 8J9v_No66IEFlri4AAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 1Yk64fPfPYuuWjUpAAAA
+Client disconnected: 1Yk64fPfPYuuWjUpAAAA
+Client connected: 1eEK-YoNfhXl_uhQAAAB
+Client disconnected: 1eEK-YoNfhXl_uhQAAAB
+Client connected: deHBwqWDTuEpDY5eAAAC
+Client disconnected: deHBwqWDTuEpDY5eAAAC
+Client connected: zfoGdTgikGQ86pBAAAAD
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: _tLXSHanh7ZkD223AAAA
+Client disconnected: _tLXSHanh7ZkD223AAAA
+Client connected: PlBfB3IWbeLHQ0vQAAAB
+Client disconnected: PlBfB3IWbeLHQ0vQAAAB
+Client connected: nrZ_z4nvBG02be0bAAAC
+Client disconnected: nrZ_z4nvBG02be0bAAAC
+Client connected: DLYgTXD421id-LwhAAAD
+Client disconnected: DLYgTXD421id-LwhAAAD
+Client connected: eQYIu2lkbTULbHB0AAAE
+Client disconnected: eQYIu2lkbTULbHB0AAAE
+Client connected: HTGdqWtqk96D4hgoAAAF
+Client disconnected: HTGdqWtqk96D4hgoAAAF
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: uSvIwDMp-rHFZx8aAAAA
+Client connected: SYcYeFLcCmsyZ9pYAAAB
+Client connected: aIyV5WYBC1pBQvvXAAAC
+Client disconnected: aIyV5WYBC1pBQvvXAAAC
+Client connected: z2ipLSvJqFCjACBBAAAD
+Client disconnected: SYcYeFLcCmsyZ9pYAAAB
+Client connected: w-txL_9v9MMOVBqWAAAE
+Client disconnected: w-txL_9v9MMOVBqWAAAE
+Client disconnected: z2ipLSvJqFCjACBBAAAD
+Client disconnected: uSvIwDMp-rHFZx8aAAAA
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: _N3IaLDYmhnsMyjpAAAA
+Client connected: 0oyCvfeY1itu_aKiAAAB
+Client connected: 2-Yc2GOUXL2a3Br0AAAC
+Client connected: o2rXns68p1Lq1E2YAAAD
+Client disconnected: o2rXns68p1Lq1E2YAAAD
+Client disconnected: 2-Yc2GOUXL2a3Br0AAAC
+Client connected: GFGYSePXOHHVTKQ_AAAE
+Client disconnected: GFGYSePXOHHVTKQ_AAAE
+Client connected: EuYx0bi8zEH8KsKoAAAF
+Client disconnected: EuYx0bi8zEH8KsKoAAAF
+Client connected: uIeoRYSQ4PLPH5WAAAAG
+Client connected: rLD_tw18or8ovFqTAAAH
+Client disconnected: uIeoRYSQ4PLPH5WAAAAG
+Client disconnected: rLD_tw18or8ovFqTAAAH
+Client connected: PEbi-MVX9Yi-CMfMAAAI
+Client disconnected: PEbi-MVX9Yi-CMfMAAAI
+Client connected: NKW-59oP_JcfiL0xAAAJ
+Client disconnected: NKW-59oP_JcfiL0xAAAJ
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: DUihDxABxVpF8HQpAAAA
+Client connected: BamSpRqYV5s0EnoIAAAB
+Client connected: mYjOUdEFAfEOy505AAAC
+Client disconnected: DUihDxABxVpF8HQpAAAA
+Client connected: ljtLBLKoDxXJwx1kAAAD
+Client disconnected: mYjOUdEFAfEOy505AAAC
+Client disconnected: ljtLBLKoDxXJwx1kAAAD
+Client disconnected: BamSpRqYV5s0EnoIAAAB
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 9iMIGdO5GCiKx9L_AAAA
+Client connected: Nej_zDuNR_ofm8YEAAAB
+Client connected: IQ_FSBXa-sK0aaowAAAC
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 6aLHwx3rMWkLAdIQAAAA
+Client connected: uLoUAyYla7kO2JTOAAAB
+Client connected: NskXjs95MwZE32RbAAAC
+Client connected: 926AjtSEk-9j0g6QAAAD
+Client disconnected: NskXjs95MwZE32RbAAAC
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+◇ injected env (7) from backend/.env
+◇ injected env (0) from backend/.env
+====================================================
+🚀 SOBATSERABUT MARKETPLACE BACKEND & WEBSOCKET
+📡 Server running on http://0.0.0.0:4000
+====================================================
+Client connected: 26R0UaPJVR7L9UUUAAAA
+Client connected: erFiQ9r-qUrmh5ChAAAB
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Akun: 087735170386 (087735170386)
+🎯 Nomor HP Penerima OTP: 087735170386 (087735170386)
+🔑 Kode OTP Nyata Dihasilkan: 270043
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 270043
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 188760772 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 971,
+      remaining: 970,
+      used: 1
+    }
+  },
+  requestid: 1067523897,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 270043 dikirim ke 087735170386 via WhatsApp
+====================================================
+📩 [OTP DISPATCH] Metode: WHATSAPP
+📱 Nomor Akun: 087735170386 (087735170386)
+🎯 Nomor HP Penerima OTP: 087735170386 (087735170386)
+🔑 Kode OTP Nyata Dihasilkan: 659924
+====================================================
+====================================================
+🤖 [BOT WHATSAPP FONNTE DISPATCH]
+📱 Nomor Bot Pengirim: 087791201091
+🎯 Nomor Tujuan: 6287735170386 (HP Penerima)
+🔑 Kode OTP: 659924
+💬 Format Boot: "jangan berikan kode otp ini kepada siapapun"
+====================================================
+📱 WhatsApp OTP sukses dikirim ke 6287735170386 via Bot 087791201091: {
+  detail: 'success! message in queue',
+  id: [ 188760838 ],
+  process: 'pending',
+  quota: {
+    '087791201091': {
+      details: 'deduced from total quota',
+      quota: 970,
+      remaining: 969,
+      used: 1
+    }
+  },
+  requestid: 1067524603,
+  status: true,
+  target: [ '6287735170386' ]
+}
+✅ [OTP PROCESSED] Kode 659924 dikirim ke 087735170386 via WhatsApp
+🔑 [PASSWORD RESET] Kata sandi untuk pengguna reza pahlevi (087735170386) berhasil diperbarui.
+Client disconnected: erFiQ9r-qUrmh5ChAAAB

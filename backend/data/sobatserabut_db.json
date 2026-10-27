@@ -1,0 +1,151 @@
+{
+  "config": {
+    "appName": "SobatSerabut",
+    "appTagline": "Solusi Cepat Serabutan & Jasa Harian",
+    "logoUrl": "/uploads/logo-1792345128360-379313236.png",
+    "appIconUrl": "/uploads/logo_icon.svg",
+    "logoPreset": "shield",
+    "primaryColor": "#2563EB",
+    "secondaryColor": "#F59E0B",
+    "maintenanceMode": false,
+    "maintenanceMessage": "mohon menunggu sedang pemeliharaan sistem",
+    "maxRadiusKm": 2,
+    "baseFare": 25000,
+    "farePerKm": 3500,
+    "platformFee": 3000,
+    "serviceFeePercentage": 10,
+    "premiumSubscriptionPrice": 10000,
+    "escrowAccountInfo": "SeaBank: 901771223812 | GoPay: 087735170386 | QRIS SobatSerabut (a/n SobatSerabut Admin)",
+    "adminSeaBank": {
+      "bankName": "SeaBank",
+      "accountNumber": "901771223812",
+      "accountHolder": "SobatSerabut Admin"
+    },
+    "adminGopay": {
+      "provider": "GoPay",
+      "accountNumber": "087735170386",
+      "accountHolder": "SobatSerabut Admin"
+    },
+    "adminQris": {
+      "title": "QRIS SobatSerabut Resmi",
+      "url": "/uploads/qris_sobatserabut.svg",
+      "accountHolder": "SobatSerabut Admin"
+    },
+    "otpSenderNumber": "087791201091",
+    "fonnteToken": "G7pBKmdnGMyfnLoEkv7g",
+    "otpMessageFormat": "\n⚠️ PERINGATAN RESMI:\n\"jangan berikan kode otp ini kepada siapapun\"\n\nKode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 menit.",
+    "announcement": "Selamat datang di SobatSerabut! Layanan serabutan & pekerjaan harian terpercaya siap membantu Anda kapan saja.",
+    "contactPhone": "087791201091",
+    "googleMapsApiKey": "",
+    "mapProvider": "google_roadmap",
+    "updatedAt": "2026-10-22T13:53:40.970Z"
+  },
+  "categories": [
+    {
+      "id": "cat-1",
+      "name": "Servis AC",
+      "icon": "snowflake",
+      "baseFare": 75000,
+      "description": "Cuci, tambah freon, dan perbaikan AC",
+      "active": true,
+      "image": "/uploads/service_ac.png"
+    },
+    {
+      "id": "cat-2",
+      "name": "Pembersih Rumah",
+      "icon": "sparkles",
+      "baseFare": 50000,
+      "description": "Bersih-bersih kamar, toilet, dan dapur",
+      "active": true,
+      "image": "/uploads/service_clean.png"
+    },
+    {
+      "id": "cat-3",
+      "name": "Angkat Barang & Pindahan",
+      "icon": "truck",
+      "baseFare": 80000,
+      "description": "Bantuan angkut mebel, kardus, dan pindahan",
+      "active": true,
+      "image": "/uploads/service_lifting.png"
+    },
+    {
+      "id": "cat-4",
+      "name": "Tukang Ledeng & Pipa",
+      "icon": "wrench",
+      "baseFare": 60000,
+      "description": "Perbaikan pipa bocor, wastafel, dan pompa air",
+      "active": true,
+      "image": "/uploads/service_plumber.png"
+    },
+    {
+      "id": "cat-5",
+      "name": "Kelistrikan & Instalasi",
+      "icon": "zap",
+      "baseFare": 65000,
+      "description": "Perbaikan korsleting, pasang lampu & saklar",
+      "active": true,
+      "image": "/uploads/service_electric.png"
+    },
+    {
+      "id": "cat-6",
+      "name": "Runner / Belanja Kilat",
+      "icon": "shopping-bag",
+      "baseFare": 25000,
+      "description": "Beli gas, galon, belanja pasar & titipan kilat",
+      "active": true,
+      "image": "/uploads/service_runner.png"
+    },
+    {
+      "id": "cat-7",
+      "name": "Pertukangan Kayu & Cat",
+      "icon": "hammer",
+      "baseFare": 90000,
+      "description": "Cat dinding, perbaikan kusen, dan furnitur",
+      "active": true,
+      "image": "/uploads/service_carpentry.png"
+    },
+    {
+      "id": "cat-8",
+      "name": "Tambal Ban & Darurat",
+      "icon": "tool",
+      "baseFare": 30000,
+      "description": "Tambal ban tubeless, jumper aki di tempat",
+      "active": true,
+      "image": "/uploads/service_tire.png"
+    },
+    {
+      "id": "cat-1792414138374",
+      "name": "servis mesin cuci",
+      "icon": "wrench",
+      "baseFare": 60000,
+      "description": "Perbaikan & perawatan langsung di rumah",
+      "active": true,
+      "image": "/uploads/service_washing.png"
+    }
+  ],
+  "mitra": [],
+  "orders": [],
+  "kycRequests": [],
+  "withdrawals": [],
+  "routeHistory": {},
+  "transactions": [],
+  "users": [
+    {
+      "id": "KLN-0004",
+      "name": "reza pahlevi",
+      "phone": "087735170386",
+      "email": "087735170386@sobatserabut.id",
+      "password": "Dwieza21@",
+      "role": "klien",
+      "avatar": null,
+      "address": "jakarta selatan",
+      "lat": -6.303348,
+      "lng": 106.830543,
+      "walletBalance": 0,
+      "createdAt": "2026-10-13T15:19:10.004Z",
+      "totalOrdersPosted": 4,
+      "paymentAccount": null,
+      "lastActive": "2026-10-27T16:10:36.012Z"
+    }
+  ]
+}

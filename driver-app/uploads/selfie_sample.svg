@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 350" width="350" height="350">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="350" height="350" rx="16" fill="url(#bgGrad)"/>
+  <!-- User head & torso -->
+  <circle cx="175" cy="110" r="45" fill="#fbcfe8"/>
+  <path d="M135 110 Q175 60 215 110 Q175 80 135 110" fill="#1e293b"/>
+  <path d="M100 240 C100 170, 250 170, 250 240 Z" fill="#2563eb"/>
+  <!-- Hands holding KTP in front -->
+  <rect x="95" y="210" width="160" height="95" rx="8" fill="#0284c7" stroke="#38bdf8" stroke-width="2"/>
+  <rect x="105" y="220" width="140" height="75" rx="4" fill="#ffffff" fill-opacity="0.15"/>
+  <text x="175" y="240" font-family="sans-serif" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">REPUBLIK INDONESIA</text>
+  <text x="175" y="255" font-family="monospace" font-size="8" font-weight="bold" fill="#fef08a" text-anchor="middle">3174051203950002</text>
+  <rect x="205" y="260" width="28" height="30" fill="#e0f2fe" rx="3"/>
+  <circle cx="219" cy="272" r="6" fill="#0284c7"/>
+  <text x="115" y="275" font-family="sans-serif" font-size="7" fill="#ffffff">REZA PAHLEVI</text>
+  <circle cx="95" cy="255" r="14" fill="#fbcfe8"/>
+  <circle cx="255" cy="255" r="14" fill="#fbcfe8"/>
+  <!-- Verification Badge -->
+  <rect x="75" y="315" width="200" height="24" rx="12" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1"/>
+  <text x="175" y="331" font-family="sans-serif" font-size="10" font-weight="bold" fill="#34d399" text-anchor="middle">✓ SELFIE RESMI DENGAN KTP</text>
+</svg>
