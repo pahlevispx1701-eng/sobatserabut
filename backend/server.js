@@ -51,6 +51,11 @@ function requireAdminAuth(req, res, next) {
   return res.status(401).json({ success: false, message: 'Akses ditolak: Autentikasi admin diperlukan.' });
 }
 
+// Cloud Health Check Endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'sobatserabut', uptime: process.uptime() });
+});
+
 // Static files
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));

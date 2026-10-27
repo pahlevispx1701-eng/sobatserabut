@@ -1,3 +1,13 @@
+---
+title: SobatSerabut
+emoji: 🛵
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # 🛠️ SobatSerabut - Platform Jasa Serabutan & Pemantauan Mitra Terpusat
 
 **SobatSerabut** adalah platform marketplace dua sisi (*two-sided marketplace*) yang menghubungkan Pemohon Jasa (Klien) dan Penyedia Jasa (Mitra Pekerja) berdasarkan lokasi terdekat (*geolocation matching*).

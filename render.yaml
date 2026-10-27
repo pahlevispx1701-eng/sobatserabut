@@ -1,14 +1,13 @@
 services:
   - type: web
-    name: sobatserabut-backend
+    name: sobatserabut
     env: node
-    plan: starter
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: node server.js
+    plan: free
+    buildCommand: npm install --omit=dev && cd backend && npm install --omit=dev
+    startCommand: node app.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 4000
+        value: 10000
