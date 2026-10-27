@@ -11,6 +11,7 @@ echo "===================================================="
 
 # 1. Update paket sistem
 echo "📦 1. Memperbarui paket sistem..."
+export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y curl git ufw nginx
 
@@ -35,6 +36,7 @@ REPO_URL="https://github.com/pahlevispx1701-eng/sobatserabut.git"
 if [ -d "$APP_DIR" ]; then
     echo "🔄 4. Direktori aplikasi sudah ada, memperbarui dari GitHub..."
     cd "$APP_DIR"
+    git reset --hard origin/main 2>/dev/null || true
     git pull origin main
 else
     echo "📥 4. Meng-clone repositori SobatSerabut dari GitHub..."
@@ -59,7 +61,10 @@ echo "🚀 7. Menjalankan SobatSerabut dengan PM2..."
 pm2 delete sobatserabut 2>/dev/null || true
 pm2 start app.js --name "sobatserabut" --env PORT=4000
 pm2 save
-pm2 startup systemd -u root --hp /root | bash 2>/dev/null || true
+STARTUP_CMD=$(pm2 startup systemd -u root --hp /root 2>/dev/null | grep -E 'sudo|env PATH' | tail -n 1)
+if [ -n "$STARTUP_CMD" ]; then
+    eval "$STARTUP_CMD" || true
+fi
 
 # 8. Setup Nginx Reverse Proxy (agar bisa diakses via Port 80 langsung tanpa :4000)
 echo "🌐 8. Mengonfigurasi Nginx Reverse Proxy..."
@@ -79,6 +84,7 @@ server {
         proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 EOF
@@ -102,7 +108,7 @@ echo "===================================================="
 echo "🎉 SOBATSERABUT BERHASIL DIAKTIFKAN 24 JAM DI VPS!"
 echo "===================================================="
 echo "🌐 URL Utama: http://$PUBLIC_IP"
-echo "📱 Portal Download: http://$PUBLIC_IP/portal"
+echo "📱 Portal Download APK: http://$PUBLIC_IP/portal"
 echo "🛵 Web Driver / Mitra: http://$PUBLIC_IP/driver"
 echo "👤 Web Klien: http://$PUBLIC_IP/client"
 echo "⚙️ Dashboard Admin: http://$PUBLIC_IP/admin"
