@@ -1,0 +1,19 @@
+name: sobatserabut
+services:
+  - name: backend
+    type: web
+    git:
+      repository: github.com/pahlevispx1701-eng/sobatserabut
+      branch: main
+    build:
+      buildpack:
+        build_command: "cd backend && npm install"
+        run_command: "cd backend && node server.js"
+    ports:
+      - port: 4000
+        protocol: http
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
