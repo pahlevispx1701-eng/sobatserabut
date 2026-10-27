@@ -2143,6 +2143,10 @@ function applyConfigToUI(cfg) {
   if (cfg.maxRadiusKm) {
     document.getElementById('mitraRadiusLabel').innerText = `${cfg.maxRadiusKm} km`;
   }
+  if (cfg.mapProvider) {
+    if (typeof switchAppMapLayer === 'function') switchAppMapLayer(cfg.mapProvider);
+    if (typeof switchPickerTileLayer === 'function') switchPickerTileLayer(cfg.mapProvider);
+  }
   applyMaintenanceMode(cfg.maintenanceMode, cfg.maintenanceMessage);
 }
 
@@ -3038,17 +3042,20 @@ function switchAppMapLayer(provider) {
     google_roadmap: {
       url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      maxZoom: 20
+      maxZoom: 20,
+      attr: 'Google Maps'
     },
     google_hybrid: {
       url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      maxZoom: 20
+      maxZoom: 20,
+      attr: 'Google Maps'
     },
     osm: {
-      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      subdomains: ['a', 'b', 'c', 'd'],
-      maxZoom: 19
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      subdomains: ['a', 'b', 'c'],
+      maxZoom: 19,
+      attr: '&copy; OpenStreetMap'
     }
   };
 
@@ -3058,7 +3065,8 @@ function switchAppMapLayer(provider) {
   }
   mainAppTileLayer = L.tileLayer(cfg.url, {
     subdomains: cfg.subdomains,
-    maxZoom: cfg.maxZoom
+    maxZoom: cfg.maxZoom,
+    attribution: cfg.attr || 'Google Maps &amp; OSM'
   }).addTo(mainAppLiveMap);
 
   const btnRoad = document.getElementById('btnAppLayerRoad');
@@ -3828,25 +3836,47 @@ function switchPickerTileLayer(provider) {
   if (!pickerMap) return;
   if (pickerTileLayer) pickerMap.removeLayer(pickerTileLayer);
 
-  const url = (provider === 'google_hybrid')
-    ? 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
-    : 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+  let url, subdomains, maxZoom, attr;
+  if (provider === 'osm') {
+    url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    subdomains = ['a', 'b', 'c'];
+    maxZoom = 19;
+    attr = '&copy; OpenStreetMap';
+  } else if (provider === 'google_hybrid') {
+    url = 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+    subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+    maxZoom = 20;
+    attr = 'Google Maps';
+  } else {
+    url = 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+    maxZoom = 20;
+    attr = 'Google Maps';
+  }
 
   pickerTileLayer = L.tileLayer(url, {
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    maxZoom: 20,
-    attribution: 'Google Maps'
+    subdomains: subdomains,
+    maxZoom: maxZoom,
+    attribution: attr
   }).addTo(pickerMap);
 
   const btnRoad = document.getElementById('pickerBtnRoad');
   const btnSat = document.getElementById('pickerBtnSat');
-  if (btnRoad && btnSat) {
+  const btnOsm = document.getElementById('pickerBtnOsm');
+  if (btnRoad) {
     btnRoad.className = (provider === 'google_roadmap')
       ? 'px-2 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]'
-      : 'px-2 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold text-[10px] hover:bg-slate-700';
+      : 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-bold text-[10px]';
+  }
+  if (btnSat) {
     btnSat.className = (provider === 'google_hybrid')
       ? 'px-2 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]'
-      : 'px-2 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold text-[10px] hover:bg-slate-700';
+      : 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-bold text-[10px]';
+  }
+  if (btnOsm) {
+    btnOsm.className = (provider === 'osm')
+      ? 'px-2 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]'
+      : 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-bold text-[10px]';
   }
 }
 
@@ -3911,6 +3941,20 @@ function useCurrentGpsLocation() {
 async function reverseGeocodePicker(lat, lng) {
   const addrDisplay = document.getElementById('pickerAddressDisplay');
   if (!addrDisplay) return;
+
+  // 1. Coba Google Maps Geocoding API jika API Key tersedia
+  if (systemConfig && systemConfig.googleMapsApiKey) {
+    try {
+      const gRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${systemConfig.googleMapsApiKey}`).then(r => r.json());
+      if (gRes && gRes.status === 'OK' && gRes.results && gRes.results.length > 0) {
+        pickerAddress = gRes.results[0].formatted_address;
+        addrDisplay.innerText = pickerAddress.split(',').slice(0, 3).join(', ');
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // 2. OpenStreetMap Nominatim Geocoding (Gratis & Terbuka Tanpa Wajib API Key)
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`).then(r => r.json());
     if (res && res.display_name) {

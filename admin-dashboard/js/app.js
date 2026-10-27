@@ -609,8 +609,8 @@ const MAP_TILE_CONFIGS = {
     maxZoom: 20
   },
   osm: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    subdomains: ['a', 'b', 'c', 'd'],
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b', 'c'],
     maxZoom: 19
   }
 };
@@ -626,7 +626,7 @@ function switchAdminMapLayer(provider) {
   currentLiveTileLayer = L.tileLayer(cfg.url, {
     subdomains: cfg.subdomains,
     maxZoom: cfg.maxZoom,
-    attribution: 'Google Maps &amp; SobatSerabut'
+    attribution: provider === 'osm' ? '&copy; OpenStreetMap &amp; SobatSerabut' : 'Google Maps &amp; SobatSerabut'
   }).addTo(liveMap);
 
   // Update button active states
