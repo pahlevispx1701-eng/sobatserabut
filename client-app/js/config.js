@@ -1,5 +1,5 @@
 window.SOBATSERABUT_CONFIG = {
-  DEFAULT_API_URL: "https://structure-crane-princess.ngrok-free.dev",
-  VERSION: "1.0.0",
-  BUILD_DATE: "2026-10-27 23:03:14"
+  DEFAULT_API_URL: "https://sobatserabut.160.19.166.231.sslip.io",
+  VERSION: "1.1.0",
+  BUILD_DATE: "2026-10-28 02:59:00"
 };

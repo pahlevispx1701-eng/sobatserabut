@@ -27,11 +27,20 @@ echo "Build Config:"
 echo " - JAVAC: $JAVAC ($($JAVAC -version 2>&1 | head -1))"
 echo " - Platform: API 34 | Min SDK: API 24 (Android 7+)"
 
+# Domain Cloud VPS 24 Jam Permanen
+DEFAULT_PROD_URL="https://sobatserabut.160.19.166.231.sslip.io"
+
 # Ambil URL publik aktif yang terverifikasi bisa diakses
 PUBLIC_URL=""
 
-# 1. Cek dari logs/public_url.txt
-if [ -f "/home/jinny21/SobatSerabut/logs/public_url.txt" ]; then
+# 1. Cek kesehatan URL Produksi VPS
+if curl -s -o /dev/null -m 5 -I "$DEFAULT_PROD_URL/api/health" 2>/dev/null; then
+    PUBLIC_URL="$DEFAULT_PROD_URL"
+    echo "$PUBLIC_URL" > /home/jinny21/SobatSerabut/logs/public_url.txt
+fi
+
+# 2. Cek dari logs/public_url.txt jika produksi tidak terjangkau
+if [ -z "$PUBLIC_URL" ] && [ -f "/home/jinny21/SobatSerabut/logs/public_url.txt" ]; then
     CANDIDATE=$(cat /home/jinny21/SobatSerabut/logs/public_url.txt | tr -d '[:space:]')
     if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "http://127.0.0.1:4000" ]; then
         if curl -s -o /dev/null -m 3 -I "$CANDIDATE" 2>/dev/null; then
@@ -40,22 +49,8 @@ if [ -f "/home/jinny21/SobatSerabut/logs/public_url.txt" ]; then
     fi
 fi
 
-# 2. Cek dari logs/tunnel.log yang paling baru
-if [ -z "$PUBLIC_URL" ] && [ -f "/home/jinny21/SobatSerabut/logs/tunnel.log" ]; then
-    for URL in $(grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare\.com' /home/jinny21/SobatSerabut/logs/tunnel.log 2>/dev/null | tail -n 8 | tac); do
-        if curl -s -o /dev/null -m 3 -I "$URL" 2>/dev/null; then
-            PUBLIC_URL="$URL"
-            echo "$PUBLIC_URL" > /home/jinny21/SobatSerabut/logs/public_url.txt
-            break
-        fi
-    done
-fi
-
-# 3. Fallback
-if [ -z "$PUBLIC_URL" ] && [ -f "/home/jinny21/SobatSerabut/logs/public_url.txt" ]; then
-    PUBLIC_URL=$(cat /home/jinny21/SobatSerabut/logs/public_url.txt | tr -d '[:space:]')
-fi
-[ -z "$PUBLIC_URL" ] && PUBLIC_URL="https://roses-deserve-skills-juvenile.trycloudflare.com"
+# Fallback default ke domain cloud resmi
+[ -z "$PUBLIC_URL" ] && PUBLIC_URL="$DEFAULT_PROD_URL"
 echo " - Verified Server URL: $PUBLIC_URL"
 
 # Keystore

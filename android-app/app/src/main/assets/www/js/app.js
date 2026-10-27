@@ -3617,7 +3617,7 @@ async function initOrderRadarMap(order) {
     maxZoom: 19
   }).setView([orderLat, orderLng], 15);
 
-  L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+  L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     maxZoom: 20
   }).addTo(map);
@@ -3992,7 +3992,7 @@ function initMainAppLiveMap() {
     worldCopyJump: true
   }).setView(initialCenter, initialZoom);
 
-  mainAppTileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+  mainAppTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     maxZoom: 20
   }).addTo(mainAppLiveMap);
@@ -4061,12 +4061,12 @@ function switchAppMapLayer(provider) {
   if (!mainAppLiveMap) return;
   const configs = {
     google_roadmap: {
-      url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+      url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       maxZoom: 20
     },
     google_hybrid: {
-      url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+      url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       maxZoom: 20
     },
@@ -5011,8 +5011,8 @@ function switchPickerTileLayer(provider) {
   if (pickerTileLayer) pickerMap.removeLayer(pickerTileLayer);
 
   const url = (provider === 'google_hybrid')
-    ? 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
-    : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    ? 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+    : 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
 
   pickerTileLayer = L.tileLayer(url, {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],

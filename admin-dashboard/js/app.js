@@ -594,17 +594,17 @@ let currentMapProvider = 'google_roadmap';
 
 const MAP_TILE_CONFIGS = {
   google_roadmap: {
-    url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     maxZoom: 20
   },
   google_hybrid: {
-    url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     maxZoom: 20
   },
   google_terrain: {
-    url: 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+    url: 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     maxZoom: 20
   },
