@@ -3,11 +3,37 @@
   "short_name": "Driver Serabut",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0F172A",
+  "background_color": "#050D1A",
   "theme_color": "#059669",
   "orientation": "portrait",
-  "description": "Aplikasi Mitra Kerja & Pengemudi SobatSerabut (Penyedia Layanan)",
+  "description": "Aplikasi Mitra Kerja & Pengemudi SobatSerabut — Cari Kerja, Terima Order, Tarik Saldo",
+  "categories": ["lifestyle", "utilities"],
+  "lang": "id",
   "icons": [
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "48x48",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/uploads/logo_icon.svg",
       "sizes": "192x192",
@@ -19,6 +45,22 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cek Order Baru",
+      "short_name": "Order",
+      "description": "Lihat order masuk terbaru",
+      "url": "./index.html#orders",
+      "icons": [{ "src": "/uploads/logo_icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Status Online",
+      "short_name": "Online",
+      "description": "Aktifkan status siap terima order",
+      "url": "./index.html#status",
+      "icons": [{ "src": "/uploads/logo_icon.svg", "sizes": "96x96" }]
     }
   ]
 }

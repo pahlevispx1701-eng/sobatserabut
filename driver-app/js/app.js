@@ -26,7 +26,7 @@ function getApiBase() {
     }
   }
 
-  return 'https://structure-crane-princess.ngrok-free.dev';
+  return 'https://driver.sobatserabut.id';
 }
 
 let API_BASE = getApiBase();
@@ -77,6 +77,7 @@ let callRingGain = null;
 let registeredAvatarBase64 = null;
 let registeredKtpBase64 = null;
 let registeredSelfieBase64 = null;
+let startWorkPhotoBase64 = null;
 let proofPhotoBase64 = null;
 let pendingRegistrationData = null;
 
@@ -144,6 +145,24 @@ async function checkAppConnectivity(showFeedback = false) {
           isConnected = true;
         }
       } catch(e2) {}
+    }
+  }
+
+  // 2b. Fallback darurat ke Cloud VPS DomaiNesia (160.19.166.231)
+  if (!isConnected) {
+    const cloudUrl = 'https://sobatserabut.160.19.166.231.sslip.io';
+    if (API_BASE !== cloudUrl) {
+      try {
+        const c3 = new AbortController();
+        const t3 = setTimeout(() => c3.abort(), 3000);
+        const r3 = await fetch(`${cloudUrl}/api/ping?_t=${Date.now()}`, { cache: 'no-store', signal: c3.signal });
+        clearTimeout(t3);
+        if (r3.ok) {
+          API_BASE = cloudUrl;
+          localStorage.setItem('sobatserabut_server_url', API_BASE);
+          isConnected = true;
+        }
+      } catch(e3) {}
     }
   }
 
@@ -256,8 +275,19 @@ async function requestAllDevicePermissions() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // First install check: Bersihkan riwayat tugas lama agar bersih saat pertama kali install
-  if (!localStorage.getItem('sobatserabut_driver_installed_v2')) {
+  // Bersihkan data palsu/simulasi — hanya data nyata dari pendaftaran yang valid
+  const DATA_VERSION = 'sobatserabut_driver_v3_real';
+  if (localStorage.getItem('_data_version') !== DATA_VERSION) {
+    const savedUser = localStorage.getItem('sobatserabut_driver_user');
+    localStorage.clear();
+    sessionStorage.clear();
+    if (savedUser) localStorage.setItem('sobatserabut_driver_user', savedUser);
+    localStorage.setItem('_data_version', DATA_VERSION);
+    localStorage.setItem('sobatserabut_driver_installed_v2', 'true');
+    driverOrders = [];
+    console.log('[Mitra] Cache lama & data simulasi dihapus.');
+  } else if (!localStorage.getItem('sobatserabut_driver_installed_v2')) {
+    // First install check: Bersihkan riwayat tugas lama agar bersih saat pertama kali install
     localStorage.removeItem('sobatserabut_driver_cached_orders');
     localStorage.setItem('sobatserabut_driver_installed_v2', 'true');
     driverOrders = [];
@@ -272,9 +302,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initSocket();
   loadRemoteConfig();
   loadCategories();
+  loadTotalDriverCount();
   updateServerStatusBadge(true, API_BASE);
   checkDevicePermissionsOnLaunch();
 });
+
+async function loadTotalDriverCount() {
+  try {
+    const res = await fetch(`${API_BASE}/api/mitra`).then(r => r.json());
+    if (res.success && Array.isArray(res.data)) {
+      const countEl = document.getElementById('driverAppTotalCountDisplay');
+      if (countEl) countEl.innerText = `${res.data.length} Driver Terdaftar`;
+    }
+  } catch(e) {}
+}
 
 /* ========================================================
  * 0. TOAST & CUSTOM NATIVE-FEEL ALERT / CONFIRM DIALOG
@@ -425,8 +466,37 @@ function initSocket() {
       playNotificationSound();
       if (currentUser?.role === 'mitra') {
         loadNearbyTasksForMitra();
+        // Tampilkan modal popup notifikasi jika driver sedang Mulai Bekerja (ready)
+        if (currentUser?.status === 'ready') {
+          showIncomingOrderModal(newOrder);
+        }
       } else if (currentUser?.role === 'klien' && newOrder.clientId === currentUser.id) {
         loadClientOrders();
+      }
+    });
+
+    socket.on('categories:update', (cats) => {
+      if (Array.isArray(cats)) {
+        categoriesList = cats;
+        renderKlienCategoriesGrid();
+        populatePostTaskCategorySelect();
+      }
+    });
+
+    socket.on('categories:updated', (cats) => {
+      if (Array.isArray(cats)) {
+        categoriesList = cats;
+        renderKlienCategoriesGrid();
+        populatePostTaskCategorySelect();
+      }
+    });
+
+    socket.on('config:icon_updated', (data) => {
+      if (data && (data.target === 'driver' || data.target === 'all')) {
+        const logoUrl = (data.iconUrl || '/uploads/logo_icon_driver.svg') + '?t=' + Date.now();
+        document.querySelectorAll('#appHeaderLogo, #authRegAppLogo, #authLoginAppLogo').forEach(el => {
+          el.src = logoUrl;
+        });
       }
     });
 
@@ -480,6 +550,22 @@ function initSocket() {
       }
     });
 
+    socket.on('order:working_started', (data) => {
+      if (activeOrder && activeOrder.id === data.orderId) {
+        activeOrder.step = 'working';
+        if (data.order) activeOrder = data.order;
+        updateMitraActiveJobUI();
+      }
+    });
+
+    socket.on('order:waiting_payment', (data) => {
+      if (activeOrder && activeOrder.id === data.orderId) {
+        activeOrder.step = 'waiting_payment';
+        if (data.order) activeOrder = data.order;
+        updateMitraActiveJobUI();
+      }
+    });
+
     socket.on('order:completed', (data) => {
       if (currentUser?.id === data.order.assignedMitraId) {
         const netInc = data.mitraNetIncome || Math.round((data.order.baseFare || data.order.budget || 25000) * 0.9);
@@ -526,6 +612,68 @@ function initSocket() {
       endInAppVoiceCall(false);
     });
 
+    // ── DRIVER CONTROL REAL-TIME LISTENERS (ADMIN ACTIONS) ──
+    socket.on('driver:suspended', (data) => {
+      if (currentUser && data && data.driverId === currentUser.id) {
+        currentUser.accountStatus = 'suspended';
+        currentUser.suspendReason = data.reason;
+        currentUser.status = 'offline';
+        saveDriverSession(currentUser);
+        updateMitraStatusUI('offline');
+        showDriverSuspendedModal(data.reason);
+        playAudioSound('chat_ping');
+        showToast('⚠️ Akun Driver Anda telah ditangguhkan (Suspended) oleh Admin.', 'error', 10000);
+      }
+    });
+
+    socket.on('driver:unsuspended', (data) => {
+      if (currentUser && data && data.driverId === currentUser.id) {
+        currentUser.accountStatus = 'active';
+        currentUser.suspendReason = null;
+        currentUser.status = 'ready';
+        saveDriverSession(currentUser);
+        updateMitraStatusUI('ready');
+        hideDriverSuspendedModal();
+        playAudioSound('order_chime');
+        showToast('🎉 Status suspen akun Driver Anda telah dibuka oleh Admin! Anda dapat kembali bekerja.', 'success', 8000);
+      }
+    });
+
+    socket.on('driver:terminated', (data) => {
+      if (currentUser && data && data.driverId === currentUser.id) {
+        currentUser.accountStatus = 'terminated';
+        saveDriverSession(null);
+        currentUser = null;
+        alert(`Pemberitahuan: Kemitraan Driver Anda telah dihentikan secara permanen (Terminated) oleh Admin.\nAlasan: ${data.reason || 'Pelanggaran SOP'}`);
+        window.location.reload();
+      }
+    });
+
+    socket.on('driver:points_updated', (data) => {
+      if (currentUser && data && data.driverId === currentUser.id) {
+        currentUser.points = data.points;
+        if (!Array.isArray(currentUser.pointHistory)) currentUser.pointHistory = [];
+        currentUser.pointHistory.unshift({
+          timestamp: new Date().toISOString(),
+          action: data.action,
+          change: data.change,
+          newTotal: data.points,
+          reason: data.reason
+        });
+        saveDriverSession(currentUser);
+        updateDriverPointsUI(data.points, currentUser.pointHistory);
+        playAudioSound('order_chime');
+        showToast(`⭐ Perubahan Poin Kinerja: ${data.action === 'deduct' ? '-' : '+'}${data.change} Poin (${data.reason})`, 'success', 6000);
+      }
+    });
+
+    socket.on('broadcast:notification', (data) => {
+      if (!data) return;
+      if (data.target === 'all' || data.target === 'driver') {
+        showBroadcastModal(data);
+      }
+    });
+
   } catch (err) {
     console.error('Socket init error:', err);
   }
@@ -549,22 +697,30 @@ function saveDriverSession(user) {
 }
 
 function checkAuthSession() {
+  // Hanya terima data akun driver dengan role 'mitra' — tolak semua data klien
   const saved = localStorage.getItem('sobatserabut_driver_user');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (parsed && parsed.role === 'mitra') {
+      // Validasi ketat: role HARUS 'mitra', id tidak boleh kosong, dan bukan data simulasi
+      if (parsed && parsed.role === 'mitra' && parsed.id && !String(parsed.id).startsWith('KLN-')) {
         currentUser = parsed;
         onUserAuthenticated(currentUser);
         return;
+      } else {
+        // Data rusak atau bukan mitra — bersihkan sesi
+        localStorage.removeItem('sobatserabut_driver_user');
       }
-    } catch(e) {}
+    } catch(e) {
+      localStorage.removeItem('sobatserabut_driver_user');
+    }
   }
 
-  // Cek apakah sudah terdaftar sebagai driver
+  // Cek apakah sudah terdaftar sebagai driver atau ada info tersimpan
   const isRegistered = localStorage.getItem('sobatserabut_driver_registered') === 'true';
+  const savedPhone = localStorage.getItem('sobatserabut_driver_saved_phone');
   showAuthOverlay();
-  if (isRegistered) {
+  if (isRegistered || savedPhone) {
     // Pengguna yang sudah terdaftar: langsung minta Login Akun & Kata Sandi Driver
     navigateToAuthScreen('login');
   } else {
@@ -607,7 +763,18 @@ function navigateToAuthScreen(screen) {
   } else if (screen === 'login') {
     if (screenLogin) screenLogin.classList.remove('hidden');
     const input = document.getElementById('loginPassPhoneInput');
-    if (input) setTimeout(() => input.focus(), 150);
+    const savedPhone = localStorage.getItem('sobatserabut_driver_saved_phone');
+    const savedBadge = document.getElementById('loginDriverSavedBadge');
+    if (input) {
+      if (savedPhone && !input.value) {
+        input.value = savedPhone;
+        if (savedBadge) savedBadge.classList.remove('hidden');
+        const passInput = document.getElementById('loginPassSecretInput');
+        if (passInput) setTimeout(() => passInput.focus(), 200);
+      } else {
+        setTimeout(() => input.focus(), 150);
+      }
+    }
   } else if (screen === 'forgot') {
     if (screenForgot) screenForgot.classList.remove('hidden');
     cancelForgotOtpStep();
@@ -1135,13 +1302,67 @@ async function submitVerifyOtpLogin() {
     }).then(r => r.json());
 
     if (res.success) {
-      currentUser = res.data;
-      driverOrders = []; // Riwayat tugas bersih kosong saat daftar baru
-      localStorage.removeItem('sobatserabut_driver_cached_orders');
-      saveDriverSession(currentUser);
-      pendingRegistrationData = null;
-      showToast('Pendaftaran Driver Mitra Berhasil! Akun Anda langsung aktif dan siap menerima tugas.', 'success');
-      onUserAuthenticated(currentUser);
+      const regPhone = phone;
+      const isRegistration = !!pendingRegistrationData || res.isNewUser;
+
+      if (isRegistration) {
+        // Simpan info pendaftaran driver agar masuk berikutnya sangat mudah & nomor otomatis terisi
+        if (regPhone) {
+          localStorage.setItem('sobatserabut_driver_saved_phone', regPhone);
+          localStorage.setItem('sobatserabut_driver_registered', 'true');
+        }
+        if (pendingRegistrationData && pendingRegistrationData.name) {
+          localStorage.setItem('sobatserabut_driver_saved_name', pendingRegistrationData.name);
+        }
+
+        // Hapus pending data dan arahkan ke Layar Masuk Akun Driver
+        pendingRegistrationData = null;
+        currentUser = null;
+        saveDriverSession(null);
+
+        navigateToAuthScreen('login');
+
+        // Tampilkan banner sukses pendaftaran driver
+        const noticeEl = document.getElementById('driverRegisteredNotice');
+        if (noticeEl) noticeEl.classList.remove('hidden');
+
+        // Otomatis isi nomor HP driver terdaftar di form login
+        const loginPhoneInput = document.getElementById('loginPassPhoneInput');
+        if (loginPhoneInput && regPhone) {
+          loginPhoneInput.value = regPhone;
+        }
+        const savedBadge = document.getElementById('loginDriverSavedBadge');
+        if (savedBadge) savedBadge.classList.remove('hidden');
+
+        const passInput = document.getElementById('loginPassSecretInput');
+        if (passInput) {
+          passInput.value = '';
+          setTimeout(() => passInput.focus(), 300);
+        }
+
+        showToast('Pendaftaran Driver Berhasil! Silakan ketik kata sandi Anda untuk masuk ke Akun Driver.', 'success', 8000);
+      } else {
+        // Driver yang sudah terdaftar login via OTP
+        currentUser = res.data;
+        if (currentUser.accountStatus === 'suspended') {
+          showDriverSuspendedModal(currentUser.suspendReason);
+          return;
+        }
+        if (currentUser.accountStatus === 'terminated') {
+          showToast('Kemitraan Anda telah dihentikan secara permanen (Terminated).', 'error');
+          return;
+        }
+        if (regPhone) {
+          localStorage.setItem('sobatserabut_driver_saved_phone', regPhone);
+          localStorage.setItem('sobatserabut_driver_registered', 'true');
+        }
+        driverOrders = [];
+        localStorage.removeItem('sobatserabut_driver_cached_orders');
+        saveDriverSession(currentUser);
+        pendingRegistrationData = null;
+        showToast(`Selamat datang kembali di Akun Driver, ${currentUser.name}!`, 'success');
+        onUserAuthenticated(currentUser);
+      }
     } else {
       showToast(res.message || 'Verifikasi OTP gagal.', 'error');
     }
@@ -1376,6 +1597,14 @@ function confirmLivePhoto() {
     const box = document.getElementById('regSelfiePreviewBox');
     if (box) box.innerHTML = `<img src="${tempSnappedDataUrl}" class="w-full h-full object-cover rounded-xl">`;
     showToast('Foto selfie memegang KTP berhasil diambil langsung dari kamera!', 'success');
+  } else if (currentCameraTarget === 'start_work') {
+    startWorkPhotoBase64 = tempSnappedDataUrl;
+    const img = document.getElementById('startWorkPhotoPreviewImg');
+    if (img) {
+      img.src = tempSnappedDataUrl;
+      img.classList.remove('hidden');
+    }
+    showToast('Foto pekerjaan dimulai berhasil diambil langsung dari kamera!', 'success');
   } else if (currentCameraTarget === 'proof') {
     proofPhotoBase64 = tempSnappedDataUrl;
     const img = document.getElementById('proofPhotoPreviewImg');
@@ -1836,29 +2065,58 @@ async function handlePasswordLoginSubmit(e) {
   const phoneOrEmail = document.getElementById('loginPassPhoneInput').value.trim();
   const password = document.getElementById('loginPassSecretInput').value.trim();
 
+  if (!phoneOrEmail || !password) {
+    showToast('Harap masukkan nomor HP Driver dan kata sandi.', 'warning');
+    return;
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
+    showToast('Memverifikasi akun Driver...', 'info');
+    // Coba endpoint khusus driver terlebih dahulu
+    let res = await fetch(`${API_BASE}/api/auth/driver/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phoneOrEmail, password })
-    }).then(r => r.json());
+      body: JSON.stringify({ phone: phoneOrEmail, phoneOrEmail, password })
+    }).then(r => r.json()).catch(() => null);
 
-    if (res.success) {
+    // Fallback ke login terpadu dengan expectedRole mitra jika perlu
+    if (!res || (res.status === 404)) {
+      res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneOrEmail, password, expectedRole: 'mitra' })
+      }).then(r => r.json());
+    }
+
+    if (res.suspended) {
+      showDriverSuspendedModal(res.message);
+      return;
+    }
+    if (res.terminated) {
+      alert(res.message || 'Kemitraan Driver Anda telah dinonaktifkan secara permanen.');
+      return;
+    }
+
+    if (res.success && res.data) {
       if (res.data.role === 'klien') {
-        showToast('Akun ini adalah Akun Klien. Gunakan aplikasi SobatSerabut.', 'warning');
+        showToast('Akun ini adalah Akun Klien. Gunakan aplikasi SobatSerabut Klien untuk memesan jasa.', 'warning');
         return;
       }
       loginFailAttempts = 0;
       const wrongBox = document.getElementById('wrongPasswordLupaBox');
       if (wrongBox) wrongBox.classList.add('hidden');
 
+      // Simpan nomor HP driver agar login berikutnya otomatis terisi
+      localStorage.setItem('sobatserabut_driver_saved_phone', phoneOrEmail);
+      localStorage.setItem('sobatserabut_driver_registered', 'true');
+
       currentUser = res.data;
       saveDriverSession(currentUser);
-      showToast(`Selamat datang kembali, ${currentUser.name}!`, 'success');
+      showToast(`Selamat datang kembali di Akun Driver, ${currentUser.name}!`, 'success');
       onUserAuthenticated(currentUser);
     } else {
       loginFailAttempts++;
-      showToast(res.message || 'Nama akun, nomor HP, atau kata sandi tidak cocok.', 'error');
+      showToast(res.message || 'Nomor HP Driver atau kata sandi tidak cocok.', 'error');
 
       // Tampilkan menu lupa kata sandi saat salah berulang di bawahnya
       const wrongBox = document.getElementById('wrongPasswordLupaBox');
@@ -1870,7 +2128,7 @@ async function handlePasswordLoginSubmit(e) {
             <span>Kata sandi tidak sesuai (${loginFailAttempts}x salah)</span>
           </div>
           <p class="text-[11px] text-slate-300 leading-relaxed">
-            Jika Anda sudah pernah mendaftar namun lupa kata sandi akun, Anda dapat langsung mereset dan memulihkan kata sandi dengan kode OTP WhatsApp/SMS.
+            Jika Anda lupa kata sandi akun Driver yang dibuat saat pendaftaran, Anda dapat langsung mereset dan memulihkan kata sandi dengan kode OTP WhatsApp/SMS.
           </p>
           <button type="button" onclick="openForgotPasswordFromLogin('${phoneOrEmail.replace(/'/g, "\\'")}')" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-white font-extrabold text-xs shadow-lg flex items-center justify-center space-x-1.5 transition-all">
             <i class="fa-solid fa-key"></i>
@@ -1923,12 +2181,24 @@ async function toggleUserRoleSwitch() {
  * 3. AUTHENTICATED APP INITIALIZATION (DRIVER MITRA)
  * ======================================================== */
 function onUserAuthenticated(user) {
-  if (user.role === 'klien') {
-    showToast('Akun ini adalah Akun Klien. Gunakan aplikasi SobatSerabut untuk memesan jasa.', 'warning');
+  if (!user || user.role === 'klien') {
+    // Akun klien TIDAK BOLEH masuk ke Driver App — tampilkan error merah dan arahkan ke register
     saveDriverSession(null);
     currentUser = null;
     showAuthOverlay();
-    navigateToAuthScreen('login');
+    navigateToAuthScreen('register');
+    // Tampilkan banner error merah di layar register
+    setTimeout(() => {
+      const errBanner = document.getElementById('authKlienErrorBanner');
+      if (errBanner) {
+        errBanner.classList.remove('hidden');
+        errBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 200);
+    showToast(
+      'Akun ini adalah akun SobatSerabut (Klien). Aplikasi Driver hanya untuk Mitra Driver. Silakan daftar sebagai Mitra Driver.',
+      'error', 9000
+    );
     return;
   }
 
@@ -1948,6 +2218,10 @@ function onUserAuthenticated(user) {
   if (mitraView) mitraView.classList.remove('hidden');
 
   updateMitraStatusUI(user.status || 'ready');
+
+  const driverIdEl = document.getElementById('driverAppIdDisplay');
+  if (driverIdEl) driverIdEl.innerText = user.id || 'MTR-001';
+  loadTotalDriverCount();
 
   // Tampilkan KYC Pending Notice jika mitra belum disetujui admin terpusat
   const kycBanner = document.getElementById('mitraKycNoticeBanner');
@@ -2759,58 +3033,437 @@ function openProofModalForTask(taskId) {
 /* ========================================================
  * 7. ALUR KERJA MITRA (GEOFENCING, TURN-BY-TURN, MANDATORY PROOF)
  * ======================================================== */
+function isFaceVerifiedToday() {
+  const today = new Date().toISOString().slice(0, 10);
+  return localStorage.getItem(`driver_face_verified_${today}`) === 'true';
+}
+
 function updateMitraStatusUI(status) {
   const dot = document.getElementById('statusPulseDot');
+  const ping = document.getElementById('statusPulsePing');
   const label = document.getElementById('statusTextLabel');
   const subtext = document.getElementById('gpsStatusSubtext');
-  const btn = document.getElementById('toggleOnlineBtn');
+  const btnReady = document.getElementById('btnStatusReady');
+  const btnBusy = document.getElementById('btnStatusBusy');
+  const btnOffline = document.getElementById('btnStatusOffline');
+
+  // Master Big Toggle Elements
+  const masterBtn = document.getElementById('btnMasterWorkToggle');
+  const masterIcon = document.getElementById('masterToggleIcon');
+  const masterIconCircle = document.getElementById('masterToggleIconCircle');
+  const masterTitle = document.getElementById('masterToggleTitle');
+  const masterSubtext = document.getElementById('masterToggleSubtext');
+  const masterPill = document.getElementById('masterTogglePill');
+
+  // Header Status Pill (tambahan indikator di atas layar)
+  const headerPill = document.getElementById('headerDriverStatusPill');
+  if (headerPill) headerPill.classList.remove('hidden');
+
+  // Reset tombol kecil ON/OFF ke style default dulu
+  if (btnReady) {
+    btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 14px rgba(22,163,74,0.4); border: 2px solid rgba(74,222,128,0.35); opacity:0.55; filter:brightness(0.85);';
+    btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95';
+  }
+  if (btnBusy) {
+    btnBusy.className = 'py-2 rounded-xl text-slate-400 hover:text-white flex items-center justify-center space-x-1 transition-all hidden';
+  }
+  if (btnOffline) {
+    btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 14px rgba(220,38,38,0.4); border: 2px solid rgba(252,165,165,0.25); opacity:0.55; filter:brightness(0.85);';
+    btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95';
+  }
 
   if (status === 'ready') {
-    dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 relative flex items-center justify-center';
-    label.innerText = 'SIAP MENERIMA ORDER';
-    label.className = 'text-xs font-bold text-emerald-400 block';
-    subtext.innerHTML = '<i class="fa-solid fa-satellite text-blue-400 mr-1"></i> GPS Live Aktif (Update tiap 4 dtk)';
-    btn.innerText = 'ONLINE';
-    btn.className = 'px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md transition-all';
-  } else if (status === 'working') {
-    dot.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 relative flex items-center justify-center';
-    label.innerText = 'SEDANG MENJALANKAN TUGAS';
-    label.className = 'text-xs font-bold text-amber-400 block';
-    subtext.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-amber-400 mr-1"></i> Tugas Aktif Sedang Berjalan';
-    btn.innerText = 'ON JOB';
-    btn.className = 'px-3.5 py-1.5 rounded-lg bg-amber-600 text-white font-extrabold text-xs shadow-md cursor-default';
+    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 relative flex items-center justify-center';
+    if (ping) ping.classList.remove('hidden');
+    if (label) {
+      label.innerText = 'SEDANG BEKERJA (SIAP TERIMA PESANAN)';
+      label.className = 'text-xs font-black text-emerald-400 block tracking-wide';
+    }
+    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-satellite text-emerald-400 mr-1"></i> GPS Live Driver Aktif (Siap Terima Pesanan)';
+    // Tombol ON aktif (hijau terang penuh), OFF tetap merah tapi sedikit redup
+    if (btnReady) {
+      btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 18px rgba(22,163,74,0.6); border: 2px solid rgba(74,222,128,0.5); opacity:1; filter:brightness(1.1);';
+      btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
+    }
+    if (btnOffline) {
+      btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 14px rgba(220,38,38,0.35); border: 2px solid rgba(252,165,165,0.2); opacity:0.7; filter:brightness(0.9);';
+      btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
+    }
+
+    // Master Toggle UI — Bright GREEN for ONLINE
+    if (masterBtn) {
+      masterBtn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
+      masterBtn.style.boxShadow = '0 6px 24px rgba(239,68,68,0.45)';
+    }
+    if (masterIcon) masterIcon.className = 'fa-solid fa-power-off text-base';
+    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow animate-pulse';
+    if (masterTitle) masterTitle.innerText = '⏹ BERHENTI BEKERJA (OFF)';
+    if (masterSubtext) masterSubtext.innerText = 'Anda ONLINE — Ketuk untuk Berhenti & Off';
+    if (masterPill) {
+      masterPill.innerText = 'ONLINE';
+      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider';
+    }
+    // Header pill
+    if (headerPill) {
+      headerPill.innerText = '● ONLINE';
+      headerPill.style.background = 'rgba(16,185,129,0.2)';
+      headerPill.style.color = '#34d399';
+      headerPill.style.borderColor = 'rgba(16,185,129,0.4)';
+    }
+  } else if (status === 'working' || status === 'busy') {
+    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 relative flex items-center justify-center';
+    if (ping) ping.classList.add('hidden');
+    if (label) {
+      label.innerText = status === 'working' ? 'SEDANG MENJALANKAN TUGAS' : 'STATUS: SEDANG BEKERJA';
+      label.className = 'text-xs font-black text-amber-400 block tracking-wide';
+    }
+    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-1"></i> Sedang Mengerjakan Tugas (Standby)';
+    if (btnBusy) btnBusy.className = 'py-2 rounded-xl bg-amber-600 text-white flex items-center justify-center space-x-1 shadow transition-all';
+
+    // Master Toggle UI — Amber DISABLED for working
+    if (masterBtn) {
+      masterBtn.style.background = 'linear-gradient(135deg, #d97706, #f59e0b)';
+      masterBtn.style.boxShadow = '0 6px 24px rgba(245,158,11,0.45)';
+    }
+    if (masterIcon) masterIcon.className = 'fa-solid fa-pause text-base';
+    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow';
+    if (masterTitle) masterTitle.innerText = '⚙️ SEDANG MENGERJAKAN TUGAS';
+    if (masterSubtext) masterSubtext.innerText = 'Sedang aktif mengerjakan pesanan';
+    if (masterPill) {
+      masterPill.innerText = 'STANDBY';
+      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider';
+    }
+    // Header pill
+    if (headerPill) {
+      headerPill.innerText = '⚙ KERJA';
+      headerPill.style.background = 'rgba(245,158,11,0.15)';
+      headerPill.style.color = '#fbbf24';
+      headerPill.style.borderColor = 'rgba(245,158,11,0.35)';
+    }
   } else {
-    dot.className = 'w-3.5 h-3.5 rounded-full bg-rose-500 relative flex items-center justify-center';
-    label.innerText = 'SEDANG OFFLINE (ISTIRAHAT)';
-    label.className = 'text-xs font-bold text-rose-400 block';
-    subtext.innerHTML = '<i class="fa-solid fa-ban text-rose-400 mr-1"></i> GPS Standby (Tidak menerima order)';
-    btn.innerText = 'OFFLINE';
-    btn.className = 'px-3.5 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-600 text-white font-extrabold text-xs shadow-md transition-all';
+    // Offline
+    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-slate-600 relative flex items-center justify-center';
+    if (ping) ping.classList.add('hidden');
+    if (label) {
+      label.innerText = 'STATUS: OFF (TIDAK AKTIF)';
+      label.className = 'text-xs font-black text-slate-400 block tracking-wide';
+    }
+    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-power-off text-slate-500 mr-1"></i> Driver OFF (Tidak menerima pesanan)';
+    // Tombol OFF aktif (merah terang penuh), ON tetap hijau tapi sedikit redup
+    if (btnReady) {
+      btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 14px rgba(22,163,74,0.35); border: 2px solid rgba(74,222,128,0.2); opacity:0.7; filter:brightness(0.9);';
+      btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
+    }
+    if (btnOffline) {
+      btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 18px rgba(220,38,38,0.6); border: 2px solid rgba(252,165,165,0.4); opacity:1; filter:brightness(1.1);';
+      btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
+    }
+
+    // Master Toggle UI — Bright GREEN for START WORKING
+    if (masterBtn) {
+      masterBtn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+      masterBtn.style.boxShadow = '0 6px 24px rgba(16,185,129,0.45)';
+      masterBtn.style.border = 'none';
+    }
+    if (masterIcon) masterIcon.className = 'fa-solid fa-play text-base text-white';
+    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow';
+    if (masterTitle) masterTitle.innerText = '▶ MULAI BEKERJA SEKARANG';
+    if (masterSubtext) masterSubtext.innerText = 'Anda OFF — Ketuk untuk Mulai Bekerja & Online';
+    if (masterPill) {
+      masterPill.innerText = 'OFF';
+      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/20 text-[11px] font-black uppercase tracking-wider border border-white/30';
+    }
+    // Header pill
+    if (headerPill) {
+      headerPill.innerText = '○ OFF';
+      headerPill.style.background = 'rgba(71,85,105,0.3)';
+      headerPill.style.color = '#94a3b8';
+      headerPill.style.borderColor = 'rgba(71,85,105,0.4)';
+    }
+  }
+}
+
+function toggleDriverWorkStatus() {
+  if (!currentUser) {
+    showAuthOverlay();
+    return;
+  }
+  if (currentUser.accountStatus === 'suspended') {
+    showDriverSuspendedModal(currentUser.suspendReason);
+    return;
+  }
+  if (currentUser.accountStatus === 'terminated') {
+    showToast('Kemitraan Driver Anda telah dinonaktifkan secara permanen.', 'error');
+    return;
+  }
+
+  // Taptic feedback
+  if (navigator.vibrate) {
+    try { navigator.vibrate(40); } catch(e) {}
+  }
+
+  if (currentUser.status === 'ready') {
+    setDriverStatus('offline');
+  } else {
+    setDriverStatus('ready');
+  }
+}
+
+async function setDriverStatus(targetStatus) {
+  if (!currentUser) return;
+  if (currentUser.accountStatus === 'suspended') {
+    showDriverSuspendedModal(currentUser.suspendReason);
+    return;
+  }
+  if (currentUser.accountStatus === 'terminated') {
+    showToast('Kemitraan Driver Anda telah dinonaktifkan secara permanen.', 'error');
+    return;
+  }
+  if (currentUser.status === 'working' && targetStatus !== 'working') {
+    showToast('Selesaikan tugas aktif terlebih dahulu sebelum mengubah status.', 'warning');
+    return;
+  }
+
+  // Wajib verifikasi wajah harian jika ingin Mulai Bekerja (ready)
+  if (targetStatus === 'ready' && !isFaceVerifiedToday()) {
+    openDailyFaceVerifyModal();
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/driver/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driverId: currentUser.id, status: targetStatus })
+    }).then(r => r.json());
+
+    if (res.success) {
+      currentUser.status = targetStatus;
+      saveDriverSession(currentUser);
+      updateMitraStatusUI(targetStatus);
+      if (socket && socket.connected) {
+        socket.emit('driver:status', { driverId: currentUser.id, status: targetStatus, name: currentUser.name });
+      }
+      playAudioSound(targetStatus === 'ready' ? 'order_chime' : 'chat_ping');
+      showToast(targetStatus === 'ready' ? '🟢 Anda Sedang Bekerja (Online)! Radar aktif mencari order di sekitar.' : '🔴 Driver OFF. Tidak menerima pesanan.', 'success');
+      if (targetStatus === 'ready') {
+        sendGpsLocationPing();
+        loadNearbyTasksForMitra();
+      }
+    } else {
+      showToast(res.message || 'Gagal mengubah status', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
   }
 }
 
 async function toggleOnlineStatus() {
-  if (currentUser?.status === 'working') {
-    showToast('Anda sedang memiliki tugas aktif yang sedang berjalan.', 'warning');
-    return;
-  }
-
   const next = currentUser?.status === 'ready' ? 'offline' : 'ready';
-  const res = await fetch(`${API_BASE}/api/mitra/${currentUser.id}/status`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: next })
-  }).then(r => r.json());
+  setDriverStatus(next);
+}
 
-  if (res.success) {
-    currentUser.status = next;
-    saveDriverSession(currentUser);
-    updateMitraStatusUI(next);
-    if (next === 'ready') {
-      sendGpsLocationPing();
-      loadNearbyTasksForMitra();
-    }
+// -----------------------------------------------------------------------------
+// VERIFIKASI WAJAH HARIAN DRIVER (DAILY FACE VERIFICATION)
+// -----------------------------------------------------------------------------
+let dailyFaceStream = null;
+
+function openDailyFaceVerifyModal() {
+  const modal = document.getElementById('dailyFaceVerifyModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      .then(stream => {
+        dailyFaceStream = stream;
+        const video = document.getElementById('dailyFaceVideo');
+        if (video) {
+          video.srcObject = stream;
+          video.play();
+        }
+      })
+      .catch(err => {
+        console.warn('Gagal membuka kamera depan:', err);
+        const feedback = document.getElementById('dailyFaceFeedback');
+        if (feedback) feedback.innerText = 'Kamera selfie tidak dapat diakses langsung. Pastikan izin kamera telah diaktifkan.';
+      });
   }
+}
+
+function closeDailyFaceVerifyModal() {
+  if (dailyFaceStream) {
+    dailyFaceStream.getTracks().forEach(t => t.stop());
+    dailyFaceStream = null;
+  }
+  const modal = document.getElementById('dailyFaceVerifyModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function captureDailyFaceVerification() {
+  const video = document.getElementById('dailyFaceVideo');
+  const canvas = document.getElementById('dailyFaceCanvas');
+  const feedback = document.getElementById('dailyFaceFeedback');
+  const btn = document.getElementById('btnSnapDailyFace');
+
+  if (!video || !canvas) return;
+
+  canvas.width = video.videoWidth || 320;
+  canvas.height = video.videoHeight || 320;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const faceBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+  if (feedback) feedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Memverifikasi kecocokan wajah dengan data pendaftaran Anda...';
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/driver/face-verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        driverId: currentUser?.id,
+        facePhoto: faceBase64
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem(`driver_face_verified_${today}`, 'true');
+      showToast('✅ Verifikasi wajah harian berhasil disetujui! Anda siap bekerja.', 'success');
+      closeDailyFaceVerifyModal();
+      setDriverStatus('ready');
+    } else {
+      if (feedback) feedback.innerText = res.message || 'Verifikasi wajah gagal. Silakan coba kembali.';
+      showToast(res.message || 'Verifikasi wajah tidak cocok.', 'error');
+    }
+  } catch(e) {
+    if (feedback) feedback.innerText = 'Kesalahan koneksi ke server verifikasi.';
+    showToast('Gagal memverifikasi wajah: ' + e.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// NOTIFIKASI ORDER BARU POPUP INTERAKTIF (TERIMA / ABAIKAN)
+// -----------------------------------------------------------------------------
+let currentIncomingOrder = null;
+let incomingOrderTimer = null;
+let incomingOrderCountdown = 30;
+
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function showIncomingOrderModal(order) {
+  if (!order || currentUser?.status !== 'ready') return;
+  currentIncomingOrder = order;
+
+  playNotificationSound();
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 500]);
+
+  const modal = document.getElementById('incomingOrderModal');
+  if (!modal) return;
+
+  const titleEl = document.getElementById('incomingOrderTitle');
+  const catEl = document.getElementById('incomingOrderCategory');
+  const fareEl = document.getElementById('incomingOrderFare');
+  const clientEl = document.getElementById('incomingOrderClientName');
+  const addrEl = document.getElementById('incomingOrderAddress');
+  const distEl = document.getElementById('incomingOrderDistance');
+
+  if (titleEl) titleEl.innerText = order.title || order.category || 'Pesanan Serabutan Baru';
+  if (catEl) catEl.innerText = order.category || 'Layanan Cepat';
+  if (fareEl) fareEl.innerText = `Rp ${(order.mitraNetEarnings || order.budget || 25000).toLocaleString('id-ID')}`;
+  if (clientEl) clientEl.innerText = order.clientName || 'Pemohon Jasa';
+  if (addrEl) addrEl.innerText = order.address || 'Alamat pengerjaan';
+
+  let distStr = '1.2 km (Radius Dekat)';
+  if (lastGpsCoords && order.lat && order.lng) {
+    const d = calculateDistanceKm(lastGpsCoords.lat, lastGpsCoords.lng, order.lat, order.lng);
+    distStr = `${d.toFixed(1)} km`;
+  }
+  if (distEl) distEl.innerText = distStr;
+
+  incomingOrderCountdown = 30;
+  const badge = document.getElementById('incomingOrderTimerBadge');
+  if (badge) badge.innerText = `${incomingOrderCountdown}s`;
+
+  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  incomingOrderTimer = setInterval(() => {
+    incomingOrderCountdown--;
+    if (badge) badge.innerText = `${incomingOrderCountdown}s`;
+    if (incomingOrderCountdown <= 0) {
+      clearInterval(incomingOrderTimer);
+      rejectIncomingOrder(true);
+    }
+  }, 1000);
+
+  modal.classList.remove('hidden');
+}
+
+async function acceptIncomingOrder() {
+  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  const modal = document.getElementById('incomingOrderModal');
+  if (modal) modal.classList.add('hidden');
+
+  if (!currentIncomingOrder || !currentUser) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/${currentIncomingOrder.id}/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driverId: currentUser.id })
+    }).then(r => r.json());
+
+    if (res.success) {
+      activeOrder = res.data || currentIncomingOrder;
+      currentUser.status = 'working';
+      currentUser.activeOrderId = activeOrder.id;
+      saveDriverSession(currentUser);
+      updateMitraStatusUI('working');
+      updateMitraActiveJobUI();
+
+      // Maps mengarahkan otomatis ke alamat tujuan live maps
+      switchMainTab('map');
+      if (activeOrder.lat && activeOrder.lng) {
+        setTimeout(() => {
+          if (mainAppLiveMap) {
+            mainAppLiveMap.setView([activeOrder.lat, activeOrder.lng], 16);
+          }
+        }, 300);
+      }
+      showToast('🎉 Pesanan diterima! Live maps otomatis mengarahkan ke rute alamat tujuan.', 'success');
+    } else {
+      showToast(res.message || 'Pesanan sudah diambil driver lain.', 'warning');
+    }
+  } catch(e) {
+    showToast('Gagal menerima pesanan: ' + e.message, 'error');
+  }
+}
+
+async function rejectIncomingOrder(silent = false) {
+  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  const modal = document.getElementById('incomingOrderModal');
+  if (modal) modal.classList.add('hidden');
+
+  if (currentIncomingOrder && currentUser) {
+    fetch(`${API_BASE}/api/orders/${currentIncomingOrder.id}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driverId: currentUser.id, reason: 'Ditolak oleh driver' })
+    }).catch(() => {});
+  }
+  if (!silent) showToast('Pesanan dilewati.', 'info');
+  currentIncomingOrder = null;
 }
 
 
@@ -3238,9 +3891,31 @@ function updateMitraActiveJobUI() {
       on_the_way: 'Dalam Perjalanan',
       arrived: 'Tiba di Lokasi',
       working: 'Sedang Dikerjakan',
+      waiting_payment: 'Menunggu Pembayaran Klien',
       completed: 'Selesai'
     };
     stepBadge.innerText = stepNames[activeOrder.step] || 'Menuju Lokasi';
+  }
+
+  // Tampilkan tombol aksi sesuai tahapan pengerjaan
+  const arriveSection = document.getElementById('mitraActionArriveSection');
+  const finishSection = document.getElementById('mitraActionFinishSection');
+  const waitingSection = document.getElementById('mitraActionWaitingPaymentSection');
+
+  const curStep = activeOrder.step || 'assigned';
+  if (curStep === 'working') {
+    if (arriveSection) arriveSection.classList.add('hidden');
+    if (finishSection) finishSection.classList.remove('hidden');
+    if (waitingSection) waitingSection.classList.add('hidden');
+  } else if (curStep === 'waiting_payment') {
+    if (arriveSection) arriveSection.classList.add('hidden');
+    if (finishSection) finishSection.classList.add('hidden');
+    if (waitingSection) waitingSection.classList.remove('hidden');
+  } else {
+    // assigned, on_the_way, arrived
+    if (arriveSection) arriveSection.classList.remove('hidden');
+    if (finishSection) finishSection.classList.add('hidden');
+    if (waitingSection) waitingSection.classList.add('hidden');
   }
 
   // Duration audit stopwatch
@@ -3355,6 +4030,81 @@ function closeGeofencingLogModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+function openStartWorkPhotoModal() {
+  if (!activeOrder) {
+    showToast('Tidak ada tugas aktif.', 'warning');
+    return;
+  }
+  const modal = document.getElementById('modalStartWorkPhoto');
+  if (modal) {
+    modal.classList.remove('hidden');
+    const catLbl = document.getElementById('startWorkCategoryLabel');
+    if (catLbl) catLbl.innerText = activeOrder.category || 'Pekerjaan Serabutan';
+    const estLbl = document.getElementById('startWorkEstMinutesLabel');
+    if (estLbl) estLbl.innerText = `${activeOrder.estimatedMinutes || 60} Menit`;
+  }
+}
+
+function closeStartWorkPhotoModal() {
+  const modal = document.getElementById('modalStartWorkPhoto');
+  if (modal) modal.classList.add('hidden');
+}
+
+function previewStartWorkImage(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    startWorkPhotoBase64 = e.target.result;
+    const img = document.getElementById('startWorkPhotoPreviewImg');
+    if (img) {
+      img.src = startWorkPhotoBase64;
+      img.classList.remove('hidden');
+    }
+    showToast('Foto pekerjaan dimulai berhasil dipilih!', 'info');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitStartWorkWithPhoto() {
+  if (!activeOrder) return;
+  if (!startWorkPhotoBase64) {
+    showToast('Wajib melampirkan foto pekerjaan yang akan dimulai saat tiba di lokasi!', 'warning');
+    return;
+  }
+  const btn = document.getElementById('btnSubmitStartWork');
+  if (btn) btn.disabled = true;
+
+  try {
+    showToast('Mengunggah foto dan memulai pekerjaan...', 'info');
+    const res = await fetch(`${API_BASE}/api/orders/${activeOrder.id}/start-work`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        startWorkPhoto: startWorkPhotoBase64,
+        driverId: currentUser?.id
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      closeStartWorkPhotoModal();
+      activeOrder = res.data;
+      activeOrder.step = 'working';
+      updateMitraActiveJobUI();
+      showToast(`Pekerjaan dimulai! Estimasi waktu ${res.data.estimatedMinutes || 60} menit sesuai kategori.`, 'success');
+      if (socket && socket.connected) {
+        socket.emit('order:step_change', { orderId: activeOrder.id, step: 'working' });
+      }
+    } else {
+      showToast(res.message || 'Gagal memulai pekerjaan', 'error');
+    }
+  } catch(e) {
+    showToast('Gagal memproses mulai kerja: ' + e.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 function openProofPhotoModal() {
   if (!activeOrder) {
     showToast('Tidak ada tugas aktif.', 'warning');
@@ -3380,41 +4130,31 @@ async function submitCompletedTaskWithProof() {
   if (btn) btn.disabled = true;
 
   try {
-    showToast('Mengunggah bukti foto dan menyelesaikan tugas...', 'info');
-    const res = await fetch(`${API_BASE}/api/orders/${activeOrder.id}/complete`, {
+    showToast('Mengunggah bukti foto tugas selesai...', 'info');
+    const res = await fetch(`${API_BASE}/api/orders/${activeOrder.id}/finish-work`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         proofPhoto: proofPhotoBase64,
-        notes: 'Pekerjaan telah selesai dengan bukti foto nyata terlampir.'
+        driverId: currentUser?.id
       })
     }).then(r => r.json());
 
     if (res.success) {
       closeProofPhotoModal();
       proofPhotoBase64 = null;
-      const order = res.data;
-      const payout = order.payoutDetails || {};
-      const net = (order.mitraNetIncome || payout.netIncome || 0).toLocaleString('id-ID');
-      const dest = payout.destination || 'Rekening / E-Wallet Terdaftar';
+      activeOrder = res.data;
+      activeOrder.step = 'waiting_payment';
+      updateMitraActiveJobUI();
 
       await showCustomDialog({
-        title: 'Tugas Selesai & Dana Otomatis Masuk!',
-        message: `Bukti pekerjaan berhasil diverifikasi.\n\nDana bersih sebesar Rp ${net} telah otomatis ditransfer ke akun Anda:\n${dest}\nNomor Bukti Transfer: ${payout.payoutId || 'PO-' + Date.now().toString().slice(-4)}`,
+        title: 'Foto Tugas Selesai Terkirim!',
+        message: 'Foto bukti pekerjaan selesai berhasil diunggah.\n\nKlien diwajibkan transfer ke SeaBank 901771223812. Begitu uang masuk, pendapatan bersih (potongan biaya layanan 3rb & komisi 10%) otomatis langsung masuk ke rekening/e-wallet Anda tanpa menunggu persetujuan admin!',
         type: 'success',
-        confirmText: 'Selesai & Tutup'
+        confirmText: 'Mengerti'
       });
-
-      activeOrder = null;
-      if (activeJobTimerInterval) clearInterval(activeJobTimerInterval);
-      currentUser.status = 'ready';
-      updateMitraStatusUI('ready');
-      updateMitraActiveJobUI();
-      refreshUserProfile();
-      loadNearbyTasksForMitra();
-      loadDriverOrders();
     } else {
-      showToast(res.message || 'Gagal menyelesaikan tugas', 'error');
+      showToast(res.message || 'Gagal mengirim bukti tugas selesai', 'error');
     }
   } catch(e) {
     showToast('Gagal memproses penyelesaian tugas: ' + e.message, 'error');
@@ -3613,36 +4353,162 @@ function updateCallControlsUI() {
 /* ========================================================
  * 9. E-WALLET TOP-UP & WITHDRAW
  * ======================================================== */
-function openTopupModal() { document.getElementById('topupModal').classList.remove('hidden'); }
-function closeTopupModal() { document.getElementById('topupModal').classList.add('hidden'); }
+let currentDriverTopupChannel = 'seabank';
+
+function openTopupModal() {
+  const modal = document.getElementById('topupModal');
+  if (modal) modal.classList.remove('hidden');
+  updateDriverGeneratedVAInfo();
+}
+
+function closeTopupModal() {
+  const modal = document.getElementById('topupModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function onDriverTopupChannelChange(channel) {
+  currentDriverTopupChannel = channel;
+  updateDriverGeneratedVAInfo();
+}
+
+function updateDriverGeneratedVAInfo() {
+  const sel = document.getElementById('topupMethodSelect');
+  const channel = (sel ? sel.value : currentDriverTopupChannel) || 'seabank';
+  currentDriverTopupChannel = channel;
+
+  const phoneSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-7) : '3517038';
+  const phoneRetailSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-6) : '881234';
+
+  const titleEl = document.getElementById('vaChannelTitle');
+  const numEl = document.getElementById('vaNumberDisplay');
+  const instEl = document.getElementById('vaInstructionShort');
+
+  let vaNum = '901771223812';
+  let title = 'Nomor Rekening SeaBank SobatSerabut:';
+  let inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo langsung masuk otomatis ke dompet Anda.';
+
+  if (channel === 'seabank') {
+    vaNum = '901771223812';
+    title = 'Nomor Rekening SeaBank SobatSerabut:';
+    inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo seketika masuk ke dompet Anda.';
+  } else if (channel === 'bca_va') {
+    vaNum = '88077' + phoneSuffix;
+    title = 'BCA Virtual Account SobatSerabut:';
+    inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor VA di atas. Otomatis masuk seketika.';
+  } else if (channel === 'bri_va') {
+    vaNum = '12877' + phoneSuffix;
+    title = 'BRI BRIVA SobatSerabut:';
+    inst = 'Transfer via BRImo / ATM BRI ke nomor BRIVA di atas. Otomatis masuk seketika.';
+  } else if (channel === 'mandiri_va') {
+    vaNum = '89077' + phoneSuffix;
+    title = 'Mandiri Virtual Account SobatSerabut:';
+    inst = 'Transfer via Livin\' by Mandiri / ATM ke nomor Mandiri VA.';
+  } else if (channel === 'bni_va') {
+    vaNum = '98077' + phoneSuffix;
+    title = 'BNI Virtual Account SobatSerabut:';
+    inst = 'Transfer via BNI Mobile Banking / ATM BNI ke nomor BNI VA.';
+  } else if (['dana', 'gopay', 'ovo', 'shopeepay'].includes(channel.toLowerCase())) {
+    vaNum = '087735170386';
+    title = `E-Wallet (${channel.toUpperCase()}) SobatSerabut:`;
+    inst = `Kirim transfer saldo melalui ${channel.toUpperCase()} ke nomor 087735170386 a.n SobatSerabut Admin.`;
+  } else if (channel === 'alfamart') {
+    vaNum = 'SS-ALFA-' + phoneRetailSuffix;
+    title = 'Kode Pembayaran Kasir Alfamart / Alfamidi:';
+    inst = 'Tunjukkan kode ini kepada kasir Alfamart / Alfamidi dan sebutkan pembayaran SobatSerabut.';
+  } else if (channel === 'indomaret') {
+    vaNum = 'SS-INDO-' + phoneRetailSuffix;
+    title = 'Kode Pembayaran Kasir Indomaret / Ceriamart:';
+    inst = 'Tunjukkan kode ini kepada kasir Indomaret / Ceriamart dan sebutkan pembayaran SobatSerabut.';
+  }
+
+  if (titleEl) titleEl.innerText = title;
+  if (numEl) numEl.innerText = vaNum;
+  if (instEl) instEl.innerText = inst;
+}
+
+function copyCurrentVANumber() {
+  const numEl = document.getElementById('vaNumberDisplay');
+  if (numEl && numEl.innerText) {
+    navigator.clipboard.writeText(numEl.innerText).then(() => {
+      showToast('Nomor VA / Rekening berhasil disalin ke clipboard!', 'success');
+    }).catch(() => {
+      showToast('Nomor: ' + numEl.innerText, 'info');
+    });
+  }
+}
 
 async function submitTopup() {
   const amount = Number(document.getElementById('topupAmountInput').value);
-  const res = await fetch(`${API_BASE}/api/auth/topup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: currentUser.id, amount })
-  }).then(r => r.json());
+  const sel = document.getElementById('topupMethodSelect');
+  const channel = sel ? sel.value : currentDriverTopupChannel;
+  const numEl = document.getElementById('vaNumberDisplay');
+  const vaNumber = numEl ? numEl.innerText : '901771223812';
 
-  if (res.success) {
-    showToast(res.message, 'success');
-    currentUser.walletBalance = res.newBalance;
-    saveDriverSession(currentUser);
-    updateWalletDisplay();
-    closeTopupModal();
+  if (!amount || amount < 10000) {
+    showToast('Minimal isi saldo adalah Rp 10.000.', 'warning');
+    return;
+  }
+
+  try {
+    showToast('Memproses top-up Virtual Account ke dompet driver...', 'info');
+    const res = await fetch(`${API_BASE}/api/wallet/pay-va`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUser?.id,
+        amount,
+        channel: channel || 'seabank',
+        vaNumber
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast(res.message || 'Top-up saldo berhasil masuk langsung ke dompet Anda!', 'success');
+      if (res.data && res.data.amount) {
+        currentUser.walletBalance = (currentUser.walletBalance || 0) + res.data.amount;
+      }
+      saveDriverSession(currentUser);
+      updateWalletDisplay();
+      closeTopupModal();
+      playAudioSound('order_chime');
+    } else {
+      showToast(res.message || 'Gagal memproses isi saldo.', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi server gagal: ' + e.message, 'error');
   }
 }
+
+function handleWithdrawChannelChange(val) {}
 
 function openWithdrawModal() {
   const modal = document.getElementById('withdrawModal');
   if (!modal) return;
-  if (currentUser) {
+
+  // Muat rekening tersimpan dari localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('sobat_saved_driver_payout') || '{}');
+    if (saved.channelType && document.getElementById('wdChannelSelect')) {
+      document.getElementById('wdChannelSelect').value = saved.channelType;
+    }
+    if (saved.destination && document.getElementById('wdDestinationInput')) {
+      document.getElementById('wdDestinationInput').value = saved.destination;
+    }
+    if (saved.accountHolder && document.getElementById('wdAccountHolderInput')) {
+      document.getElementById('wdAccountHolderInput').value = saved.accountHolder;
+    }
+  } catch(e) {}
+
+  if (currentUser && !document.getElementById('wdDestinationInput')?.value) {
     const bank = currentUser.bankDetails || {};
     if (bank.bankName && document.getElementById('wdChannelSelect')) {
       document.getElementById('wdChannelSelect').value = bank.bankName;
     }
     if (bank.bankAccount && document.getElementById('wdDestinationInput')) {
-      document.getElementById('wdDestinationInput').value = `${bank.bankAccount} (a.n. ${bank.bankHolder || currentUser.name})`;
+      document.getElementById('wdDestinationInput').value = bank.bankAccount;
+    }
+    if (document.getElementById('wdAccountHolderInput')) {
+      document.getElementById('wdAccountHolderInput').value = bank.bankHolder || currentUser.name || '';
     }
   }
   modal.classList.remove('hidden');
@@ -3651,28 +4517,46 @@ function closeWithdrawModal() { document.getElementById('withdrawModal').classLi
 
 async function submitWithdrawForm() {
   const channelType = document.getElementById('wdChannelSelect').value;
-  const destination = document.getElementById('wdDestinationInput').value;
+  const destination = document.getElementById('wdDestinationInput').value.trim();
+  const accountHolder = document.getElementById('wdAccountHolderInput')?.value.trim() || currentUser?.name || '';
   const amount = Number(document.getElementById('wdAmountInput').value);
+  const saveCheck = document.getElementById('wdSaveAccountCheckbox')?.checked;
 
   if (!destination) {
     showToast('Masukkan nomor rekening atau nomor HP tujuan pencairan.', 'warning');
     return;
   }
+  if (!amount || amount < 20000) {
+    showToast('Minimal penarikan saldo adalah Rp 20.000.', 'warning');
+    return;
+  }
+  if (currentUser?.walletBalance && amount > currentUser.walletBalance) {
+    showToast('Saldo Anda tidak mencukupi untuk penarikan ini.', 'warning');
+    return;
+  }
 
-  const res = await fetch(`${API_BASE}/api/mitra/${currentUser.id}/withdraw`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, channelType, destination: `${channelType} ${destination}` })
-  }).then(r => r.json());
+  if (saveCheck) {
+    localStorage.setItem('sobat_saved_driver_payout', JSON.stringify({ channelType, destination, accountHolder }));
+  }
 
-  if (res.success) {
-    showToast('Permintaan penarikan dana diajukan ke admin untuk diproses.', 'success');
-    currentUser.walletBalance = res.newBalance;
-    saveDriverSession(currentUser);
-    updateWalletDisplay();
-    closeWithdrawModal();
-  } else {
-    showToast(res.message, 'error');
+  try {
+    const res = await fetch(`${API_BASE}/api/driver/withdraw`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driverId: currentUser.id, amount, bankName: channelType, accountNumber: destination, accountHolder })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('Permintaan penarikan dana diajukan ke admin untuk diproses.', 'success');
+      if (res.newBalance !== undefined) currentUser.walletBalance = res.newBalance;
+      saveDriverSession(currentUser);
+      updateWalletDisplay();
+      closeWithdrawModal();
+    } else {
+      showToast(res.message || 'Gagal mengajukan penarikan.', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi server gagal: ' + e.message, 'error');
   }
 }
 

@@ -275,6 +275,22 @@ let routeMarkersGroup = null;
 let revenueChartInstance = null;
 let categoryChartInstance = null;
 
+// Auto-clear stale/fake cached data — hanya simpan token admin yang valid
+(function clearStaleBrowserCache() {
+  const DATA_VERSION = 'sobatserabut_v2';
+  const savedVersion = localStorage.getItem('_cache_version');
+  if (savedVersion !== DATA_VERSION) {
+    // Hapus semua cache lama (data palsu/simulasi yang tersimpan sebelumnya)
+    const adminToken = localStorage.getItem('adminToken');
+    localStorage.clear();
+    sessionStorage.clear();
+    // Kembalikan token admin agar tidak perlu login ulang
+    if (adminToken) localStorage.setItem('adminToken', adminToken);
+    localStorage.setItem('_cache_version', DATA_VERSION);
+    console.log('[SobatSerabut] Cache lama dibersihkan — hanya data nyata yang akan ditampilkan.');
+  }
+})();
+
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
   initSocket();
@@ -313,6 +329,12 @@ function initSocket() {
       handleLiveGpsUpdate(data);
     });
 
+    socket.on('driver:location_update', (data) => {
+      if (!adminToken) return;
+      console.log('Driver GPS Update received:', data);
+      handleLiveGpsUpdate({ ...data, id: data.driverId || data.id });
+    });
+
     socket.on('klien:location_update', (data) => {
       if (!adminToken) return;
       console.log('Klien GPS Update received:', data);
@@ -330,6 +352,12 @@ function initSocket() {
       if (!adminToken) return;
       console.log('Status change received:', data);
       handleMitraStatusChange(data);
+    });
+
+    socket.on('driver:status_change', (data) => {
+      if (!adminToken) return;
+      console.log('Driver Status change received:', data);
+      handleMitraStatusChange({ ...data, id: data.driverId || data.id });
     });
 
     // Mitra just logged in / came online
@@ -441,10 +469,27 @@ async function loadInitialData() {
       renderOrdersAuditTable();
     }
     if (catRes.success) {
-      categoriesList = catRes.data;
+      categoriesList = catRes.data || [];
       renderCategoriesGrid();
       populateCategorySelects();
+      console.log('[SobatSerabut Admin] Kategori dimuat:', catRes.data?.length, 'kategori');
+    } else {
+      categoriesList = [];
+      renderCategoriesGrid();
     }
+
+    // Force reload categories langsung sebagai fallback
+    setTimeout(async () => {
+      try {
+        const catRes = await fetch(`${API_BASE}/api/categories`).then(r => r.json());
+        if (catRes.success && catRes.data) {
+          categoriesList = catRes.data;
+          renderCategoriesGrid();
+          populateCategorySelects();
+          console.log('[Admin] Kategori berhasil dimuat:', categoriesList.length);
+        }
+      } catch(e) { console.error('Error loading categories:', e); }
+    }, 500);
     if (kycRes.success) {
       kycList = kycRes.data;
       renderKycTable();
@@ -521,7 +566,15 @@ async function loadMarketplaceUsers() {
             ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Siap Order</span>'
             : m.status === 'working'
             ? '<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold">Bekerja</span>'
-            : '<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold">Offline</span>';
+            : '<span class="px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 text-[10px] font-bold">Off</span>';
+
+          const accountStatusBadge = m.accountStatus === 'suspended'
+            ? '<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black text-[9px] border border-amber-500/40 inline-block animate-pulse">SUSPENDED</span>'
+            : m.accountStatus === 'terminated'
+            ? '<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-black text-[9px] border border-rose-500/40 inline-block">TERMINATED</span>'
+            : '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[9px] border border-emerald-500/30 inline-block">AKTIF</span>';
+
+          const currentPts = typeof m.points === 'number' ? m.points : 100;
 
           const avatarSrc = m.avatar && !m.avatar.includes('unsplash.com') 
             ? (m.avatar.startsWith('http') ? m.avatar : `${API_BASE}${m.avatar}`) 
@@ -531,6 +584,9 @@ async function loadMarketplaceUsers() {
           const selfieImg = m.selfieKtpPhoto ? (m.selfieKtpPhoto.startsWith('http') ? m.selfieKtpPhoto : `${API_BASE}${m.selfieKtpPhoto}`) : null;
 
           const bank = m.bankDetails || { bankName: m.bankName || 'DANA', bankAccount: m.bankAccount || m.phone, bankHolder: m.bankHolder || m.name };
+
+          const isSuspended = m.accountStatus === 'suspended';
+          const isTerminated = m.accountStatus === 'terminated';
 
           return `
             <tr class="hover:bg-slate-700/40">
@@ -542,18 +598,27 @@ async function loadMarketplaceUsers() {
                     ${m.isPremium ? '<i class="fa-solid fa-crown text-amber-400 text-[10px]"></i>' : ''}
                   </span>
                   <span class="text-[10px] text-slate-400 font-mono block">${m.phone}</span>
+                  <span class="text-[9px] text-slate-500 font-mono block">${m.id}</span>
                 </div>
               </td>
               <td class="p-2.5">
                 ${statusBadge}
-                <span class="text-[10px] text-amber-400 font-bold block mt-0.5"><i class="fa-solid fa-star text-[9px] mr-0.5"></i>${(m.completedOrders || 0) > 0 ? (m.rating || 5.0) : '0.0'} (${m.completedOrders || 0})</span>
+                <div class="mt-1 flex items-center space-x-1">
+                  <button type="button" onclick="openDriverPointsModal('${m.id}', '${m.name.replace(/'/g, "\\'")}', ${currentPts})" class="px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/40 text-[10px] font-black flex items-center space-x-1 shadow transition-all" title="Kelola Poin Kinerja">
+                    <i class="fa-solid fa-medal text-amber-400"></i>
+                    <span>${currentPts} Poin</span>
+                  </button>
+                </div>
+                <span class="text-[10px] text-amber-400 font-bold block mt-1"><i class="fa-solid fa-star text-[9px] mr-0.5"></i>${(m.completedOrders || 0) > 0 ? (m.rating || 5.0) : '0.0'} (${m.completedOrders || 0})</span>
               </td>
-              <td class="p-2.5 font-mono font-extrabold text-emerald-400 text-xs">
-                Rp ${(m.walletBalance || 0).toLocaleString('id-ID')}
+              <td class="p-2.5">
+                ${accountStatusBadge}
+                ${m.suspendReason ? `<span class="text-[9px] text-amber-300/80 block mt-0.5 truncate max-w-[110px]" title="${m.suspendReason}">${m.suspendReason}</span>` : ''}
               </td>
               <td class="p-2.5">
                 <div class="font-mono text-xs">
-                  <span class="font-bold text-emerald-400">${bank.bankName}:</span> <span class="text-white">${bank.bankAccount}</span>
+                  <span class="font-bold text-emerald-400 block">Rp ${(m.walletBalance || 0).toLocaleString('id-ID')}</span>
+                  <span class="text-white text-[11px]">${bank.bankName}: ${bank.bankAccount}</span>
                   <span class="text-[10px] text-slate-400 block font-sans">a.n. ${bank.bankHolder}</span>
                 </div>
               </td>
@@ -567,15 +632,38 @@ async function loadMarketplaceUsers() {
                 </div>
               </td>
               <td class="p-2.5 text-right">
-                <div class="flex items-center justify-end space-x-1.5">
-                  <button onclick="openMitraDetailModal('${m.id}')" class="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] shadow flex items-center space-x-1">
-                    <i class="fa-solid fa-id-card-clip"></i>
-                    <span>Verifikasi</span>
-                  </button>
-                  <button onclick="quickTransferSaldoToMitra('${m.id}', '${m.name}', '${bank.bankName}', '${bank.bankAccount}')" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow flex items-center space-x-1" title="Transfer Saldo / Payout ke Mitra">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Transfer</span>
-                  </button>
+                <div class="flex flex-col items-end space-y-1">
+                  <!-- Baris 1: Poin & Suspen -->
+                  <div class="flex items-center space-x-1">
+                    <button onclick="openDriverPointsModal('${m.id}', '${m.name.replace(/'/g, "\\'")}', ${currentPts})" class="px-2 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-[10px] shadow" title="Tambah / Kurangi Poin Driver">
+                      <i class="fa-solid fa-plus-minus mr-0.5"></i>Poin
+                    </button>
+                    ${isSuspended ? `
+                      <button onclick="confirmUnsuspendDriver('${m.id}', '${m.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] shadow" title="Buka Suspen">
+                        <i class="fa-solid fa-lock-open mr-0.5"></i>Buka Suspen
+                      </button>
+                    ` : !isTerminated ? `
+                      <button onclick="openSuspendDriverModal('${m.id}', '${m.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-[10px] shadow" title="Tangguhkan Driver">
+                        <i class="fa-solid fa-user-lock mr-0.5"></i>Suspen
+                      </button>
+                    ` : ''}
+                    ${!isTerminated ? `
+                      <button onclick="confirmTerminateDriver('${m.id}', '${m.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-lg bg-rose-700 hover:bg-rose-600 text-white font-bold text-[10px] shadow" title="Putus Kemitraan Permanen">
+                        <i class="fa-solid fa-ban"></i>
+                      </button>
+                    ` : ''}
+                  </div>
+                  <!-- Baris 2: Verifikasi & Transfer -->
+                  <div class="flex items-center space-x-1">
+                    <button onclick="openMitraDetailModal('${m.id}')" class="px-2 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] shadow flex items-center space-x-1">
+                      <i class="fa-solid fa-id-card-clip"></i>
+                      <span>Detail</span>
+                    </button>
+                    <button onclick="quickTransferSaldoToMitra('${m.id}', '${m.name}', '${bank.bankName}', '${bank.bankAccount}')" class="px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow flex items-center space-x-1" title="Transfer Saldo / Payout ke Mitra">
+                      <i class="fa-solid fa-paper-plane"></i>
+                      <span>Transfer</span>
+                    </button>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -590,7 +678,7 @@ async function loadMarketplaceUsers() {
 
 // 3. Leaflet Live Tracking Map with Google Maps Integration
 let currentLiveTileLayer = null;
-let currentMapProvider = 'google_roadmap';
+let currentMapProvider = 'osm';
 
 const MAP_TILE_CONFIGS = {
   google_roadmap: {
@@ -611,6 +699,11 @@ const MAP_TILE_CONFIGS = {
   osm: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     subdomains: ['a', 'b', 'c'],
+    maxZoom: 19
+  },
+  carto: {
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    subdomains: ['a', 'b', 'c', 'd'],
     maxZoom: 19
   }
 };
@@ -680,7 +773,12 @@ function initLiveMap() {
     maxZoom: 20
   }).setView(defaultCenter, 5);
 
-  switchAdminMapLayer(systemConfig.mapProvider || 'google_roadmap');
+  // Default ke OSM (tanpa API key, selalu berfungsi).
+  // Hanya beralih ke Google Maps jika ada API key valid di systemConfig.
+  const savedProvider = (systemConfig && systemConfig.mapProvider) || 'osm';
+  const hasGoogleKey = systemConfig && systemConfig.googleMapsApiKey && systemConfig.googleMapsApiKey.length > 20;
+  const isGoogleProvider = ['google_roadmap','google_hybrid','google_terrain'].includes(savedProvider);
+  switchAdminMapLayer((isGoogleProvider && hasGoogleKey) ? savedProvider : 'osm');
 
   liveMap.on('mousemove', (e) => {
     const coordsEl = document.getElementById('mapCenterCoords');
@@ -1062,47 +1160,183 @@ function switchTab(tabId) {
   }
 
   // Refresh Leaflet maps when visible
-  if (tabId === 'tracking' && liveMap) {
-    setTimeout(() => liveMap.invalidateSize(), 200);
+  if (tabId === 'tracking') {
+    if (!liveMap) initLiveMap();
+    else setTimeout(() => liveMap.invalidateSize(), 200);
   }
   if (tabId === 'route-history') {
+    // Inisialisasi atau aktifkan kembali Google Maps Live rute
     initRouteMap();
-    setTimeout(() => routeMap?.invalidateSize(), 200);
+    populateMitraRouteSelect();
+    [50, 150, 350, 800].forEach(delay => {
+      setTimeout(() => {
+        if (routeMap) routeMap.invalidateSize();
+        const lo = document.getElementById('routeMapLoading');
+        if (lo) lo.style.display = 'none';
+      }, delay);
+    });
   }
   if (tabId === 'metrics') {
     if (!revenueChartInstance) initCharts();
     refreshMetrics();
   }
+  if (tabId === 'broadcast') {
+    loadBroadcastHistory();
+  }
+  // Re-render categories setiap kali tab dibuka agar selalu fresh
+  if (tabId === 'categories') {
+    // Jika belum ada data, fetch dulu
+    if (!categoriesList || categoriesList.length === 0) {
+      fetch(`${API_BASE}/api/categories`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.success && res.data) {
+            categoriesList = res.data;
+            renderCategoriesGrid();
+            populateCategorySelects();
+          }
+        })
+        .catch(e => console.error('Gagal muat kategori:', e));
+    } else {
+      renderCategoriesGrid();
+    }
+  }
 }
 
 // 7. Route History & Geofencing
+// Tile configs untuk routeMap (Google Maps Live Permanen Tanpa Blank Hitam)
+const ROUTE_MAP_TILES = [
+  { name: 'Google Maps Live', url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', sub: ['mt0','mt1','mt2','mt3'], zoom: 20 },
+  { name: 'Google Satelit Hybrid', url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', sub: ['mt0','mt1','mt2','mt3'], zoom: 20 },
+  { name: 'OpenStreetMap', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', sub: ['a','b','c'], zoom: 19 }
+];
+
+let routeMapTileLayer = null;
+let routeMapTileIdx = 0;
+
+function _applyRouteTile(idx) {
+  const cfg = ROUTE_MAP_TILES[idx % ROUTE_MAP_TILES.length];
+  if (routeMapTileLayer && routeMap) {
+    try { routeMap.removeLayer(routeMapTileLayer); } catch(e) {}
+  }
+  const opts = { maxZoom: cfg.zoom, attribution: `© ${cfg.name} | SobatSerabut Terpusat` };
+  if (cfg.sub) opts.subdomains = cfg.sub;
+  routeMapTileLayer = L.tileLayer(cfg.url, opts);
+  if (routeMap) routeMapTileLayer.addTo(routeMap);
+
+  // Jika gagal load tile, coba provider berikutnya
+  routeMapTileLayer.on('tileerror', () => {
+    console.warn(`[RouteMap] Tile error pada ${cfg.name}, mencoba fallback...`);
+    const nextIdx = (idx + 1) % ROUTE_MAP_TILES.length;
+    if (nextIdx !== routeMapTileIdx) {
+      routeMapTileIdx = nextIdx;
+      setTimeout(() => _applyRouteTile(nextIdx), 400);
+    }
+  });
+  routeMapTileIdx = idx;
+
+  // Sembunyikan loading overlay
+  const lo = document.getElementById('routeMapLoading');
+  if (lo) lo.style.display = 'none';
+
+  // Update switcher label jika ada
+  const lbl = document.getElementById('routeTileLabel');
+  if (lbl) lbl.textContent = cfg.name;
+}
+
+function switchRouteTile() {
+  const next = (routeMapTileIdx + 1) % ROUTE_MAP_TILES.length;
+  _applyRouteTile(next);
+}
+
 function initRouteMap() {
-  if (routeMap) return;
+  const mapEl = document.getElementById('routeMap');
+  if (!mapEl) return;
+
+  // Bersihkan instance lama jika ada (cegah error "Map already initialized")
+  if (routeMap) {
+    try {
+      setTimeout(() => {
+        routeMap.invalidateSize();
+        const lo = document.getElementById('routeMapLoading');
+        if (lo) lo.style.display = 'none';
+      }, 100);
+      setTimeout(() => { if (routeMap) routeMap.invalidateSize(); }, 400);
+    } catch(e) {}
+    return;
+  }
+
+  // Simpan loading overlay sebelum reset innerHTML
+  const loadingEl = document.getElementById('routeMapLoading');
+  const loadingHTML = loadingEl ? loadingEl.outerHTML : '';
+
+  // Reset elemen agar Leaflet dapat attach ulang
+  mapEl.innerHTML = '';
+  if (mapEl._leaflet_id) { delete mapEl._leaflet_id; }
+
+  // Restore loading overlay agar tampil saat peta memuat
+  if (loadingHTML) {
+    mapEl.insertAdjacentHTML('beforeend', loadingHTML);
+  }
 
   routeMap = L.map('routeMap', {
     zoomControl: true,
-    attributionControl: false
-  }).setView([-6.1754, 106.8272], 14);
+    attributionControl: true,
+    minZoom: 3,
+    maxZoom: 20,
+    preferCanvas: true
+  }).setView([-6.2088, 106.8456], 12); // Default: Jabodetabek / Indonesia
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19
-  }).addTo(routeMap);
+  // Google Maps Live permanen default
+  _applyRouteTile(0);
 
   routeMarkersGroup = L.layerGroup().addTo(routeMap);
 
-  const select = document.getElementById('routeMitraSelect');
+  // Sembunyikan loading overlay secara aman
+  function _hideRouteMapLoading() {
+    const lo = document.getElementById('routeMapLoading');
+    if (lo) lo.style.display = 'none';
+  }
+
+  if (routeMapTileLayer) {
+    routeMapTileLayer.once('load', _hideRouteMapLoading);
+  }
+  setTimeout(_hideRouteMapLoading, 800);
+
+  // Invalidate size setelah render DOM selesai agar tidak blank hitam
+  [100, 300, 700, 1200].forEach(delay => {
+    setTimeout(() => {
+      if (routeMap) {
+        routeMap.invalidateSize();
+        _hideRouteMapLoading();
+      }
+    }, delay);
+  });
+
+  // Auto-load mitra pertama jika ada
+  const select = document.getElementById('mitraRouteSelect') || document.getElementById('routeMitraSelect');
   if (select && select.value) {
     loadMitraRoute(select.value);
+  } else if (mitraList && mitraList.length > 0) {
+    loadMitraRoute(mitraList[0].id);
+    if (select) select.value = mitraList[0].id;
   }
 }
 
 function populateMitraRouteSelect() {
-  const select = document.getElementById('routeMitraSelect');
-  if (!select) return;
+  const optionsHtml = mitraList.map(m =>
+    `<option value="${m.id}">${m.name} (${m.status === 'ready' ? 'Siap' : m.status === 'working' ? 'Bekerja' : 'Offline'})</option>`
+  ).join('');
 
-  select.innerHTML = mitraList.map(m => `
-    <option value="${m.id}">${m.name} (${m.status === 'ready' ? 'Siap' : m.status === 'working' ? 'Bekerja' : 'Offline'})</option>
-  `).join('');
+  // Populate legacy select (kept for backward compatibility)
+  const select = document.getElementById('routeMitraSelect');
+  if (select) select.innerHTML = optionsHtml;
+
+  // Populate new enhanced select
+  const newSelect = document.getElementById('mitraRouteSelect');
+  if (newSelect) {
+    newSelect.innerHTML = '<option value="">-- Pilih Mitra --</option>' + optionsHtml;
+  }
 }
 
 async function loadMitraRoute(mitraId) {
@@ -1217,6 +1451,9 @@ async function loadMitraRoute(mitraId) {
 
     document.getElementById('routePointsCount').innerText = `${waypoints.length} Titik Jejak Terekam`;
 
+    // Enhanced: update stats panel & audit log
+    updateGeoStats(waypoints);
+
     // Render list
     document.getElementById('routeWaypointsList').innerHTML = waypoints.map((w, idx) => `
       <div class="p-3 bg-slate-900 rounded-xl border border-slate-700/80">
@@ -1232,6 +1469,152 @@ async function loadMitraRoute(mitraId) {
     console.error('Error loading route history:', e);
   }
 }
+
+// ── New enhanced route-history functions ──────────────────────────────────────
+
+// loadRouteHistory: called by the new mitraRouteSelect dropdown & Refresh button
+async function loadRouteHistory() {
+  const select = document.getElementById('mitraRouteSelect');
+  const mitraId = select ? select.value : '';
+  if (!mitraId) return;
+  await loadMitraRoute(mitraId);
+}
+
+// clearRouteHistory: clears the map and resets stats / audit log
+function clearRouteHistory() {
+  if (routeMap) {
+    if (routePolyline) { routeMap.removeLayer(routePolyline); routePolyline = null; }
+    if (routeMarkersGroup) routeMarkersGroup.clearLayers();
+  }
+  const sp = document.getElementById('statTotalPoints');
+  const sd = document.getElementById('statDeviated');
+  const sdur = document.getElementById('statDuration');
+  const sgs = document.getElementById('statGeoStatus');
+  if (sp) sp.textContent = '0';
+  if (sd) sd.textContent = '0';
+  if (sdur) sdur.textContent = '0m';
+  if (sgs) sgs.textContent = 'IDLE';
+
+  const auditEl = document.getElementById('routeAuditLog');
+  if (auditEl) auditEl.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-satellite-dish text-2xl mb-2 block"></i><p class="text-xs">Pilih mitra untuk melihat riwayat GPS</p></div>';
+
+  const tbody = document.getElementById('taskAuditTable');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-500"><i class="fa-solid fa-calendar-xmark text-xl mb-1 block"></i>Belum ada data audit tugas</td></tr>';
+}
+
+// Enhanced: Update geofence stats dari route data
+function updateGeoStats(waypoints) {
+  const totalPoints = waypoints.length;
+  const deviated = waypoints.filter(w => w.geofenceStatus === 'EN_ROUTE' || w.geofenceStatus === 'IDLE').length;
+
+  let duration = '0m';
+  if (totalPoints > 1) {
+    const first = new Date(waypoints[0].timestamp);
+    const last = new Date(waypoints[totalPoints - 1].timestamp);
+    const diffMs = last - first;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHr = Math.floor(diffMin / 60);
+    duration = diffHr > 0 ? `${diffHr}j ${diffMin % 60}m` : `${diffMin}m`;
+  }
+
+  const lastStatus = totalPoints > 0 ? (waypoints[totalPoints - 1].geofenceStatus || 'IDLE') : 'IDLE';
+  const statusMap = {
+    'INSIDE_GEOFENCE': '✅ DI ZONA',
+    'NEAR_ZONE': '🟡 DEKAT ZONA',
+    'EN_ROUTE': '🔵 DI JALAN',
+    'IDLE': '⚪ IDLE'
+  };
+
+  const sp = document.getElementById('statTotalPoints');
+  const sd = document.getElementById('statDeviated');
+  const sdur = document.getElementById('statDuration');
+  const sgs = document.getElementById('statGeoStatus');
+  if (sp) sp.textContent = totalPoints;
+  if (sd) sd.textContent = deviated;
+  if (sdur) sdur.textContent = duration;
+  if (sgs) sgs.textContent = statusMap[lastStatus] || lastStatus;
+
+  // Render audit log
+  const auditEl = document.getElementById('routeAuditLog');
+  if (auditEl && totalPoints > 0) {
+    const statusColors = {
+      'INSIDE_GEOFENCE': 'emerald',
+      'NEAR_ZONE': 'amber',
+      'EN_ROUTE': 'blue',
+      'IDLE': 'slate'
+    };
+    auditEl.innerHTML = waypoints.slice().reverse().map(pt => {
+      const color = statusColors[pt.geofenceStatus] || 'slate';
+      const ts = new Date(pt.timestamp);
+      const timeStr = ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = ts.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      return `
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/40 hover:border-${color}-500/30 transition-all">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] font-mono text-${color}-400 font-bold">${pt.geofenceStatus || 'IDLE'}</span>
+            <span class="text-[10px] text-slate-500">${dateStr} ${timeStr}</span>
+          </div>
+          <div class="font-mono text-[10px] text-slate-300">
+            <i class="fa-solid fa-crosshairs text-${color}-400 mr-1"></i>
+            ${typeof pt.lat === 'number' ? pt.lat.toFixed(5) : (pt.lat || '-')},
+            ${typeof pt.lng === 'number' ? pt.lng.toFixed(5) : (pt.lng || '-')}
+          </div>
+          ${pt.distanceToTask ? `<div class="text-[10px] text-slate-500 mt-0.5"><i class="fa-solid fa-ruler mr-1"></i>${(pt.distanceToTask / 1000).toFixed(2)} km dari tugas</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } else if (auditEl) {
+    auditEl.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-satellite-dish text-2xl mb-2 block"></i><p class="text-xs">Belum ada riwayat GPS untuk mitra ini</p></div>';
+  }
+
+  // Render task audit table dari orders
+  renderTaskAuditTable();
+}
+
+function renderTaskAuditTable() {
+  const tbody = document.getElementById('taskAuditTable');
+  if (!tbody) return;
+
+  const completedOrders = (ordersList || []).filter(o => o.status === 'completed' || o.status === 'working');
+
+  if (completedOrders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-500"><i class="fa-solid fa-calendar-xmark text-xl mb-1 block"></i>Belum ada data audit tugas</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = completedOrders.slice(0, 20).map(o => {
+    const startTime = o.acceptedAt || o.createdAt;
+    const endTime = o.completedAt || o.updatedAt;
+    let duration = '-';
+    if (startTime && endTime) {
+      const diffMs = new Date(endTime) - new Date(startTime);
+      const diffMin = Math.floor(Math.abs(diffMs) / 60000);
+      const diffHr = Math.floor(diffMin / 60);
+      duration = diffHr > 0 ? `${diffHr}j ${diffMin % 60}m` : `${diffMin}m`;
+    }
+
+    const statusBadge = o.status === 'completed'
+      ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">✅ Selesai</span>'
+      : o.status === 'working'
+      ? '<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold">🔧 Berjalan</span>'
+      : `<span class="px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 font-semibold">${o.status}</span>`;
+
+    const startStr = startTime ? new Date(startTime).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+    const endStr = endTime ? new Date(endTime).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+
+    return `<tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
+      <td class="px-4 py-2.5 font-mono text-blue-400 font-bold">${o.id}</td>
+      <td class="px-4 py-2.5 text-slate-200">${o.serviceType || o.category || '-'}</td>
+      <td class="px-4 py-2.5 text-slate-300">${o.mitraName || o.mitraId || '-'}</td>
+      <td class="px-4 py-2.5 text-slate-400 font-mono text-[10px]">${startStr}</td>
+      <td class="px-4 py-2.5 text-slate-400 font-mono text-[10px]">${endStr}</td>
+      <td class="px-4 py-2.5 font-bold text-white">${duration}</td>
+      <td class="px-4 py-2.5">${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function inspectMitra(mitraId) {
   switchTab('route-history');
@@ -1636,8 +2019,10 @@ function applyConfigToUI(cfg) {
   // Inputs
   document.getElementById('cmsAppNameInput').value = cfg.appName || '';
   document.getElementById('cmsAppTaglineInput').value = cfg.appTagline || '';
-  document.getElementById('cmsRadiusSlider').value = cfg.maxRadiusKm || 10;
-  document.getElementById('radiusSliderVal').innerText = `${cfg.maxRadiusKm || 10} KM`;
+  const rVal = cfg.radarRadiusMeters || ((cfg.maxRadiusKm || 2) * 1000);
+  const rSlider = document.getElementById('cmsRadiusSlider');
+  if (rSlider) rSlider.value = rVal;
+  updateRadarSliderVal(rVal);
   document.getElementById('cmsBaseFareInput').value = cfg.baseFare || 25000;
   document.getElementById('cmsFarePerKmInput').value = cfg.farePerKm || 3500;
   document.getElementById('cmsPlatformFeeInput').value = cfg.platformFee || 3000;
@@ -1672,6 +2057,18 @@ function applyConfigToUI(cfg) {
 
   updateMaintenanceUI(cfg.maintenanceMode, cfg.maintenanceMessage);
   updateGeofenceCircle();
+}
+
+function updateRadarSliderVal(val) {
+  const num = Number(val) || 2000;
+  const el = document.getElementById('radiusSliderVal');
+  if (el) {
+    if (num >= 1000) {
+      el.innerText = `${(num / 1000).toFixed(1)} KM (${num.toLocaleString('id-ID')} Meter)`;
+    } else {
+      el.innerText = `${num.toLocaleString('id-ID')} Meter`;
+    }
+  }
 }
 
 function updateMaintenanceUI(isMaintenance, message) {
@@ -1718,10 +2115,12 @@ async function toggleServerMaintenance() {
 }
 
 async function saveAllCmsConfig() {
+  const sliderMeters = Number(document.getElementById('cmsRadiusSlider').value) || 2000;
   const payload = {
     appName: document.getElementById('cmsAppNameInput').value,
     appTagline: document.getElementById('cmsAppTaglineInput').value,
-    maxRadiusKm: Number(document.getElementById('cmsRadiusSlider').value),
+    radarRadiusMeters: sliderMeters,
+    maxRadiusKm: Number((sliderMeters / 1000).toFixed(2)),
     baseFare: Number(document.getElementById('cmsBaseFareInput').value),
     farePerKm: Number(document.getElementById('cmsFarePerKmInput').value),
     platformFee: Number(document.getElementById('cmsPlatformFeeInput').value),
@@ -1772,6 +2171,38 @@ async function saveAllCmsConfig() {
     }
   } catch (err) {
     alert('Gagal menyimpan konfigurasi: ' + err.message);
+  }
+}
+
+async function uploadDedicatedAppIcon(target) {
+  const inputId = target === 'driver' ? 'cmsDriverIconFileInput' : 'cmsClientIconFileInput';
+  const fileInput = document.getElementById(inputId);
+
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert(`Pilih file ikon baru (.svg, .png, .jpg) untuk aplikasi ${target} terlebih dahulu.`);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  formData.append('target', target);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/config/icon`, {
+      method: 'POST',
+      body: formData
+    }).then(r => r.json());
+
+    if (res.success) {
+      alert(`🎉 ${res.message}\nIkon baru berhasil diunggah dan langsung disiarkan secara real-time ke semua perangkat!`);
+      if (document.getElementById('cmsIconPreview')) {
+        document.getElementById('cmsIconPreview').src = res.iconUrl + '?t=' + Date.now();
+      }
+    } else {
+      alert(res.message || 'Gagal mengunggah ikon.');
+    }
+  } catch(e) {
+    alert('Koneksi server gagal: ' + e.message);
   }
 }
 
@@ -1878,27 +2309,101 @@ function renderCategoriesGrid() {
   const container = document.getElementById('categoryGrid');
   if (!container) return;
 
-  container.innerHTML = categoriesList.map(cat => `
-    <div class="p-4 bg-slate-800 border border-slate-700 rounded-2xl shadow flex flex-col justify-between">
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <div class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700/80 p-1 flex items-center justify-center shadow-inner overflow-hidden">
-            <img src="${getCategoryIconUrl(cat)}" alt="${cat.name}" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='uploads/logo_icon.svg'">
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" ${cat.active ? 'checked' : ''} onchange="toggleCategory('${cat.id}', this.checked)" class="sr-only peer">
-            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-          </label>
+  if (!categoriesList || categoriesList.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-4 flex flex-col items-center justify-center py-20 space-y-4 text-center">
+        <div class="w-20 h-20 rounded-3xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(220,38,38,0.15),rgba(30,41,59,0.8));border:1px solid rgba(220,38,38,0.25);">
+          <i class="fa-solid fa-boxes-stacked text-3xl" style="color:#DC2626;"></i>
         </div>
-        <h4 class="font-bold text-white text-sm">${cat.name}</h4>
-        <p class="text-[11px] text-slate-400 mt-1">${cat.description || '-'}</p>
+        <div>
+          <p class="text-base font-extrabold text-white mb-1">Memuat Kategori Jasa...</p>
+          <p class="text-xs text-slate-400 max-w-xs">Menghubungi server, harap tunggu sebentar.</p>
+        </div>
+        <button onclick="fetch(API_BASE+'/api/categories').then(r=>r.json()).then(res=>{if(res.success){categoriesList=res.data;renderCategoriesGrid();}})" 
+          class="px-4 py-2 rounded-xl text-xs font-bold text-white" style="background:linear-gradient(135deg,#DC2626,#991B1B);">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Muat Ulang Kategori
+        </button>
+      </div>`;
+
+    // Auto-fetch jika kosong
+    setTimeout(() => {
+      if (!categoriesList || categoriesList.length === 0) {
+        fetch(`${API_BASE}/api/categories`)
+          .then(r => r.json())
+          .then(res => {
+            if (res.success && res.data && res.data.length > 0) {
+              categoriesList = res.data;
+              renderCategoriesGrid();
+            }
+          }).catch(() => {});
+      }
+    }, 800);
+    return;
+  }
+
+  const colorPalette = [
+    { bg: 'rgba(220,38,38,0.12)', border: 'rgba(220,38,38,0.3)', accent: '#EF4444' },
+    { bg: 'rgba(37,99,235,0.12)', border: 'rgba(37,99,235,0.3)', accent: '#3B82F6' },
+    { bg: 'rgba(5,150,105,0.12)', border: 'rgba(5,150,105,0.3)', accent: '#10B981' },
+    { bg: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.3)', accent: '#8B5CF6' },
+    { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', accent: '#F59E0B' },
+    { bg: 'rgba(236,72,153,0.12)', border: 'rgba(236,72,153,0.3)', accent: '#EC4899' },
+    { bg: 'rgba(14,165,233,0.12)', border: 'rgba(14,165,233,0.3)', accent: '#0EA5E9' },
+    { bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.3)', accent: '#F97316' },
+    { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', accent: '#10B981' },
+  ];
+
+  container.innerHTML = categoriesList.map((cat, i) => {
+    const pal = colorPalette[i % colorPalette.length];
+    const isActive = cat.active !== false;
+    return `
+    <div class="relative rounded-2xl overflow-hidden flex flex-col justify-between group cursor-default"
+         style="background:linear-gradient(145deg,${pal.bg},rgba(15,23,42,0.9));border:1px solid ${pal.border};padding:1rem;transition:all 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.3);"
+         onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 35px rgba(0,0,0,0.45)'"
+         onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.3)'">
+      <!-- Top line accent -->
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${pal.accent},transparent);opacity:${isActive?'1':'0.3'};"></div>
+
+      <!-- Header: icon + toggle -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.75rem;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(15,23,42,0.7);border:1px solid ${pal.border};padding:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+          <img src="${getCategoryIconUrl(cat)}" alt="${cat.name}" style="width:100%;height:100%;object-fit:contain;" 
+               onerror="this.onerror=null;this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-screwdriver-wrench\\' style=\\'color:${pal.accent};font-size:22px;\\'></i>'">
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <label style="position:relative;display:inline-flex;align-items:center;cursor:pointer;">
+            <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleCategory('${cat.id}', this.checked)" style="position:absolute;opacity:0;width:0;height:0;" id="catToggle_${cat.id}">
+            <div onclick="document.getElementById('catToggle_${cat.id}').click()" style="width:38px;height:21px;background:${isActive?pal.accent:'#334155'};border-radius:99px;position:relative;transition:background 0.3s;cursor:pointer;">
+              <div style="position:absolute;top:3px;left:${isActive?'18px':'3px'};width:15px;height:15px;background:white;border-radius:50%;transition:left 0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>
+            </div>
+          </label>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;${isActive?`background:rgba(16,185,129,0.15);color:#10B981;border:1px solid rgba(16,185,129,0.3);`:`background:rgba(100,116,139,0.15);color:#64748B;border:1px solid rgba(100,116,139,0.2);`}">${isActive ? '● Aktif' : '○ Nonaktif'}</span>
+        </div>
       </div>
-      <div class="pt-3 border-t border-slate-700/80 mt-3 flex justify-between items-center text-xs">
-        <span class="text-emerald-400 font-bold">Rp ${cat.baseFare.toLocaleString('id-ID')}</span>
-        <button onclick="deleteCategory('${cat.id}')" class="text-slate-500 hover:text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+
+      <!-- Content -->
+      <div style="flex:1;">
+        <h4 style="font-size:14px;font-weight:800;color:white;margin-bottom:4px;line-height:1.3;">${cat.name}</h4>
+        <p style="font-size:11px;color:#94A3B8;line-height:1.5;min-height:32px;">${cat.description || 'Layanan profesional tersedia di ekosistem SobatSerabut'}</p>
       </div>
-    </div>
-  `).join('');
+
+      <!-- Footer: harga + aksi -->
+      <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:10px;padding-top:10px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <p style="font-size:9px;color:#64748B;font-weight:600;margin-bottom:1px;text-transform:uppercase;letter-spacing:0.5px;">Tarif Dasar</p>
+          <span style="font-size:14px;font-weight:800;color:${pal.accent};">Rp ${(cat.baseFare||0).toLocaleString('id-ID')}</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="deleteCategory('${cat.id}')" 
+                  style="width:30px;height:30px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#EF4444;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all 0.2s;"
+                  onmouseover="this.style.background='rgba(239,68,68,0.25)'"
+                  onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function toggleCategory(catId, active) {
@@ -1947,7 +2452,7 @@ function renderKycTable() {
   if (!tbody) return;
 
   if (kycList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-500 italic">Belum ada permohonan KYC pendaftaran mitra baru.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500 italic">Belum ada permohonan KYC pendaftaran mitra baru.</td></tr>';
     return;
   }
 
@@ -2480,3 +2985,333 @@ function playNotificationSound() {
 }
 
 function setupEventListeners() {}
+
+/* ========================================================
+ * 12. ADMIN DRIVER MANAGEMENT: POINTS, SUSPEND, TERMINATE & BROADCAST
+ * ======================================================== */
+
+// A. Kelola Poin Kinerja Driver
+function openDriverPointsModal(driverId, driverName, currentPoints) {
+  const idInput = document.getElementById('pointsModalDriverId');
+  const nameEl = document.getElementById('pointsModalDriverName');
+  const curEl = document.getElementById('pointsModalCurrentPoints');
+  const amtInput = document.getElementById('pointsModalAmountInput');
+  const rsnInput = document.getElementById('pointsModalReasonInput');
+
+  if (idInput) idInput.value = driverId;
+  if (nameEl) nameEl.innerText = `Driver: ${driverName} (${driverId})`;
+  if (curEl) curEl.innerText = `${currentPoints || 100} Poin`;
+  if (amtInput) amtInput.value = '25';
+  if (rsnInput) rsnInput.value = 'Bonus ketekunan & kedisiplinan kerja driver';
+
+  const modal = document.getElementById('driverPointsModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeDriverPointsModal() {
+  const modal = document.getElementById('driverPointsModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function submitDriverPointsChange() {
+  const driverId = document.getElementById('pointsModalDriverId')?.value;
+  const amount = document.getElementById('pointsModalAmountInput')?.value;
+  const reason = document.getElementById('pointsModalReasonInput')?.value.trim();
+  const action = document.querySelector('input[name="pointActionRadio"]:checked')?.value || 'add';
+
+  if (!driverId) {
+    showToast('Driver ID tidak valid.', 'error');
+    return;
+  }
+  if (!amount || Number(amount) <= 0) {
+    showToast('Masukkan jumlah poin yang sah.', 'warning');
+    return;
+  }
+  if (!reason) {
+    showToast('Wajib memasukkan alasan pemberian/pengurangan poin.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/driver/${driverId}/points`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminAuthToken}`,
+        'x-admin-token': adminAuthToken
+      },
+      body: JSON.stringify({ amount: Number(amount), action, reason })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast(res.message, 'success');
+      closeDriverPointsModal();
+      loadMarketplaceUsers();
+    } else {
+      showToast(res.message || 'Gagal mengubah poin driver', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi server gagal: ' + e.message, 'error');
+  }
+}
+
+// B. Suspend & Unsuspend & Terminate Driver
+function openSuspendDriverModal(driverId, driverName) {
+  const idInput = document.getElementById('suspendModalDriverId');
+  const nameEl = document.getElementById('suspendModalDriverName');
+  const rsnInput = document.getElementById('suspendModalReasonInput');
+
+  if (idInput) idInput.value = driverId;
+  if (nameEl) nameEl.innerText = `Driver: ${driverName} (${driverId})`;
+  if (rsnInput) rsnInput.value = 'Laporan pembatalan order berulang & ketidaksesuaian SOP layanan.';
+
+  const modal = document.getElementById('driverSuspendModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeDriverSuspendModal() {
+  const modal = document.getElementById('driverSuspendModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function submitDriverSuspendAction() {
+  const driverId = document.getElementById('suspendModalDriverId')?.value;
+  const reason = document.getElementById('suspendModalReasonInput')?.value.trim();
+  if (!driverId) return;
+  if (!reason) {
+    showToast('Harap isi alasan penangguhan driver.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/driver/${driverId}/suspend`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminAuthToken}`,
+        'x-admin-token': adminAuthToken
+      },
+      body: JSON.stringify({ reason })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast(res.message, 'success');
+      closeDriverSuspendModal();
+      loadMarketplaceUsers();
+    } else {
+      showToast(res.message || 'Gagal menangguhkan driver', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  }
+}
+
+async function confirmUnsuspendDriver(driverId, driverName) {
+  if (!confirm(`Buka status suspen untuk Driver ${driverName}? Driver akan dapat kembali online dan menerima tugas pesanan.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/driver/${driverId}/unsuspend`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminAuthToken}`,
+        'x-admin-token': adminAuthToken
+      }
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast(res.message, 'success');
+      loadMarketplaceUsers();
+    } else {
+      showToast(res.message || 'Gagal membuka suspen driver', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  }
+}
+
+async function confirmTerminateDriver(driverId, driverName) {
+  const reason = prompt(`PERINGATAN: Pemutusan kemitraan bersifat permanen!\nMasukkan alasan pemutusan kemitraan untuk Driver ${driverName}:`, 'Pelanggaran berat terhadap standar operasional & etika kemitraan');
+  if (!reason) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/driver/${driverId}/terminate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminAuthToken}`,
+        'x-admin-token': adminAuthToken
+      },
+      body: JSON.stringify({ reason })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast(res.message, 'success');
+      loadMarketplaceUsers();
+    } else {
+      showToast(res.message || 'Gagal menghentikan kemitraan driver', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  }
+}
+
+// C. Siaran Promo & Broadcast Notification
+function openBroadcastPromoModal() {
+  const modal = document.getElementById('broadcastPromoModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeBroadcastPromoModal() {
+  const modal = document.getElementById('broadcastPromoModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function updateBroadcastPreview() {
+  const title = document.getElementById('broadcastTitleInput')?.value || 'PROMO KOMISI 0% HARI INI!';
+  const message = document.getElementById('broadcastMessageInput')?.value || 'Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!';
+  const type = document.getElementById('broadcastTypeSelect')?.value || 'promo';
+
+  const previewTitle = document.getElementById('previewTitle');
+  const previewMessage = document.getElementById('previewMessage');
+  const previewTypeLabel = document.getElementById('previewTypeLabel');
+  const previewTypeIcon = document.getElementById('previewTypeIcon');
+  const titleCount = document.getElementById('broadcastTitleCount');
+  const messageCount = document.getElementById('broadcastMessageCount');
+
+  if (previewTitle) previewTitle.innerText = title;
+  if (previewMessage) previewMessage.innerText = message;
+  if (titleCount) titleCount.innerText = `${document.getElementById('broadcastTitleInput')?.value.length || 0}/60`;
+  if (messageCount) messageCount.innerText = `${document.getElementById('broadcastMessageInput')?.value.length || 0}/250`;
+
+  if (previewTypeLabel) {
+    previewTypeLabel.innerText = (type === 'promo') ? 'PROMO SPESIAL' : (type === 'urgent') ? 'PERINGATAN PENTING' : 'PENGUMUMAN RESMI';
+  }
+  if (previewTypeIcon) {
+    previewTypeIcon.innerHTML = (type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
+  }
+}
+
+async function handleSendBroadcastSubmit(e) {
+  e.preventDefault();
+  const target = document.getElementById('broadcastTargetSelect')?.value || 'all';
+  const type = document.getElementById('broadcastTypeSelect')?.value || 'promo';
+  const title = document.getElementById('broadcastTitleInput')?.value.trim();
+  const message = document.getElementById('broadcastMessageInput')?.value.trim();
+
+  if (!title || !message) {
+    showToast('Harap lengkapi judul dan isi pesan notifikasi siaran.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnSubmitBroadcast');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i><span>Menyiarkan ke seluruh perangkat...</span>';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/broadcast-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminAuthToken}`,
+        'x-admin-token': adminAuthToken
+      },
+      body: JSON.stringify({ target, type, title, message })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('🎉 ' + res.message, 'success');
+      document.getElementById('broadcastTitleInput').value = '';
+      document.getElementById('broadcastMessageInput').value = '';
+      updateBroadcastPreview();
+      loadBroadcastHistory();
+    } else {
+      showToast(res.message || 'Gagal mengirim siaran notifikasi', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane text-xs mr-1"></i><span>Kirim Siaran Notifikasi Promo Sekarang</span>';
+    }
+  }
+}
+
+async function handleQuickBroadcastSubmit(e) {
+  e.preventDefault();
+  const target = document.getElementById('quickModalTarget')?.value || 'all';
+  const type = document.getElementById('quickModalType')?.value || 'promo';
+  const title = document.getElementById('quickModalTitle')?.value.trim();
+  const message = document.getElementById('quickModalMessage')?.value.trim();
+
+  if (!title || !message) {
+    showToast('Harap lengkapi judul dan isi pesan notifikasi siaran.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/broadcast-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminAuthToken}`,
+        'x-admin-token': adminAuthToken
+      },
+      body: JSON.stringify({ target, type, title, message })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('🎉 ' + res.message, 'success');
+      closeBroadcastPromoModal();
+      document.getElementById('quickModalTitle').value = '';
+      document.getElementById('quickModalMessage').value = '';
+      loadBroadcastHistory();
+    } else {
+      showToast(res.message || 'Gagal mengirim notifikasi siaran', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  }
+}
+
+async function loadBroadcastHistory() {
+  const container = document.getElementById('broadcastHistoryList');
+  const countBadge = document.getElementById('broadcastHistoryCount');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/notifications/active`).then(r => r.json());
+    if (res.success && Array.isArray(res.data)) {
+      if (countBadge) countBadge.innerText = `${res.data.length} Siaran`;
+      if (res.data.length === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-slate-500 italic">Belum ada riwayat siaran notifikasi promo yang dikirim.</div>';
+        return;
+      }
+      container.innerHTML = res.data.map(b => {
+        const timeStr = new Date(b.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+        const targetBadge = b.target === 'driver' ? '<span class="text-[9px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">Khusus Driver</span>' : b.target === 'client' ? '<span class="text-[9px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">Khusus Klien</span>' : '<span class="text-[9px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold">Semua Pengguna</span>';
+        const typeBadge = b.type === 'promo' ? '🔥 PROMO' : b.type === 'urgent' ? '⚠️ PERINGATAN' : '📢 PENGUMUMAN';
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 hover:border-slate-600 transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] font-black text-amber-400">${typeBadge}</span>
+                ${targetBadge}
+              </div>
+              <span class="text-[10px] text-slate-500 font-mono">${timeStr}</span>
+            </div>
+            <h4 class="font-extrabold text-white text-xs">${b.title}</h4>
+            <p class="text-slate-300 text-[11px] leading-relaxed">${b.message}</p>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch(e) {
+    console.warn('Gagal memuat riwayat siaran:', e);
+  }
+}

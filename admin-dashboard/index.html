@@ -13,16 +13,16 @@
         extend: {
           colors: {
             brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a',
+              50: '#fef2f2',
+              100: '#fee2e2',
+              500: '#DC2626',
+              600: '#DC2626',
+              700: '#b91c1c',
+              800: '#991b1b',
+              900: '#7f1d1d',
             },
             amber: {
-              400: '#fbbf24',
+              400: '#FBBF24',
               500: '#f59e0b',
               600: '#d97706',
             }
@@ -50,6 +50,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Round|Material+Icons+Outlined" rel="stylesheet">
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/svg+xml" href="/uploads/logo_icon.svg">
+  <link rel="shortcut icon" href="/uploads/logo_icon.svg">
+  <link rel="apple-touch-icon" href="/uploads/logo_icon.svg">
+  <meta name="theme-color" content="#DC2626">
 
   <style>
     body {
@@ -90,9 +95,406 @@
     @keyframes pulse-yellow {
       to { box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); }
     }
+
+/* === SOBATSERABUT ADMIN v4.0 - PREMIUM REDESIGN === */
+:root {
+  --brand-red: #DC2626;
+  --brand-red-dark: #B91C1C;
+  --brand-gold: #F59E0B;
+  --brand-gold-light: #FCD34D;
+  --bg-primary: #0A0F1E;
+  --bg-secondary: #0F172A;
+  --bg-card: #1E293B;
+  --bg-card-hover: #273549;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-glow: rgba(220, 38, 38, 0.3);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+}
+
+body {
+  background: var(--bg-primary) !important;
+  background-image: 
+    radial-gradient(ellipse at 20% 0%, rgba(220,38,38,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(37,99,235,0.04) 0%, transparent 50%) !important;
+}
+
+/* Scrollbar Custom */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #0A0F1E; }
+::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.4); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(220,38,38,0.7); }
+
+/* Header glow effect */
+header {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-bottom-color: rgba(220,38,38,0.2) !important;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4), 0 1px 0 rgba(220,38,38,0.1) inset !important;
+}
+
+/* Animated header logo */
+#headerLogoContainer {
+  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%) !important;
+  box-shadow: 0 0 20px rgba(220,38,38,0.4), 0 0 40px rgba(220,38,38,0.2) !important;
+  animation: logoPulse 3s ease-in-out infinite !important;
+  border: 1.5px solid rgba(220,38,38,0.5) !important;
+}
+
+@keyframes logoPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(220,38,38,0.4), 0 0 30px rgba(220,38,38,0.2); }
+  50% { box-shadow: 0 0 25px rgba(220,38,38,0.6), 0 0 50px rgba(220,38,38,0.3); }
+}
+
+/* Navigation tabs */
+nav {
+  background: rgba(15, 23, 42, 0.98) !important;
+  border-bottom-color: rgba(220,38,38,0.15) !important;
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+}
+
+.tab-btn {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0 !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.tab-btn:hover {
+  color: #F8FAFC !important;
+  background: rgba(220,38,38,0.08) !important;
+}
+
+.tab-btn.border-blue-500 {
+  color: #DC2626 !important;
+  border-bottom-color: #DC2626 !important;
+}
+
+/* Enhanced stat cards */
+.bg-slate-800, .bg-slate-800\/90 {
+  background: rgba(30, 41, 59, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Card hover effects */
+.bg-slate-800:hover {
+  background: rgba(39, 53, 73, 0.8) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Map container */
+#liveTrackingMap, #routeMap {
+  border-radius: 16px !important;
+  border: 1px solid rgba(220,38,38,0.2) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+}
+
+/* Category cards enhanced */
+#categoryGrid > div {
+  background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.8) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+#categoryGrid > div::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(220,38,38,0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#categoryGrid > div:hover::before {
+  opacity: 1;
+}
+
+#categoryGrid > div:hover {
+  border-color: rgba(220,38,38,0.3) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4) !important;
+}
+
+/* Login modal enhanced */
+#adminLoginModal {
+  background: radial-gradient(ellipse at center, rgba(15,23,42,0.98) 0%, rgba(0,0,0,0.99) 100%) !important;
+}
+
+/* Glow effects for status indicators */
+.bg-emerald-500 { box-shadow: 0 0 8px rgba(16,185,129,0.6) !important; }
+
+/* Table rows hover */
+tr:hover td {
+  background: rgba(220,38,38,0.04) !important;
+}
+
+/* Buttons enhanced */
+button[onclick*="switchTab"] {
+  transition: all 0.2s ease !important;
+}
+
+/* Input fields */
+input, select, textarea {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #F8FAFC !important;
+  transition: all 0.2s !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(220,38,38,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.1) !important;
+  outline: none !important;
+}
+
+/* Pulse animations for live indicators */
+@keyframes liveRing {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.animate-ping {
+  animation: liveRing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+}
+
+/* Badge animations */
+@keyframes badgePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Enhanced modals */
+.fixed.inset-0 > div {
+  box-shadow: 0 25px 80px rgba(0,0,0,0.7) !important;
+}
+
+/* KYC table */
+.rounded-2xl {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+}
+
+/* Footer/bottom branding */
+.text-slate-500 {
+  color: #475569 !important;
+}
+
+/* ========================================================
+   SOBATSERABUT v5.0 — ULTRA PREMIUM UI ENHANCEMENTS
+   ======================================================== */
+
+/* Animated background particles */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse at 10% 10%, rgba(220,38,38,0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 90% 90%, rgba(59,130,246,0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(245,158,11,0.02) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Shimmer animation untuk loading states */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Tab content animations */
+.tab-content:not(.hidden) {
+  animation: fadeInUp 0.25s ease forwards;
+}
+
+/* Header premium redesign */
+header {
+  background: linear-gradient(180deg, rgba(10,15,30,0.97) 0%, rgba(15,23,42,0.95) 100%) !important;
+  border-bottom: 1px solid rgba(220,38,38,0.18) !important;
+  box-shadow: 0 1px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(220,38,38,0.08) inset !important;
+}
+
+/* Brand text gradient */
+#headerAppName {
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#headerAppName span[style*="DC2626"] {
+  background: linear-gradient(135deg, #FF6B35 0%, #DC2626 60%, #991B1B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Logo container animation */
+#headerLogoContainer {
+  background: linear-gradient(135deg, #FF6B35 0%, #DC2626 60%, #991B1B 100%) !important;
+  box-shadow: 0 0 20px rgba(220,38,38,0.5), 0 0 40px rgba(220,38,38,0.2) !important;
+  animation: logoPulse 3s ease-in-out infinite !important;
+}
+
+/* Navigation premium */
+nav {
+  background: rgba(10,15,30,0.98) !important;
+  border-bottom: 1px solid rgba(220,38,38,0.12) !important;
+  scrollbar-width: none !important;
+}
+
+nav::-webkit-scrollbar { display: none !important; }
+
+/* Tab button redesign */
+.tab-btn {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  padding: 0.7rem 0.9rem !important;
+  color: #64748B !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.tab-btn:hover {
+  color: #CBD5E1 !important;
+  background: rgba(220,38,38,0.06) !important;
+}
+
+.tab-btn.border-blue-500 {
+  color: #FF6B35 !important;
+  border-bottom-color: #DC2626 !important;
+  background: rgba(220,38,38,0.05) !important;
+}
+
+/* Stat cards premium */
+.bg-slate-800\/90, .bg-slate-800 {
+  background: rgba(20,30,50,0.8) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+/* Stat cards glow on hover */
+.bg-slate-800\/90:hover, .bg-slate-800:hover {
+  background: rgba(30,45,70,0.85) !important;
+}
+
+/* Map containers */
+#liveTrackingMap {
+  border-radius: 16px !important;
+  border: 1px solid rgba(220,38,38,0.2) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset !important;
+}
+
+#routeMap {
+  border-radius: 16px !important;
+  border: 1px solid rgba(14,165,233,0.2) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Category grid enhanced */
+#categoryGrid {
+  gap: 1rem !important;
+}
+
+/* Status badges glow */
+.bg-emerald-500 {
+  box-shadow: 0 0 8px rgba(16,185,129,0.7) !important;
+}
+
+/* Button premium */
+button[class*="bg-blue-600"], button[class*="bg-blue-500"] {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+  box-shadow: 0 4px 15px rgba(37,99,235,0.3) !important;
+}
+
+button[class*="bg-red"], button[class*="bg-rose"] {
+  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%) !important;
+  box-shadow: 0 4px 15px rgba(220,38,38,0.3) !important;
+}
+
+/* Enhanced scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); }
+::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.5); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(220,38,38,0.8); }
+
+/* Login modal premium */
+#adminLoginModal {
+  background: radial-gradient(ellipse at 30% 20%, rgba(220,38,38,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(37,99,235,0.05) 0%, transparent 50%),
+              rgba(5, 8, 20, 0.98) !important;
+}
+
+/* Table styling */
+table thead tr {
+  background: rgba(15,23,42,0.8) !important;
+}
+
+table tbody tr:hover td {
+  background: rgba(220,38,38,0.04) !important;
+}
+
+/* Input fields */
+input:not([type="checkbox"]):not([type="range"]), select, textarea {
+  background: rgba(10,15,30,0.8) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #F1F5F9 !important;
+  transition: all 0.2s !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(220,38,38,0.4) !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.1) !important;
+  outline: none !important;
+}
+
+/* Leaflet popup custom */
+.leaflet-popup-content-wrapper {
+  background: rgba(15, 23, 42, 0.97) !important;
+  border: 1px solid rgba(220,38,38,0.2) !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6) !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(15, 23, 42, 0.97) !important;
+}
+
+/* Animate ping (live dot) */
+.animate-ping {
+  animation: liveRing 1.4s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+}
+
+@keyframes liveRing {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased" style="background: #0A0F1E;">
 
   <!-- DASHBOARD APP WRAPPER: STRICTLY LOADED AND DISPLAYED AFTER AUTHENTICATION ONLY -->
   <div id="adminDashboardApp" class="hidden flex-col min-h-screen w-full" style="display: none !important;">
@@ -101,13 +503,13 @@
   <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700/80 sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
     <div class="flex items-center space-x-4">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('tracking')">
-        <div id="headerLogoContainer" class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center overflow-hidden shadow-inner">
-          <img id="appHeaderLogo" src="/uploads/logo_icon.svg" alt="Logo" class="w-8 h-8 object-contain">
+        <div id="headerLogoContainer" class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-inner" style="background: linear-gradient(135deg, #DC2626 0%, #991b1b 100%); border: 1px solid rgba(220,38,38,0.4);">
+          <img id="appHeaderLogo" src="/uploads/logo_icon.svg" alt="Logo" class="w-8 h-8 object-contain" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:20px\'>🔧</span>'">
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <span id="headerAppName" class="text-xl font-extrabold tracking-tight text-white">Sobat<span class="text-blue-500">Serabut</span></span>
-            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Admin Pusat</span>
+            <span id="headerAppName" class="text-xl font-extrabold tracking-tight text-white">Sobat<span style="color:#DC2626">Serabut</span></span>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border" style="background: rgba(220,38,38,0.15); color: #DC2626; border-color: rgba(220,38,38,0.3);">Admin Pusat</span>
           </div>
           <p id="headerAppTagline" class="text-xs text-slate-400">Sistem Otomasi Data &amp; Pemantauan Mitra Real-Time</p>
         </div>
@@ -128,6 +530,12 @@
         </span>
         <span id="socketStatusText">Live Socket Connected</span>
       </div>
+
+      <!-- Tombol Pintas Kirim Notif Promo Massal -->
+      <button onclick="openBroadcastPromoModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-red-600/30 transition-all active:scale-95" title="Kirim Notifikasi Promo atau Siaran ke Driver & Klien">
+        <i class="fa-solid fa-bullhorn text-xs animate-bounce"></i>
+        <span>Kirim Notif Promo</span>
+      </button>
 
       <!-- Profile -->
       <div class="flex items-center space-x-2 pl-2 border-l border-slate-700">
@@ -179,12 +587,16 @@
     <button onclick="switchTab('kyc')" id="tabBtn-kyc" class="tab-btn px-4 py-3 flex items-center space-x-2 border-b-2 border-transparent hover:text-slate-200 transition-all">
       <i class="fa-solid fa-id-card"></i>
       <span>Verifikasi KYC</span>
-      <span id="badgeKycCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">1</span>
+      <span id="badgeKycCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">0</span>
     </button>
     <button onclick="switchTab('escrow')" id="tabBtn-escrow" class="tab-btn px-4 py-3 flex items-center space-x-2 border-b-2 border-transparent hover:text-slate-200 transition-all">
       <i class="fa-solid fa-shield-halved"></i>
       <span>Rekber &amp; Penarikan</span>
-      <span id="badgeWdCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">1</span>
+      <span id="badgeWdCount" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">0</span>
+    </button>
+    <button onclick="switchTab('broadcast')" id="tabBtn-broadcast" class="tab-btn px-4 py-3 flex items-center space-x-2 border-b-2 border-transparent hover:text-slate-200 transition-all">
+      <i class="fa-solid fa-bullhorn text-rose-400"></i>
+      <span>Siaran Promo &amp; Notif</span>
     </button>
   </nav>
 
@@ -335,7 +747,7 @@
               <i class="fa-solid fa-users-gear text-blue-400"></i>
               <span>Daftar Mitra Aktif</span>
             </h3>
-            <span id="activeMitraCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">5 Mitra</span>
+            <span id="activeMitraCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">0 Mitra</span>
           </div>
 
           <!-- Search Mitra -->
@@ -392,7 +804,7 @@
               <i class="fa-solid fa-user-tie text-amber-400"></i>
               <span>Daftar Pemohon Jasa (Klien)</span>
             </h3>
-            <span id="klienCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">2 Klien</span>
+            <span id="klienCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">0 Klien</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-300">
@@ -419,18 +831,18 @@
               <i class="fa-solid fa-person-digging text-blue-400"></i>
               <span>Daftar Penyedia Jasa (Mitra Pekerja)</span>
             </h3>
-            <span id="mitraCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">2 Mitra</span>
+            <span id="mitraCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">0 Mitra</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-300">
               <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] font-bold">
                 <tr>
-                  <th class="p-2.5">Mitra &amp; Kontak</th>
-                  <th class="p-2.5">Status Kerja</th>
-                  <th class="p-2.5">Saldo Dompet</th>
-                  <th class="p-2.5">Rekening / E-Wallet Pencairan</th>
-                  <th class="p-2.5">Status KYC &amp; Dokumen</th>
-                  <th class="p-2.5 text-right">Aksi Verifikasi</th>
+                  <th class="p-2.5">Driver &amp; Kontak</th>
+                  <th class="p-2.5">Status Kerja &amp; Poin</th>
+                  <th class="p-2.5">Status Akun</th>
+                  <th class="p-2.5">Saldo &amp; Rekening</th>
+                  <th class="p-2.5">KYC Dokumen</th>
+                  <th class="p-2.5 text-right">Kontrol &amp; Aksi Driver</th>
                 </tr>
               </thead>
               <tbody id="adminMitraTbody" class="divide-y divide-slate-700">
@@ -538,123 +950,175 @@
     <!-- ========================================================
          TAB 3: GEOFENCING & RIWAYAT PERJALANAN
          ======================================================== -->
-    <section id="tab-route-history" class="tab-content hidden space-y-6">
-      <div class="flex items-center justify-between">
+    <section id="tab-route-history" class="tab-content hidden space-y-5">
+      <!-- Header -->
+      <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 class="text-xl font-extrabold text-white">Log Geofencing &amp; Jejak Rute Perjalanan Mitra</h2>
-          <p class="text-xs text-slate-400">Pemantauan riwayat koordinat GPS, deteksi rute melenceng, dan audit durasi pengerjaan tugas.</p>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center">
+              <i class="fa-solid fa-route text-red-400 text-sm"></i>
+            </span>
+            Log Geofencing &amp; Jejak Rute Perjalanan Mitra
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Pemantauan riwayat koordinat GPS, deteksi rute melenceng, dan audit durasi pengerjaan tugas real-time.</p>
         </div>
-        <div class="flex items-center space-x-3">
-          <label class="text-xs text-slate-400">Pilih Mitra:</label>
-          <select id="routeMitraSelect" onchange="loadMitraRoute(this.value)" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white">
-            <!-- options populated via JS -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="mitraRouteSelect" onchange="loadRouteHistory()" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 focus:border-red-500 outline-none">
+            <option value="">-- Pilih Mitra --</option>
           </select>
+          <button onclick="loadRouteHistory()" class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+          <button onclick="clearRouteHistory()" class="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-trash"></i> Hapus Riwayat
+          </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Route Map Display -->
-        <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl h-[520px] flex flex-col">
-          <div id="routeMap" class="w-full flex-1 z-0"></div>
-          <div class="bg-slate-900 p-3 border-t border-slate-700 text-xs flex justify-between items-center text-slate-400">
-            <div class="flex items-center space-x-3">
-              <span class="flex items-center space-x-1"><span class="w-3 h-0.5 bg-blue-500 inline-block"></span><span>Jalur Rute GPS</span></span>
-              <span class="flex items-center space-x-1"><i class="fa-solid fa-circle text-emerald-500 text-[10px]"></i><span>Titik Mulai</span></span>
-              <span class="flex items-center space-x-1"><i class="fa-solid fa-flag-checkered text-rose-500 text-[10px]"></i><span>Tujuan / Selesai</span></span>
+      <!-- Stats Row -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="geoStatsRow">
+        <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+              <i class="fa-solid fa-location-dot text-blue-400 text-xs"></i>
             </div>
-            <span id="routePointsCount" class="font-mono text-xs text-blue-400">0 Titik Jejak Terekam</span>
+            <p class="text-[11px] text-slate-400 font-medium">Total Titik GPS</p>
+          </div>
+          <p class="text-2xl font-extrabold text-white" id="statTotalPoints">0</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Koordinat terekam</p>
+        </div>
+        <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400 text-xs"></i>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium">Rute Melenceng</p>
+          </div>
+          <p class="text-2xl font-extrabold text-amber-400" id="statDeviated">0</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Titik di luar zona</p>
+        </div>
+        <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <i class="fa-solid fa-clock text-emerald-400 text-xs"></i>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium">Durasi Tracking</p>
+          </div>
+          <p class="text-2xl font-extrabold text-white" id="statDuration">0m</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Sejak titik pertama</p>
+        </div>
+        <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+              <i class="fa-solid fa-person-walking text-purple-400 text-xs"></i>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium">Status Geofence</p>
+          </div>
+          <p class="text-sm font-extrabold text-white" id="statGeoStatus">IDLE</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Status terakhir</p>
+        </div>
+      </div>
+
+      <!-- Map & Audit Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Peta Rute (2/3 width) -->
+        <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-700/60 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-map text-red-400 text-sm"></i>
+              <span class="text-sm font-bold text-white">Peta Jejak Rute GPS Real-Time</span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold animate-pulse">🟢 LIVE</span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px]">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>Start</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>End</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>Melenceng</span>
+              <!-- Tombol ganti tile peta -->
+              <button onclick="switchRouteTile()" title="Ganti Layer Peta" class="ml-2 px-2.5 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600 border border-blue-500/40 text-blue-300 hover:text-white font-bold flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-layer-group text-[10px]"></i>
+                <span id="routeTileLabel">OpenStreetMap</span>
+              </button>
+            </div>
+          </div>
+          <!-- Map container: tinggi 480px, Leaflet inject otomatis -->
+          <div id="routeMap" style="height: 480px; min-height: 480px; background: #0F172A; position:relative;">
+            <!-- Loading overlay (akan dihapus otomatis saat Leaflet selesai load) -->
+            <div id="routeMapLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;background:rgba(15,23,42,0.92);pointer-events:none;">
+              <div style="width:40px;height:40px;border:3px solid rgba(59,130,246,0.2);border-top-color:#3B82F6;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;"></div>
+              <span style="color:#94A3B8;font-size:12px;font-weight:600;">Memuat peta…</span>
+            </div>
           </div>
         </div>
 
-        <!-- Waypoint Logs List -->
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl flex flex-col h-[520px]">
-          <h3 class="font-bold text-white text-sm pb-3 border-b border-slate-700 flex items-center space-x-2">
-            <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
-            <span>Log Titik Singgah (Breadcrumbs)</span>
-          </h3>
-          <div id="routeWaypointsList" class="flex-1 overflow-y-auto space-y-3 mt-3 pr-1 text-xs">
-            <!-- populated via JS -->
+        <!-- Panel Audit Kanan (1/3 width) -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col">
+          <div class="px-4 py-3 border-b border-slate-700/60">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-blue-400 text-sm"></i>
+              <span class="text-sm font-bold text-white">Riwayat Koordinat GPS</span>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto" style="max-height: 480px;">
+            <div id="routeAuditLog" class="p-3 space-y-2">
+              <div class="text-center py-8 text-slate-500">
+                <i class="fa-solid fa-satellite-dish text-2xl mb-2 block"></i>
+                <p class="text-xs">Pilih mitra untuk melihat riwayat GPS</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Audit Geofencing, Deteksi Rute & Durasi Pengerjaan -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl space-y-2">
-          <div class="flex items-center justify-between text-xs text-slate-400">
-            <span class="font-bold flex items-center space-x-1.5 text-white">
-              <i class="fa-solid fa-satellite-dish text-blue-400"></i>
-              <span>Status Zona Geofencing</span>
-            </span>
-            <span id="adminGeofenceZoneBadge" class="px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 font-bold text-[10px]">IDLE</span>
+      <!-- Audit Durasi Tugas -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-700/60 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-stopwatch text-purple-400 text-sm"></i>
+            <span class="text-sm font-bold text-white">Audit Durasi Pengerjaan Tugas</span>
           </div>
-          <p id="adminGeofenceDesc" class="text-xs text-slate-300">Belum ada tugas aktif berjalan.</p>
-          <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-700/60 flex justify-between">
-            <span>Jarak ke Titik Tugas:</span>
-            <span id="adminDistToTask" class="font-mono font-bold text-amber-400">-</span>
-          </div>
-        </div>
-
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl space-y-2">
-          <div class="flex items-center justify-between text-xs text-slate-400">
-            <span class="font-bold flex items-center space-x-1.5 text-white">
-              <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
-              <span>Deteksi Rute Melenceng</span>
-            </span>
-            <span id="adminOffRouteBadge" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">Normal</span>
-          </div>
-          <p id="adminOffRouteDesc" class="text-xs text-slate-300">Rute mitra mengarah langsung ke tujuan tugas klien.</p>
-          <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-700/60 flex justify-between">
-            <span>Toleransi Deviasi:</span>
-            <span class="font-mono font-semibold text-slate-300">&lt; 300 meter</span>
-          </div>
-        </div>
-
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl space-y-2">
-          <div class="flex items-center justify-between text-xs text-slate-400">
-            <span class="font-bold flex items-center space-x-1.5 text-white">
-              <i class="fa-solid fa-stopwatch text-emerald-400"></i>
-              <span>Audit Durasi Pengerjaan</span>
-            </span>
-            <span id="adminSlaStatusBadge" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">SLA OK</span>
-          </div>
-          <p id="adminDurationBreakdown" class="text-xs text-slate-300">Total Waktu: <strong class="text-white font-mono" id="adminTotalDurationText">-</strong></p>
-          <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-700/60 flex justify-between">
-            <span>Selesai Tugas:</span>
-            <span id="adminCompletedStatus" class="font-semibold text-slate-300">-</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabel Audit Order: Bukti Pekerjaan Foto & Pencairan Saldo Otomatis -->
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-700">
-          <h3 class="font-bold text-white text-sm flex items-center space-x-2">
-            <i class="fa-solid fa-camera text-emerald-400"></i>
-            <span>Audit Foto Hasil Tugas Selesai &amp; Rekening Pencairan Otomatis</span>
-          </h3>
-          <span class="text-xs text-slate-400 font-mono" id="adminOrdersAuditCount">0 Tugas Terekam</span>
+          <span class="text-xs text-slate-400">Waktu aktual vs estimasi</span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] font-bold">
-              <tr>
-                <th class="p-3">ID &amp; Judul Tugas</th>
-                <th class="p-3">Kategori</th>
-                <th class="p-3">Pemohon (Klien)</th>
-                <th class="p-3">Alamat &amp; Titik Akurat</th>
-                <th class="p-3">Mitra Penyedia</th>
-                <th class="p-3">Foto Bukti &amp; Validitas</th>
-                <th class="p-3">Durasi</th>
-                <th class="p-3">Pencairan Rekening</th>
-                <th class="p-3 text-right">Aksi Konfirmasi</th>
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-slate-900/60 text-slate-400">
+                <th class="text-left px-4 py-2.5 font-semibold">ID Order</th>
+                <th class="text-left px-4 py-2.5 font-semibold">Layanan</th>
+                <th class="text-left px-4 py-2.5 font-semibold">Mitra</th>
+                <th class="text-left px-4 py-2.5 font-semibold">Mulai</th>
+                <th class="text-left px-4 py-2.5 font-semibold">Selesai</th>
+                <th class="text-left px-4 py-2.5 font-semibold">Durasi</th>
+                <th class="text-left px-4 py-2.5 font-semibold">Status</th>
               </tr>
             </thead>
-            <tbody id="ordersAuditTbody" class="divide-y divide-slate-700">
-              <!-- Dynamically populated via JS -->
+            <tbody id="taskAuditTable">
+              <tr>
+                <td colspan="7" class="text-center py-8 text-slate-500">
+                  <i class="fa-solid fa-calendar-xmark text-xl mb-1 block"></i>
+                  Belum ada data audit tugas
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
+      </div>
+
+      <!-- Hidden legacy elements kept for backward compatibility with existing JS -->
+      <div class="hidden">
+        <select id="routeMitraSelect"></select>
+        <span id="routePointsCount"></span>
+        <div id="routeWaypointsList"></div>
+        <span id="adminGeofenceZoneBadge"></span>
+        <p id="adminGeofenceDesc"></p>
+        <span id="adminDistToTask"></span>
+        <span id="adminOffRouteBadge"></span>
+        <p id="adminOffRouteDesc"></p>
+        <span id="adminSlaStatusBadge"></span>
+        <p id="adminDurationBreakdown"></p>
+        <strong id="adminTotalDurationText"></strong>
+        <span id="adminCompletedStatus"></span>
+        <span id="adminOrdersAuditCount"></span>
+        <tbody id="ordersAuditTbody"></tbody>
       </div>
     </section>
 
@@ -713,19 +1177,36 @@
             <input type="file" id="cmsLogoFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500">
           </div>
 
-          <!-- Upload App Icon sobatserabut.com -->
-          <div class="p-3 bg-slate-900/90 rounded-xl border border-amber-500/30 space-y-2">
-            <label class="block text-xs font-bold text-amber-300">
-              <i class="fa-solid fa-shapes mr-1 text-amber-400"></i>
-              Ganti Ikon Aplikasi sobatserabut.com (Favicon &amp; HP Launcher)
-            </label>
-            <input type="file" id="cmsIconFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
-            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-              <span>Preset Ikon:</span>
-              <div class="space-x-1.5">
-                <button type="button" onclick="setAppIconPreset('icon')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700">Square Icon</button>
-                <button type="button" onclick="setAppIconPreset('shield')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700">Shield</button>
-              </div>
+          <!-- Upload Ikon Khusus App Driver & App Klien & Splash Screen -->
+          <div class="p-3 bg-slate-900/90 rounded-xl border border-red-500/40 space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-red-400 mb-1">
+                <i class="fa-solid fa-motorcycle mr-1 text-red-500"></i>
+                Ganti Ikon Aplikasi Driver (Driver-SobatSerabut)
+              </label>
+              <input type="file" id="cmsDriverIconFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500">
+              <button type="button" onclick="uploadDedicatedAppIcon('driver')" class="mt-1.5 w-full py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] shadow">
+                Broadcast Ikon Driver ke Seluruh Mitra
+              </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800">
+              <label class="block text-xs font-bold text-amber-300 mb-1">
+                <i class="fa-solid fa-user mr-1 text-amber-400"></i>
+                Ganti Ikon Aplikasi Klien (SobatSerabut Klien)
+              </label>
+              <input type="file" id="cmsClientIconFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
+              <button type="button" onclick="uploadDedicatedAppIcon('client')" class="mt-1.5 w-full py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] shadow">
+                Broadcast Ikon Klien ke Seluruh Pemohon
+              </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800">
+              <label class="block text-xs font-bold text-slate-300 mb-1">
+                <i class="fa-solid fa-image mr-1 text-blue-400"></i>
+                Ganti Layar Splash / Banner Pembuka
+              </label>
+              <input type="file" id="cmsSplashFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-slate-200">
             </div>
           </div>
         </div>
@@ -739,11 +1220,11 @@
 
           <div>
             <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1">
-              <span>Maksimal Radius Radar Pencarian</span>
-              <span id="radiusSliderVal" class="text-blue-400 font-bold">10 KM</span>
+              <span>Radius Radar Driver Terdekat (100 m - 2 km)</span>
+              <span id="radiusSliderVal" class="text-blue-400 font-bold">2.000 Meter (2 KM)</span>
             </div>
-            <input type="range" id="cmsRadiusSlider" min="1" max="30" step="1" value="10" oninput="document.getElementById('radiusSliderVal').innerText = this.value + ' KM'" class="w-full accent-blue-500">
-            <p class="text-[10px] text-slate-500 mt-0.5">Mitra hanya akan menerima order tugas yang berada dalam radius ini.</p>
+            <input type="range" id="cmsRadiusSlider" min="100" max="2000" step="50" value="2000" oninput="updateRadarSliderVal(this.value)" class="w-full accent-blue-500">
+            <p class="text-[10px] text-slate-500 mt-0.5">Radar pencarian otomatis menghubungkan posting tugas klien ke driver mitra terdekat dalam rentang 100 meter hingga 2 kilometer.</p>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -898,7 +1379,10 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-semibold text-slate-300 mb-1">Google Maps API Key (Opsional)</label>
-              <input type="text" id="cmsGoogleMapsApiKeyInput" placeholder="Masukkan Google Maps API Key (AIzaSy...)" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+              <div class="relative">
+                <input type="password" id="cmsGoogleMapsApiKeyInput" placeholder="Masukkan Google Maps API Key (AIzaSy...)" class="w-full px-3 py-2 pr-10 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 font-mono">
+                <button type="button" onclick="var i=document.getElementById('cmsGoogleMapsApiKeyInput');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'<i class=\'fa-solid fa-eye text-xs\'></i>':'<i class=\'fa-solid fa-eye-slash text-xs\'></i>'" class="absolute right-2 top-2 text-slate-400 hover:text-white p-0.5"><i class="fa-solid fa-eye text-xs"></i></button>
+              </div>
               <p class="text-[10px] text-slate-500 mt-1">Dapat dikosongkan. Jika diisi, digunakan untuk pencarian lokasi Google Places &amp; Geocoding presisi.</p>
             </div>
 
@@ -1074,6 +1558,134 @@
       </div>
     </section>
 
+    <!-- ========================================================
+         TAB 8: SIARAN NOTIFIKASI PROMO & PENGUMUMAN MASSAL
+         ======================================================== -->
+    <section id="tab-broadcast" class="tab-content hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-extrabold text-white">Pusat Siaran Notifikasi Promo &amp; Informasi Massal</h2>
+          <p class="text-xs text-slate-400">Kirimkan pesan promo, diskon komisi, atau pengumuman darurat langsung ke HP pengemudi Driver &amp; Klien SobatSerabut secara real-time.</p>
+        </div>
+        <button onclick="loadBroadcastHistory()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 flex items-center space-x-2">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Perbarui Riwayat</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form Pembuat Siaran Notifikasi -->
+        <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-5">
+          <div class="flex items-center space-x-2.5 pb-3 border-b border-slate-700">
+            <div class="w-10 h-10 rounded-xl bg-red-600/20 text-red-400 flex items-center justify-center text-lg border border-red-500/30">
+              <i class="fa-solid fa-bullhorn"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-black text-white">Buat Notifikasi Siaran Baru</h3>
+              <p class="text-[11px] text-slate-400">Pesan akan langsung muncul sebagai notifikasi pop-up di aplikasi penerima</p>
+            </div>
+          </div>
+
+          <form id="formBroadcastPromo" onsubmit="handleSendBroadcastSubmit(event)" class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-300 mb-1.5">Target Penerima Siaran</label>
+                <select id="broadcastTargetSelect" required class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
+                  <option value="all">📢 Semua Pengguna (Driver &amp; Klien)</option>
+                  <option value="driver" selected>🚗 Khusus Mitra Driver Saja</option>
+                  <option value="client">👤 Khusus Klien Pemohon Jasa</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-300 mb-1.5">Kategori / Tipe Notifikasi</label>
+                <select id="broadcastTypeSelect" required class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
+                  <option value="promo" selected>🔥 Promo &amp; Bonus Spesial</option>
+                  <option value="announcement">📢 Pengumuman Resmi Admin</option>
+                  <option value="urgent">⚠️ Peringatan Keamanan / Penting</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-300 mb-1.5">Judul Notifikasi Promo</label>
+              <div class="relative">
+                <input type="text" id="broadcastTitleInput" placeholder="Contoh: 🔥 PROMO KOMISI 0% HARI INI!" required maxlength="60" oninput="updateBroadcastPreview()" class="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs focus:border-red-500 focus:outline-none">
+                <span id="broadcastTitleCount" class="absolute right-3 top-2.5 text-[10px] text-slate-500 font-mono">0/60</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-300 mb-1.5">Isi Pesan Notifikasi Siaran</label>
+              <textarea id="broadcastMessageInput" rows="3" placeholder="Contoh: Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!" required maxlength="250" oninput="updateBroadcastPreview()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed focus:border-red-500 focus:outline-none"></textarea>
+              <div class="flex justify-between items-center mt-1 text-[10px] text-slate-500">
+                <span>Pesan singkat, padat, dan jelas untuk kenyamanan pengguna.</span>
+                <span id="broadcastMessageCount" class="font-mono">0/250</span>
+              </div>
+            </div>
+
+            <button type="submit" id="btnSubmitBroadcast" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-500 text-white font-black text-xs shadow-xl shadow-red-600/30 flex items-center justify-center space-x-2 active:scale-98 transition-all">
+              <i class="fa-solid fa-paper-plane text-xs"></i>
+              <span>Kirim Siaran Notifikasi Promo Sekarang</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Live Preview Tampilan Layar HP Pengguna -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+              <span class="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
+                <i class="fa-solid fa-mobile-screen text-slate-400"></i>
+                <span>Pratinjau Layar HP Driver</span>
+              </span>
+              <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Live Preview</span>
+            </div>
+
+            <!-- Kartu Simulasi Notifikasi -->
+            <div id="previewCardContainer" class="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 shadow-2xl space-y-2.5">
+              <div class="flex items-center space-x-2">
+                <span id="previewTypeIcon" class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+                  <i class="fa-solid fa-fire text-amber-400"></i>
+                </span>
+                <span id="previewTypeLabel" class="text-[9px] font-black uppercase text-emerald-400 tracking-wider">PROMO SPESIAL</span>
+              </div>
+              <h4 id="previewTitle" class="text-xs font-black text-white leading-snug">PROMO KOMISI 0% HARI INI!</h4>
+              <p id="previewMessage" class="text-[11px] text-slate-300 leading-relaxed">
+                Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!
+              </p>
+              <div class="pt-1">
+                <span class="block w-full py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[10px] text-center">
+                  Saya Mengerti &amp; Lanjutkan
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[10px] text-slate-400 space-y-1">
+            <span class="font-bold text-slate-300 flex items-center space-x-1">
+              <i class="fa-solid fa-circle-info text-blue-400"></i>
+              <span>Info Pengiriman Siaran:</span>
+            </span>
+            <p>Pesan otomatis disiarkan menggunakan Socket.IO real-time. Jika pengguna sedang membuka aplikasi, pop-up akan langsung berbunyi dan muncul seketika.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Riwayat Siaran Notifikasi Terakhir -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+          <h3 class="font-bold text-white text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
+            <span>Riwayat Siaran Notifikasi Terakhir</span>
+          </h3>
+          <span id="broadcastHistoryCount" class="text-xs text-slate-400 font-mono">0 Riwayat</span>
+        </div>
+        <div id="broadcastHistoryList" class="space-y-2 text-xs">
+          <!-- populated via JS -->
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ========================================================
@@ -1162,6 +1774,190 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: KELOLA POIN KINERJA DRIVER (GAMIFIKASI KERJA NYATA)
+       ======================================================== -->
+  <div id="driverPointsModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-purple-500/40 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl border border-purple-500/30">
+            <i class="fa-solid fa-medal"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">Kelola Poin Kinerja Driver</h3>
+            <p id="pointsModalDriverName" class="text-xs text-purple-300 font-bold">Driver: -</p>
+          </div>
+        </div>
+        <button onclick="closeDriverPointsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <input type="hidden" id="pointsModalDriverId">
+
+      <div class="space-y-4 text-xs">
+        <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-between">
+          <span class="text-slate-400 font-semibold">Poin Saat Ini:</span>
+          <span id="pointsModalCurrentPoints" class="font-black font-mono text-lg text-amber-400">100 Poin</span>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1.5">Tindakan / Aksi Poin</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="pointActionRadio" value="add" checked class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-emerald-500 peer-checked:bg-emerald-600/20 text-center transition-all">
+                <span class="text-emerald-400 font-black text-xs block">+ Tambah</span>
+                <span class="text-[9px] text-slate-400">Bonus</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="pointActionRadio" value="deduct" class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-rose-500 peer-checked:bg-rose-600/20 text-center transition-all">
+                <span class="text-rose-400 font-black text-xs block">- Kurangi</span>
+                <span class="text-[9px] text-slate-400">Penalti</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="pointActionRadio" value="set" class="peer sr-only">
+              <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-blue-500 peer-checked:bg-blue-600/20 text-center transition-all">
+                <span class="text-blue-400 font-black text-xs block">= Atur Nilai</span>
+                <span class="text-[9px] text-slate-400">Reset</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1.5">Jumlah Poin</label>
+          <div class="relative">
+            <input type="number" id="pointsModalAmountInput" min="1" max="1000" value="25" required class="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-sm focus:border-purple-500 focus:outline-none">
+            <span class="absolute right-3.5 top-2.5 text-slate-400 font-bold text-xs">Poin</span>
+          </div>
+          <!-- Quick Buttons -->
+          <div class="flex items-center space-x-1.5 pt-1.5">
+            <button type="button" onclick="document.getElementById('pointsModalAmountInput').value = 10" class="px-2 py-0.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold">+10</button>
+            <button type="button" onclick="document.getElementById('pointsModalAmountInput').value = 25" class="px-2 py-0.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold">+25</button>
+            <button type="button" onclick="document.getElementById('pointsModalAmountInput').value = 50" class="px-2 py-0.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold">+50</button>
+            <button type="button" onclick="document.getElementById('pointsModalAmountInput').value = 100" class="px-2 py-0.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold">+100</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1.5">Alasan Perubahan Poin</label>
+          <input type="text" id="pointsModalReasonInput" placeholder="Contoh: Bonus rajin 10 order & pelayanan ramah" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-purple-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-700">
+        <button type="button" onclick="closeDriverPointsModal()" class="px-4 py-2.5 rounded-xl bg-slate-700 text-slate-200 text-xs font-bold">Batal</button>
+        <button type="button" onclick="submitDriverPointsChange()" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold shadow flex items-center space-x-1.5">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>Simpan Perubahan Poin</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: SUSPEN DRIVER DENGAN ALASAN
+       ======================================================== -->
+  <div id="driverSuspendModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-amber-500/40 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl border border-amber-500/30">
+            <i class="fa-solid fa-user-lock"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">Tangguhkan (Suspen) Driver</h3>
+            <p id="suspendModalDriverName" class="text-xs text-amber-300 font-bold">Driver: -</p>
+          </div>
+        </div>
+        <button onclick="closeDriverSuspendModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <input type="hidden" id="suspendModalDriverId">
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-300 leading-relaxed">
+          Driver yang ditangguhkan (Suspended) tidak akan dapat menerima order pesanan atau masuk kerja sampai status suspen dibuka kembali oleh Admin.
+        </p>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1.5">Alasan Penangguhan (Akan Tampil di HP Driver)</label>
+          <textarea id="suspendModalReasonInput" rows="3" placeholder="Contoh: Laporan pembatalan order sepihak / ketidaksesuaian identitas kendaraan." required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed focus:border-amber-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-700">
+        <button type="button" onclick="closeDriverSuspendModal()" class="px-4 py-2.5 rounded-xl bg-slate-700 text-slate-200 text-xs font-bold">Batal</button>
+        <button type="button" onclick="submitDriverSuspendAction()" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-black shadow flex items-center space-x-1.5">
+          <i class="fa-solid fa-lock"></i>
+          <span>Terapkan Suspen Sekarang</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: KIRIM NOTIFIKASI PROMO & SIARAN MASSAL
+       ======================================================== -->
+  <div id="broadcastPromoModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-red-500/40 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-red-600/20 text-red-400 flex items-center justify-center text-xl border border-red-500/30">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">Kirim Notifikasi Promo Massal</h3>
+            <p class="text-[11px] text-slate-400">Siarkan pesan ke seluruh perangkat pengguna secara instan</p>
+          </div>
+        </div>
+        <button onclick="closeBroadcastPromoModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="formBroadcastModalQuick" onsubmit="handleQuickBroadcastSubmit(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">Target Penerima</label>
+            <select id="quickModalTarget" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
+              <option value="all">Semua (Driver &amp; Klien)</option>
+              <option value="driver" selected>Khusus Driver Mitra</option>
+              <option value="client">Khusus Klien</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">Tipe Siaran</label>
+            <select id="quickModalType" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
+              <option value="promo" selected>🔥 Promo Spesial</option>
+              <option value="announcement">📢 Pengumuman</option>
+              <option value="urgent">⚠️ Peringatan</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Judul Promo / Pesan</label>
+          <input type="text" id="quickModalTitle" placeholder="Contoh: 🔥 BONUS ORDER DRIVER RAJIN!" required maxlength="60" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs focus:border-red-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Pesan Notifikasi</label>
+          <textarea id="quickModalMessage" rows="3" placeholder="Ketik rincian promo atau pesan yang ingin disampaikan..." required maxlength="250" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed focus:border-red-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-700">
+          <button type="button" onclick="closeBroadcastPromoModal()" class="px-4 py-2.5 rounded-xl bg-slate-700 text-slate-200 font-bold">Batal</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 text-white font-black shadow-lg shadow-red-600/30 flex items-center space-x-1.5 active:scale-95 transition-all">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <span>Kirim Siaran Sekarang</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

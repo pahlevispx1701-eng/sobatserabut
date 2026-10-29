@@ -31,13 +31,18 @@
           extend: {
             colors: {
               brand: {
-                50: '#eff6ff',
-                100: '#dbeafe',
-                500: '#3b82f6',
-                600: '#2563eb',
-                700: '#1d4ed8',
-                800: '#1e40af',
-                900: '#1e3a8a',
+                50: '#fef2f2',
+                100: '#fee2e2',
+                500: '#DC2626',
+                600: '#DC2626',
+                700: '#b91c1c',
+                800: '#991b1b',
+                900: '#7f1d1d',
+              },
+              amber: {
+                400: '#FBBF24',
+                500: '#f59e0b',
+                600: '#d97706',
               }
             }
           }
@@ -89,16 +94,16 @@
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
     .radar-wave {
       position: absolute;
-      border: 2px solid rgba(59, 130, 246, 0.5);
+      border: 2px solid rgba(238,77,45,0.6);
       border-radius: 50%;
       animation: radar-pulse 2.2s infinite ease-out;
     }
     @keyframes radar-pulse {
       0% { width: 40px; height: 40px; opacity: 1; }
-      100% { width: 140px; height: 140px; opacity: 0; }
+      100% { width: 160px; height: 160px; opacity: 0; }
     }
     .leaflet-popup-content-wrapper {
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 0;
     }
     @keyframes puzzleShake {
@@ -109,10 +114,407 @@
     .puzzle-shake {
       animation: puzzleShake 0.4s ease-in-out;
     }
-    .stage4-otp-box:focus {
-      border-color: #EE4D2D !important;
-      box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.2) !important;
-    }
+
+/* ============================================================
+   CLIENT APP v6.0 — ULTRA PREMIUM WARM DARK PHOENIX EDITION
+   Volcanic Ember × Deep Space × Glassmorphism × Living Glow
+   ============================================================ */
+
+/* ---- ROOT DESIGN TOKENS ---- */
+:root {
+  --o-primary:    #EE4D2D;
+  --o-bright:     #FF6B35;
+  --o-dark:       #DC2626;
+  --o-glow:       rgba(238,77,45,0.5);
+  --o-glow-soft:  rgba(238,77,45,0.18);
+  --gold:         #F59E0B;
+  --gold-glow:    rgba(245,158,11,0.35);
+  --bg-void:      #060308;
+  --bg-deep:      #0A0610;
+  --bg-dark:      #100C18;
+  --bg-mid:       #18112A;
+  --bg-card:      #1E1530;
+  --bg-card2:     #261B3A;
+  --bg-glass:     rgba(24,17,42,0.78);
+  --border-o:     rgba(238,77,45,0.18);
+  --border-o2:    rgba(238,77,45,0.35);
+  --text-primary: #FFF5F0;
+  --text-sec:     #FECDC0;
+  --text-muted:   #FDA78D;
+}
+
+/* ---- BODY: Cosmic Ember Dark ---- */
+body {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(238,77,45,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 40% at 85% 85%, rgba(245,158,11,0.06) 0%, transparent 50%),
+    linear-gradient(175deg, #060308 0%, #0A0610 35%, #100C18 65%, #18112A 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* ---- AMBIENT LAYER: Volcanic Orbs ---- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle 600px at 25% 20%, rgba(238,77,45,0.1) 0%, transparent 65%),
+    radial-gradient(circle 400px at 80% 80%, rgba(245,158,11,0.06) 0%, transparent 60%),
+    radial-gradient(circle 500px at 50% 50%, rgba(220,38,38,0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: volcanicDrift 16s ease-in-out infinite alternate;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23EE4D2D' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") !important;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+@keyframes volcanicDrift {
+  0%   { transform: translate(0,0) scale(1); }
+  33%  { transform: translate(-1.5%, 2%) scale(1.01); }
+  66%  { transform: translate(1%, -2%) scale(1.015); }
+  100% { transform: translate(-2%, 1%) scale(0.99); }
+}
+
+/* ---- SCROLLBAR: Ember Glow ---- */
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #FF6B35, #EE4D2D, #DC2626);
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(238,77,45,0.5);
+}
+
+/* ---- BOTTOM NAVIGATION: Obsidian Glass ---- */
+nav.fixed.bottom-0, [id*="bottomNav"], .bottom-nav {
+  background: linear-gradient(180deg,
+    rgba(6,3,8,0) 0%,
+    rgba(10,6,16,0.93) 12%,
+    rgba(10,6,16,0.99) 100%) !important;
+  backdrop-filter: blur(32px) saturate(200%) brightness(0.85) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(0.85) !important;
+  border-top: 1px solid rgba(238,77,45,0.1) !important;
+  box-shadow:
+    0 -1px 0 rgba(238,77,45,0.07),
+    0 -16px 48px rgba(0,0,0,0.85),
+    0 -2px 24px rgba(238,77,45,0.04) !important;
+}
+
+/* Active nav item ember glow */
+nav.fixed.bottom-0 button[class*="text-orange"],
+nav.fixed.bottom-0 button[class*="text-red"],
+nav.fixed.bottom-0 button.active {
+  text-shadow: 0 0 16px rgba(238,77,45,0.75), 0 0 32px rgba(238,77,45,0.3) !important;
+  filter: drop-shadow(0 0 5px rgba(238,77,45,0.5)) !important;
+}
+
+/* ---- HEADER: Frosted Obsidian ---- */
+header,
+[class*="bg-white"][class*="sticky"],
+[class*="sticky"][class*="top-0"],
+[class*="bg-slate"][class*="top-0"] {
+  background: linear-gradient(180deg,
+    rgba(6,3,8,0.98) 0%,
+    rgba(16,12,24,0.96) 100%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(238,77,45,0.1) !important;
+  box-shadow:
+    0 4px 32px rgba(0,0,0,0.65),
+    0 1px 0 rgba(238,77,45,0.05) !important;
+}
+
+/* ---- CARDS: Volcanic Glass ---- */
+.bg-slate-800, .bg-slate-900,
+.bg-gray-800, .bg-gray-900,
+.bg-white, .bg-slate-950 {
+  background: linear-gradient(140deg,
+    rgba(30,21,48,0.85) 0%,
+    rgba(24,17,42,0.82) 100%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+}
+
+/* White card override — keep text readable */
+[class*="bg-white"], .bg-white {
+  background: rgba(30,21,48,0.92) !important;
+  color: #F1F5F9 !important;
+}
+
+/* ---- SERVICE CATEGORY CARDS ---- */
+[class*="service-card"], [id*="categoryCard"],
+[class*="rounded-2xl"][class*="border"] {
+  border-color: rgba(238,77,45,0.12) !important;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.55),
+    0 1px 0 rgba(255,255,255,0.03) !important;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1) !important;
+}
+
+[class*="rounded-2xl"][class*="border"]:hover {
+  border-color: rgba(238,77,45,0.3) !important;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(238,77,45,0.12),
+    0 2px 16px rgba(238,77,45,0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+[class*="rounded-2xl"][class*="border"]:active {
+  transform: scale(0.97) !important;
+  border-color: rgba(238,77,45,0.4) !important;
+}
+
+/* ---- BUTTONS: Ember Gradient ---- */
+button[class*="bg-orange"],
+button[class*="bg-red"],
+button[class*="bg-brand"] {
+  background: linear-gradient(135deg, #FF6B35 0%, #EE4D2D 50%, #DC2626 100%) !important;
+  box-shadow:
+    0 8px 28px rgba(238,77,45,0.45),
+    0 2px 8px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  border: none !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+}
+
+button[class*="bg-orange"]::after,
+button[class*="bg-red"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+button[class*="bg-orange"]:active,
+button[class*="bg-red"]:active {
+  transform: scale(0.97) !important;
+  box-shadow: 0 3px 14px rgba(238,77,45,0.4) !important;
+}
+
+/* CTA mega button — Lava Burst */
+[id*="orderBtn"], [id*="bookBtn"], [id*="ctaBtn"],
+button[class*="w-full"][class*="py-4"],
+button[class*="w-full"][class*="py-3"] {
+  background: linear-gradient(135deg, #FF8C5A 0%, #FF6B35 25%, #EE4D2D 60%, #DC2626 100%) !important;
+  box-shadow:
+    0 12px 36px rgba(238,77,45,0.5),
+    0 4px 16px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(255,107,53,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.2) !important;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+
+/* ---- NEXT / SUBMIT BUTTONS ---- */
+#btnRegisterNext:not([disabled]),
+#btnLoginNext:not([disabled]) {
+  background: linear-gradient(135deg, #FF8C5A 0%, #FF6B35 30%, #EE4D2D 70%, #DC2626 100%) !important;
+  box-shadow:
+    0 10px 30px rgba(238,77,45,0.5),
+    0 4px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.18) !important;
+  color: white !important;
+}
+
+/* ---- INPUTS: Volcanic Glass ---- */
+input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]),
+textarea, select {
+  background: rgba(6,3,8,0.78) !important;
+  border: 1px solid rgba(238,77,45,0.18) !important;
+  color: #FFF5F0 !important;
+  transition: all 0.25s ease !important;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #EE4D2D !important;
+  box-shadow:
+    0 0 0 3px rgba(238,77,45,0.15),
+    inset 0 2px 8px rgba(0,0,0,0.5) !important;
+  outline: none !important;
+  background: rgba(12,7,18,0.88) !important;
+}
+
+/* OTP boxes */
+.stage4-otp-box {
+  background: rgba(6,3,8,0.88) !important;
+  border-color: rgba(238,77,45,0.25) !important;
+  color: #FFF5F0 !important;
+}
+
+.stage4-otp-box:focus {
+  border-color: #EE4D2D !important;
+  box-shadow: 0 0 0 3px rgba(238,77,45,0.2) !important;
+  background: rgba(16,10,22,0.95) !important;
+}
+
+/* ---- MAP: Premium Framed ---- */
+.leaflet-container {
+  background: #060308 !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(238,77,45,0.18) !important;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(238,77,45,0.05),
+    inset 0 0 0 1px rgba(255,255,255,0.02) !important;
+  overflow: hidden !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(16,12,24,0.97) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(238,77,45,0.2) !important;
+  color: #FFF5F0 !important;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.75) !important;
+  border-radius: 16px !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(16,12,24,0.97) !important;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(24,17,42,0.95) !important;
+  color: #EE4D2D !important;
+  border-color: rgba(238,77,45,0.2) !important;
+}
+
+/* ---- PRICE / FARE DISPLAY ---- */
+[id*="price"], [id*="fare"], [id*="total"], [id*="cost"] {
+  color: #F59E0B !important;
+  text-shadow: 0 0 16px rgba(245,158,11,0.45), 0 0 32px rgba(245,158,11,0.15) !important;
+}
+
+/* ---- RATING STARS ---- */
+.text-amber-400, .text-yellow-400, [class*="star"] {
+  text-shadow: 0 0 12px rgba(245,158,11,0.6), 0 0 24px rgba(245,158,11,0.2) !important;
+}
+
+/* ---- STATUS BADGES ---- */
+.bg-emerald-500, .bg-green-500 {
+  box-shadow: 0 0 12px rgba(16,185,129,0.65), 0 0 24px rgba(16,185,129,0.25) !important;
+}
+
+.bg-orange-500, .bg-red-500 {
+  box-shadow: 0 0 12px rgba(238,77,45,0.6), 0 0 24px rgba(238,77,45,0.2) !important;
+}
+
+/* ---- BORDER OVERRIDES ---- */
+.border-slate-700, .border-slate-800 {
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+.border-slate-200, .border-slate-300,
+.border-gray-200, .border-gray-300 {
+  border-color: rgba(238,77,45,0.12) !important;
+}
+
+/* ---- TEXT OVERRIDES: Dark BG fix ---- */
+.text-slate-800, .text-slate-900,
+.text-gray-800, .text-gray-900 {
+  color: #F0E8FF !important;
+}
+
+.text-slate-700, .text-gray-700 {
+  color: #C4B8D8 !important;
+}
+
+.text-slate-600, .text-gray-600 {
+  color: #8B7FA0 !important;
+}
+
+/* ---- AUTH SCREENS: Warm Dark ---- */
+#stage2RegisterScreen, #stage3PuzzleScreen, #stage4OtpScreen,
+[id*="loginScreen"], [id*="authScreen"] {
+  background: linear-gradient(160deg, #060308 0%, #0A0610 50%, #18112A 100%) !important;
+  color: #F1F5F9 !important;
+}
+
+/* Override light mode auth screens */
+.bg-\[#F8F9FA\], .bg-white.fixed {
+  background: rgba(16,10,22,0.99) !important;
+  color: #F1F5F9 !important;
+}
+
+/* Input in auth light screens */
+input[class*="bg-white"], input.bg-white {
+  background: rgba(10,6,16,0.9) !important;
+  color: #FFF5F0 !important;
+  border-color: rgba(238,77,45,0.2) !important;
+}
+
+/* ---- ANIMATE PING ---- */
+.animate-ping {
+  animation: liveRing 1.5s cubic-bezier(0,0,0.2,1) infinite !important;
+}
+
+@keyframes liveRing {
+  0%   { transform: scale(1); opacity: 0.85; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ---- KEYFRAMES ---- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes warmPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(238,77,45,0); }
+  50%       { box-shadow: 0 0 0 10px rgba(238,77,45,0.08), 0 0 32px rgba(238,77,45,0.4); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ---- SCREEN TRANSITIONS ---- */
+[id*="Screen"]:not(.hidden), [id*="Tab"]:not(.hidden),
+[id*="stage"]:not(.hidden) {
+  animation: fadeInUp 0.22s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+/* ---- BOTTOM SHEETS ---- */
+[id*="bottomSheet"]:not(.hidden), [id*="sheet"]:not(.hidden),
+[id*="modal"]:not(.hidden) {
+  animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1) forwards;
+}
+
+/* ---- MODAL OVERLAYS ---- */
+[class*="fixed"][class*="inset-0"][class*="z-"] > div {
+  box-shadow: 0 -24px 80px rgba(0,0,0,0.85) !important;
+}
+
+/* ---- SHIMMER LOADING ---- */
+.loading-shimmer {
+  background: linear-gradient(90deg,
+    rgba(30,21,48,0.5) 0%,
+    rgba(238,77,45,0.07) 50%,
+    rgba(30,21,48,0.5) 100%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.5s ease infinite !important;
+}
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden">
@@ -170,6 +572,12 @@
           <button type="button" id="btnRegisterNext" onclick="onRegisterNextClick()" disabled class="w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-black text-sm cursor-not-allowed transition-all duration-300 flex items-center justify-center space-x-2 select-none shadow-none">
             <span>Berikutnya</span>
             <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+        </div>
+
+        <div class="pt-1 text-center">
+          <button type="button" onclick="closeRegisterFlow()" class="text-xs text-slate-400 hover:text-white underline py-1">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Lewati &amp; Buka Marketplace Langsung
           </button>
         </div>
       </div>
@@ -454,51 +862,107 @@
   </div>
 
 
-  <!-- TAHAP 5: PEMBUATAN KATA SANDI (PASSWORD SETUP) -->
+  <!-- TAHAP 5: PEMBUATAN KATA SANDI & WAJIB PENGISIAN ALAMAT LENGKAP KLIEN -->
   <div id="stage5PasswordScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-y-auto max-w-md mx-auto shadow-2xl">
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center justify-between safe-top">
       <button type="button" onclick="backToOtpStep4()" class="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all" title="Kembali">
         <i class="fa-solid fa-arrow-left text-base"></i>
       </button>
-      <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Atur Kata Sandi</h1>
+      <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Lengkapi Pendaftaran Akun</h1>
       <div class="w-8"></div>
     </header>
 
-    <div class="p-5 flex-1 flex flex-col justify-between space-y-6">
-      <div class="space-y-4 pt-2">
+    <div class="p-5 flex-1 flex flex-col justify-between space-y-5">
+      <div class="space-y-4 pt-1">
         <div>
-          <h2 class="text-base font-black text-slate-900">Tentukan Kata Sandi Akun</h2>
+          <h2 class="text-base font-black text-slate-900">Nama, Sandi &amp; Alamat Lengkap</h2>
           <p class="text-xs text-slate-500 mt-0.5">
-            Atur kata sandi untuk melindungi akun SobatSerabut Anda saat masuk di perangkat lain.
+            Saat mendaftar akun Klien, Anda diwajibkan mengisi alamat lengkap agar saat posting tugas otomatis sinkron tanpa perlu input ulang.
           </p>
+        </div>
+
+        <!-- Nama Lengkap Pemohon -->
+        <div>
+          <label class="block font-bold text-xs text-slate-700 mb-1">Nama Lengkap Pemohon <span class="text-rose-500">*</span></label>
+          <div class="flex items-center border border-slate-300 rounded-2xl bg-white px-3.5 py-3 focus-within:border-[#EE4D2D] transition-all shadow-sm">
+            <i class="fa-solid fa-user text-slate-400 mr-2.5 text-sm"></i>
+            <input type="text" id="stage5NameInput" placeholder="Contoh: Budi Santoso" oninput="validateStage5Form()" class="flex-1 bg-transparent text-slate-900 font-bold text-sm focus:outline-none placeholder-slate-400">
+          </div>
         </div>
 
         <!-- Kolom Atur Kata Sandi dengan Ikon Mata (👁️) -->
         <div>
-          <label class="block font-bold text-xs text-slate-700 mb-2">Atur Kata Sandi</label>
-          <div class="relative flex items-center border border-slate-300 rounded-2xl bg-white px-3.5 py-3.5 focus-within:border-[#EE4D2D] focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-sm">
+          <label class="block font-bold text-xs text-slate-700 mb-1">Atur Kata Sandi <span class="text-rose-500">*</span></label>
+          <div class="relative flex items-center border border-slate-300 rounded-2xl bg-white px-3.5 py-3 focus-within:border-[#EE4D2D] transition-all shadow-sm">
             <i class="fa-solid fa-lock text-slate-400 mr-2.5 text-sm"></i>
-            <input type="password" id="stage5PasswordInput" placeholder="Atur Kata Sandi" oninput="onStage5PasswordInput(this.value)" class="flex-1 bg-transparent text-slate-900 font-bold text-base focus:outline-none placeholder-slate-400">
-            <!-- Ikon Mata (👁️) -->
-            <button type="button" onclick="toggleStage5PasswordVisibility()" class="text-slate-400 hover:text-slate-700 p-1 flex items-center justify-center" title="Tampilkan / Sembunyikan Kata Sandi">
-              <i id="stage5EyeIcon" class="fa-solid fa-eye text-base"></i>
+            <input type="password" id="stage5PasswordInput" placeholder="Minimal 8 karakter" oninput="onStage5PasswordInput(this.value)" class="flex-1 bg-transparent text-slate-900 font-bold text-sm focus:outline-none placeholder-slate-400">
+            <button type="button" onclick="toggleStage5PasswordVisibility()" class="text-slate-400 hover:text-slate-700 p-1 flex items-center justify-center" title="Tampilkan / Sembunyikan">
+              <i id="stage5EyeIcon" class="fa-solid fa-eye text-sm"></i>
             </button>
           </div>
 
-          <!-- Petunjuk Keamanan: Berubah Warna Merah -> Hijau Saat Syarat Terpenuhi -->
-          <div id="stage5RuleBox" class="mt-3 p-3 rounded-2xl border text-xs leading-relaxed transition-all duration-300 border-rose-200 bg-rose-50 text-rose-600 flex items-start space-x-2">
-            <i id="stage5RuleIcon" class="fa-solid fa-circle-xmark text-sm mt-0.5 flex-shrink-0"></i>
-            <span id="stage5RuleText">
-              Password harus terdiri dari 8-16 karakter dan mengandung minimal 1 huruf besar dan 1 huruf kecil.
-            </span>
+          <div id="stage5RuleBox" class="mt-2 p-2.5 rounded-xl border text-[11px] leading-relaxed transition-all duration-300 border-rose-200 bg-rose-50 text-rose-600 flex items-start space-x-2">
+            <i id="stage5RuleIcon" class="fa-solid fa-circle-xmark text-xs mt-0.5 flex-shrink-0"></i>
+            <span id="stage5RuleText">Password minimal 8 karakter dengan huruf besar &amp; kecil.</span>
+          </div>
+        </div>
+
+        <!-- FORMULIR WAJIB ALAMAT LENGKAP -->
+        <div class="p-3.5 rounded-2xl bg-white border border-slate-300 shadow-sm space-y-2.5">
+          <div class="flex items-center space-x-1.5 pb-1 border-b border-slate-100">
+            <span class="material-symbols-outlined text-rose-500 text-base">location_on</span>
+            <span class="text-xs font-black text-slate-800">Alamat Lengkap Domisili / Rumah (Wajib)</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Nama Jalan / Gang <span class="text-rose-500">*</span></label>
+              <input type="text" id="regStreetInput" oninput="validateStage5Form()" placeholder="Jl. Margonda / Gang Niih" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">No. Rumah <span class="text-rose-500">*</span></label>
+              <input type="text" id="regHouseNumberInput" oninput="validateStage5Form()" placeholder="No. 12B" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">RT</label>
+              <input type="text" id="regRtInput" placeholder="001" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">RW</label>
+              <input type="text" id="regRwInput" placeholder="005" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+            <div class="col-span-2">
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Kelurahan / Desa <span class="text-rose-500">*</span></label>
+              <input type="text" id="regKelurahanInput" oninput="validateStage5Form()" placeholder="Kemiri Muka / Kebagusan" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Kecamatan <span class="text-rose-500">*</span></label>
+              <input type="text" id="regKecamatanInput" oninput="validateStage5Form()" placeholder="Beji / Pasar Minggu" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Kota / Kabupaten <span class="text-rose-500">*</span></label>
+              <input type="text" id="regCityInput" oninput="validateStage5Form()" placeholder="Kota Depok / Jakarta" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Patokan Rumah (Sangat Membantu Driver Menemukan Anda)</label>
+            <input type="text" id="regBenchmarkInput" placeholder="Contoh: Pagar hitam tinggi, seberang warung Madura, samping masjid" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#EE4D2D]">
           </div>
         </div>
       </div>
 
-      <!-- Tombol Final: "Daftar" (Besar di Bawah) -->
+      <!-- Tombol Final: "Daftar Akun SobatSerabut" -->
       <div class="pb-4">
         <button type="button" id="btnStage5RegisterFinal" onclick="submitStage5RegisterFinal()" disabled class="w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-black text-sm cursor-not-allowed transition-all duration-300 flex items-center justify-center space-x-2 select-none shadow-none">
-          <span>Daftar</span>
+          <span>Daftar Akun Klien</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
         </button>
       </div>
     </div>
@@ -735,58 +1199,58 @@
   <!-- ========================================================
        TOP APP BAR / HEADER
        ======================================================== -->
-  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 safe-top">
-    <div class="flex items-center justify-between">
-      <!-- App Brand & Dynamic Logo -->
-      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchMainTab('profile')">
-        <div class="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center overflow-hidden shadow-inner">
-          <img id="appHeaderLogo" src="uploads/logo_icon.svg" class="w-7 h-7 object-contain">
-        </div>
-        <div>
-          <div class="flex items-center space-x-1">
-            <span id="appHeaderName" class="font-black text-sm tracking-tight text-white">Sobat<span class="text-blue-500">Serabut</span></span>
-            <span id="roleHeaderBadge" class="text-[9px] px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-400 font-extrabold border border-blue-500/30">KLIEN RESMI</span>
+  <header class="sticky top-0 z-40 safe-top" style="background: linear-gradient(135deg, #080e1c 0%, #0c1428 50%, #0a1220 100%); border-bottom: 1px solid rgba(59,130,246,0.15);">
+    <div class="px-4 pt-3 pb-2">
+      <!-- Top row: Name + Actions -->
+      <div class="flex items-center justify-between">
+        <div class="cursor-pointer" onclick="switchMainTab('profile')">
+          <div class="flex items-center space-x-2">
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #bfdbfe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
+                <span id="roleHeaderBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider" style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3);">KLIEN</span>
+              </div>
+              <p id="currentUserHeaderName" class="text-[11px] truncate max-w-[160px]" style="color: #64748b;">Halo, Klien! 👋</p>
+            </div>
           </div>
-          <p id="currentUserHeaderName" class="text-[11px] text-slate-400 truncate max-w-[130px]">Klien SobatSerabut</p>
+        </div>
+
+        <div class="flex items-center space-x-1.5">
+          <div onclick="switchMainTab('wallet')" class="flex items-center space-x-1.5 cursor-pointer px-3 py-1.5 rounded-2xl" style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2);">
+            <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+            <span id="headerWalletDisplay" class="font-mono text-xs font-bold" style="color: #34d399;">Rp 0</span>
+          </div>
+          <button onclick="openServerSettingsModal()" title="Pengaturan" class="w-8 h-8 rounded-2xl flex items-center justify-center" style="background: rgba(51,65,85,0.6); border: 1px solid rgba(71,85,105,0.4); color: #94a3b8;">
+            <i class="fa-solid fa-sliders text-xs"></i>
+          </button>
+          <button onclick="handleLogout()" title="Keluar" class="w-8 h-8 rounded-2xl flex items-center justify-center" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">
+            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+          </button>
         </div>
       </div>
 
-      <!-- Header Action: Driver App Switcher & Wallet Quick View & Server Settings -->
-      <div class="flex items-center space-x-1.5">
-
-        <div onclick="switchMainTab('wallet')" class="px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 cursor-pointer flex items-center space-x-1.5">
-          <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
-          <span id="headerWalletDisplay" class="font-mono text-xs font-bold text-emerald-300">Rp 0</span>
+      <!-- GLOBAL ANNOUNCEMENT BANNER -->
+      <div id="globalAnnouncementBanner" class="hidden mt-2 p-2 rounded-2xl flex items-center justify-between" style="background: rgba(37,99,235,0.1); border: 1px solid rgba(59,130,246,0.25);">
+        <div class="flex items-center space-x-2 truncate">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+          <span id="globalAnnouncementText" class="truncate font-medium text-[11px]" style="color: #93c5fd;"></span>
         </div>
-        <button onclick="openServerSettingsModal()" title="Pengaturan Koneksi Server" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-blue-400 flex items-center justify-center border border-slate-700">
-          <i class="fa-solid fa-server text-xs"></i>
-        </button>
-        <button onclick="handleLogout()" title="Keluar / Ganti Akun" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-rose-400 flex items-center justify-center border border-slate-700">
-          <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+        <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1" style="background: #059669; color: #fff;">
+          <i class="fa-brands fa-whatsapp"></i>
+          <span>CS</span>
+        </a>
+      </div>
+
+      <!-- QUICK POST TASK BAR - Redesigned -->
+      <div id="klienQuickBarContainer" class="mt-3">
+        <button onclick="openPostTaskModal()" class="w-full py-3 rounded-2xl font-extrabold text-xs flex items-center justify-center space-x-2 transition-all" style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: #fff; box-shadow: 0 4px 15px rgba(37,99,235,0.35);">
+          <div class="w-5 h-5 rounded-lg flex items-center justify-center" style="background: rgba(255,255,255,0.2);">
+            <i class="fa-solid fa-plus text-xs"></i>
+          </div>
+          <span>Posting Tugas — Butuh Bantuan Sekarang?</span>
+          <i class="fa-solid fa-chevron-right text-[10px] opacity-70"></i>
         </button>
       </div>
-    </div>
-
-    <!-- GLOBAL ANNOUNCEMENT BANNER FOR PEMOHON & MITRA -->
-    <div id="globalAnnouncementBanner" class="hidden mt-2 p-2 rounded-xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/30 text-xs text-blue-200 flex items-center justify-between">
-      <div class="flex items-center space-x-2 truncate">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-        <span id="globalAnnouncementText" class="truncate font-medium text-[11px]"></span>
-      </div>
-      <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded-full flex items-center space-x-1">
-        <i class="fa-brands fa-whatsapp"></i>
-        <span>087791201091</span>
-      </a>
-    </div>
-
-
-
-    <!-- KLIEN ONLY: QUICK POST TASK BAR -->
-    <div id="klienQuickBarContainer" class="mt-3 flex items-center justify-between">
-      <button onclick="openPostTaskModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
-        <i class="fa-solid fa-plus-circle text-sm"></i>
-        <span>Posting Tugas &amp; Butuh Bantuan Baru</span>
-      </button>
     </div>
   </header>
 
@@ -800,27 +1264,68 @@
          ======================================================== -->
     <div id="klienViewContainer" class="space-y-4">
 
-      <!-- Search Service Banner -->
-      <div class="p-4 rounded-2xl bg-gradient-to-br from-blue-900/40 via-slate-900 to-slate-900 border border-blue-500/30 shadow-xl space-y-3">
-        <div>
-          <h2 class="text-base font-extrabold text-white">Butuh bantuan apa hari ini?</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Ribuan mitra pekerja terdekat siap membantu tugas Anda.</p>
+      <!-- Search Service Banner - Modern Redesign -->
+      <div class="rounded-3xl overflow-hidden shadow-2xl" style="background: linear-gradient(135deg, #0b1628 0%, #111c35 60%, #0b1628 100%); border: 1px solid rgba(59,130,246,0.18); padding: 16px;">
+        <!-- Decorative -->
+        <div class="absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-10" style="background: radial-gradient(circle, #3b82f6, transparent 70%); pointer-events: none;"></div>
+        
+        <div class="mb-3">
+          <div class="flex items-center space-x-2 mb-1">
+            <span class="text-lg">👋</span>
+            <h2 class="text-sm font-black text-white">Butuh bantuan apa hari ini?</h2>
+          </div>
+          <p class="text-[11px]" style="color: #475569;">Ribuan mitra terdekat siap membantu tugas Anda sekarang.</p>
         </div>
 
-        <!-- Search Input Bar -->
+        <!-- Search Input - Modern -->
         <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-          <input type="text" id="klienSearchServiceInput" oninput="handleSearchServices(this.value)" placeholder="Cari jasa: AC bocor, beli gas 3kg, angkat barang..." class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-[11px]" style="color: #60a5fa;"></i>
+          <input type="text" id="klienSearchServiceInput" oninput="handleSearchServices(this.value)" placeholder="Cari: servis AC, angkat barang, tukang..." class="w-full pl-9 pr-4 py-3 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none transition-all" style="background: rgba(2,6,23,0.8); border: 1px solid rgba(59,130,246,0.2);">
         </div>
       </div>
 
-      <!-- Hero Promo Banner SobatSerabut (Layar Beranda) -->
-      <div class="relative w-full rounded-2xl overflow-hidden border border-blue-500/20 shadow-xl group">
-        <img src="img/banner_hero.png" alt="SobatSerabut Banner" class="w-full h-32 sm:h-36 object-cover object-center" onerror="this.onerror=null; this.src='uploads/logo_sobatserabut.svg'">
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex flex-col justify-end p-3.5">
-          <span class="text-[9px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-extrabold w-max uppercase tracking-wider mb-1 shadow">Marketplace Jasa Serabutan</span>
-          <h3 class="text-xs font-black text-white leading-tight">Solusi Cepat Kebutuhan Rumah &amp; Harian Anda</h3>
-          <p class="text-[10px] text-slate-300 mt-0.5">Pekerja terverifikasi, tarif standar transparan &amp; saldo aman 100% di Rekber.</p>
+      <!-- Hero Banner - Modern Redesign -->
+      <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl group" style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #0ea5e9 100%); min-height: 120px;">
+        <!-- Pattern overlay -->
+        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px), radial-gradient(circle at 60% 80%, white 1px, transparent 1px); background-size: 40px 40px;"></div>
+        
+        <!-- Blob decorations -->
+        <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20" style="background: radial-gradient(circle, #60a5fa, transparent);"></div>
+        <div class="absolute -bottom-4 -left-4 w-20 h-20 rounded-full opacity-30" style="background: radial-gradient(circle, #7c3aed, transparent);"></div>
+        
+        <!-- Content -->
+        <div class="relative p-4 flex items-center justify-between">
+          <div class="flex-1 pr-4">
+            <span class="inline-block text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider mb-2 shadow" style="background: rgba(255,255,255,0.2); color: #e0f2fe; border: 1px solid rgba(255,255,255,0.2);">✨ Marketplace Jasa Serabutan</span>
+            <h3 class="text-sm font-black text-white leading-snug mb-1">Solusi Cepat Kebutuhan<br>Rumah &amp; Harian Anda</h3>
+            <div class="flex items-center space-x-3 text-[10px]" style="color: #bfdbfe;">
+              <span class="flex items-center space-x-1"><i class="fa-solid fa-shield-check text-emerald-300"></i><span>Terverifikasi</span></span>
+              <span class="flex items-center space-x-1"><i class="fa-solid fa-lock text-amber-300"></i><span>Rekber Aman</span></span>
+            </div>
+          </div>
+          
+          <!-- Right decorative element -->
+          <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);">
+            <i class="fa-solid fa-handshake text-white text-2xl opacity-80"></i>
+          </div>
+        </div>
+        
+        <!-- Bottom stats bar -->
+        <div class="px-4 pb-3 flex items-center space-x-4">
+          <div class="text-center">
+            <div class="text-xs font-black text-white">1000+</div>
+            <div class="text-[9px]" style="color: #93c5fd;">Mitra Aktif</div>
+          </div>
+          <div class="w-px h-6" style="background: rgba(255,255,255,0.2);"></div>
+          <div class="text-center">
+            <div class="text-xs font-black text-white">50+</div>
+            <div class="text-[9px]" style="color: #93c5fd;">Jenis Layanan</div>
+          </div>
+          <div class="w-px h-6" style="background: rgba(255,255,255,0.2);"></div>
+          <div class="text-center">
+            <div class="text-xs font-black text-white">4.8★</div>
+            <div class="text-[9px]" style="color: #93c5fd;">Rating Rata-rata</div>
+          </div>
         </div>
       </div>
 
@@ -1016,15 +1521,65 @@
           <div class="flex-1">
             <div class="flex items-center space-x-1.5">
               <h3 id="profileUserName" class="font-extrabold text-white text-sm">Nama Pengguna</h3>
-              <span id="profileUserBadge" class="text-[9px] px-1.5 py-0.2 rounded-full font-bold">Role</span>
+              <span id="profileUserBadge" class="text-[9px] px-1.5 py-0.2 rounded-full font-bold">Klien</span>
             </div>
             <p id="profileUserPhone" class="text-xs text-slate-400 font-mono mt-0.5">081234567890</p>
-            <p id="profileUserAddress" class="text-[11px] text-slate-500 mt-0.5 truncate">Jakarta</p>
+            <p id="profileUserAddress" class="text-[11px] text-slate-300 mt-0.5 leading-tight truncate">Memuat alamat...</p>
             <button type="button" onclick="openProfilePhotoChangeModal()" class="mt-1 text-[10px] text-blue-400 hover:text-blue-300 font-bold flex items-center space-x-1">
               <i class="fa-solid fa-image"></i>
-              <span>Atur / Ubah Foto Profil Asli</span>
+              <span>Atur Foto Profil Asli</span>
             </button>
           </div>
+        </div>
+
+        <!-- 1. KARTU DOMPET SAYA & TOP UP VIRTUAL ACCOUNT APLIKASI SENDIRI -->
+        <div class="p-4 rounded-3xl bg-gradient-to-br from-blue-950/60 via-slate-900 to-slate-950 border border-blue-500/40 shadow-2xl space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <div class="w-9 h-9 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-base shadow-inner">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+              <div>
+                <h4 class="font-black text-white text-xs">Dompet SobatSerabut</h4>
+                <p class="text-[10px] text-slate-400">Virtual Account &amp; E-Wallet Terpadu</p>
+              </div>
+            </div>
+            <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold border border-emerald-500/30">Instan Real-Time</span>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-semibold">Saldo Dompet Saya:</span>
+              <div class="text-xl font-black font-mono text-emerald-400 tracking-tight" id="profileWalletBalanceText">Rp 0</div>
+            </div>
+            <button type="button" onclick="openTopupModal()" class="px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 flex items-center space-x-1.5 transition-all">
+              <i class="fa-solid fa-circle-plus text-xs"></i>
+              <span>Top Up VA</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-tight">
+            Top up otomatis via Virtual Account Bank (SeaBank, BCA, BRI, Mandiri, BNI), E-Wallet (DANA, GoPay, OVO, ShopeePay), dan Kasir Alfamart / Indomaret.
+          </p>
+        </div>
+
+        <!-- 2. KELOLA ALAMAT SAYA: DAPAT MENAMBAHKAN & MENGUBAH ALAMAT DI MENU PROFIL SAYA -->
+        <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-xs flex items-center space-x-2">
+              <span class="material-symbols-outlined text-rose-500 text-sm">home_pin</span>
+              <span>Alamat Lengkap Saya</span>
+            </h4>
+            <span class="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">Otomatis Sinkron</span>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+            <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Alamat Utama Saat Ini:</span>
+            <p id="profileUserFullAddressBox" class="text-white font-semibold leading-relaxed text-xs">Memuat alamat...</p>
+            <p id="profileUserBenchmarkBox" class="text-[10px] text-amber-400 font-medium"></p>
+          </div>
+          <button type="button" onclick="openManageAddressModal()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition-all">
+            <i class="fa-solid fa-plus-circle text-xs"></i>
+            <span>Tambah / Ubah Alamat Lengkap Saya</span>
+          </button>
         </div>
 
       <!-- Rekening & Pembayaran Rekber Klien -->
@@ -1230,29 +1785,26 @@
   </main>
 
   <!-- ========================================================
-       BOTTOM NAVIGATION BAR (ANDROID NATIVE STYLE - GOOGLE MATERIAL ICONS)
+       BOTTOM NAVIGATION BAR: 4 MENU UTAMA
+       1. Beranda | 2. Peta | 3. Pesanan | 4. Profil Saya
        ======================================================== -->
-  <nav class="bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 px-2 py-1.5 flex items-center justify-around safe-bottom shadow-2xl">
-    <button type="button" onclick="switchMainTab('home')" id="navBtn-home" class="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-blue-500 font-extrabold transition-all active:scale-90 cursor-pointer">
+  <nav class="bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 px-3 py-1.5 flex items-center justify-around safe-bottom shadow-2xl">
+    <button type="button" onclick="switchMainTab('home')" id="navBtn-home" class="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-blue-500 font-extrabold transition-all active:scale-90 cursor-pointer">
       <span class="material-symbols-outlined text-2xl pointer-events-none">home</span>
       <span class="text-[10px] mt-0.5 pointer-events-none">Beranda</span>
     </button>
-    <button type="button" onclick="switchMainTab('map')" id="navBtn-map" class="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
+    <button type="button" onclick="switchMainTab('map')" id="navBtn-map" class="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
       <span class="material-symbols-outlined text-2xl pointer-events-none">explore</span>
       <span class="text-[10px] mt-0.5 pointer-events-none">Peta</span>
     </button>
-    <button type="button" onclick="switchMainTab('orders')" id="navBtn-orders" class="relative flex flex-col items-center justify-center py-1 px-2 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
+    <button type="button" onclick="switchMainTab('orders')" id="navBtn-orders" class="relative flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
       <span class="material-symbols-outlined text-2xl pointer-events-none">assignment</span>
       <span class="text-[10px] mt-0.5 pointer-events-none">Pesanan</span>
-      <span id="navOrdersBadge" class="hidden absolute top-0.5 right-2 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse pointer-events-none"></span>
+      <span id="navOrdersBadge" class="hidden absolute top-0.5 right-3 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse pointer-events-none"></span>
     </button>
-    <button type="button" onclick="switchMainTab('wallet')" id="navBtn-wallet" class="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
-      <span class="material-symbols-outlined text-2xl pointer-events-none">account_balance_wallet</span>
-      <span class="text-[10px] mt-0.5 pointer-events-none">Dompet</span>
-    </button>
-    <button type="button" onclick="switchMainTab('profile')" id="navBtn-profile" class="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
+    <button type="button" onclick="switchMainTab('profile')" id="navBtn-profile" class="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition-all active:scale-90 cursor-pointer">
       <span class="material-symbols-outlined text-2xl pointer-events-none">person</span>
-      <span class="text-[10px] mt-0.5 pointer-events-none">Saya</span>
+      <span class="text-[10px] mt-0.5 pointer-events-none">Profil Saya</span>
     </button>
   </nav>
 
@@ -1269,48 +1821,53 @@
         <button onclick="closePostTaskModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <div class="space-y-3 text-xs">
+      <div class="space-y-3.5 text-xs">
+        <!-- 1. KATEGORI JASA -->
         <div>
-          <label class="block font-semibold text-slate-300 mb-1">Judul Pekerjaan yang Dibutuhkan</label>
-          <input type="text" id="postTaskTitleInput" placeholder="Contoh: Tolong belikan gas 3kg dan pasangkan" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium">
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-300 mb-1">Kategori Jasa</label>
-          <select id="postTaskCategorySelect" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium">
+          <label class="block font-bold text-slate-200 mb-1 flex items-center justify-between">
+            <span class="flex items-center space-x-1.5">
+              <span class="material-symbols-outlined text-sm text-blue-400">category</span>
+              <span>Kategori Jasa yang Dibutuhkan</span>
+            </span>
+            <span class="text-[10px] text-emerald-400 font-bold" id="postTaskDurationEstimateBadge">Estimasi ~60 Menit</span>
+          </label>
+          <select id="postTaskCategorySelect" onchange="onPostTaskCategoryChange(this.value)" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold text-xs focus:border-blue-500">
             <!-- populated via JS -->
           </select>
         </div>
 
+        <!-- 2. CATATAN KEBUTUHAN / RINCIAN PEKERJAAN -->
         <div>
-          <label class="block font-semibold text-slate-300 mb-1">Rincian Kebutuhan &amp; Catatan</label>
-          <textarea id="postTaskDescInput" rows="2" placeholder="Jelaskan kebutuhan detail untuk pekerja..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white"></textarea>
-        </div>
-
-        <!-- Lampiran Foto Kebutuhan Tugas (Guna Konfirmasi Data Sesuai) -->
-        <div>
-          <label class="block font-semibold text-slate-300 mb-1 flex items-center justify-between">
-            <span class="flex items-center space-x-1.5">
-              <span class="material-symbols-outlined text-sm text-blue-400">photo_camera</span>
-              <span>Foto Kondisi / Barang / Tugas (Opsional)</span>
-            </span>
-            <span class="text-[10px] text-slate-400">Kamera HP</span>
+          <label class="block font-bold text-slate-200 mb-1 flex items-center space-x-1.5">
+            <span class="material-symbols-outlined text-sm text-amber-400">edit_note</span>
+            <span>Rincian Kebutuhan &amp; Catatan untuk Pekerja</span>
           </label>
-          <div class="flex items-center space-x-2">
-            <button type="button" onclick="document.getElementById('postTaskPhotoInput').click()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold text-xs border border-slate-700 flex items-center space-x-1.5 transition-all">
-              <span class="material-symbols-outlined text-sm">add_a_photo</span>
-              <span>Ambil / Pilih Foto</span>
-            </button>
-            <span id="postTaskPhotoStatus" class="text-[11px] text-slate-400 italic">Belum ada foto</span>
-          </div>
-          <input type="file" id="postTaskPhotoInput" accept="image/*" class="hidden" onchange="handlePostTaskPhotoSelect(this)">
-          <div id="postTaskPhotoPreviewBox" class="hidden mt-2 relative w-28 h-20 rounded-xl overflow-hidden border border-blue-500/50 shadow">
-            <img id="postTaskPhotoPreviewImg" class="w-full h-full object-cover">
-            <button type="button" onclick="removePostTaskPhoto()" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center shadow">✕</button>
-          </div>
+          <textarea id="postTaskDescInput" rows="3" placeholder="Contoh: Butuh bantuan pasang pipa wastafel yang bocor di dapur belakang, bawa kunci pipa..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white leading-relaxed text-xs focus:border-blue-500"></textarea>
         </div>
 
-        <!-- RINCIAN BIAYA OTOMATIS SESUAI KATEGORI JASA (BUDGET MANUAL & BIAYA REKBER FLAT DIHAPUS) -->
+        <!-- 3. ALAMAT PENGERJAAN: OTOMATIS SINKRON DARI PROFIL SAYA (TIDAK PERLU INPUT ALAMAT LAGI) -->
+        <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block font-bold text-slate-300 text-xs flex items-center space-x-1.5">
+              <span class="material-symbols-outlined text-sm text-rose-500">home_pin</span>
+              <span>Alamat Pengerjaan (Tersinkron dari Profil Saya)</span>
+            </label>
+            <button type="button" onclick="closePostTaskModal(); switchMainTab('profile');" class="text-blue-400 hover:text-blue-300 font-bold text-[10px] flex items-center space-x-1">
+              <i class="fa-solid fa-pen-to-square text-[9px]"></i>
+              <span>Ubah di Profil</span>
+            </button>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-200 leading-relaxed font-medium">
+            <p id="postTaskSyncedAddressDisplay">Memuat alamat profil Anda...</p>
+            <p id="postTaskSyncedBenchmarkDisplay" class="text-[10px] text-amber-400 mt-1 font-sans"></p>
+          </div>
+          <!-- Hidden inputs for coordinates and fallback -->
+          <input type="hidden" id="postTaskAddressInput">
+          <input type="hidden" id="postTaskLat" value="-6.1754">
+          <input type="hidden" id="postTaskLng" value="106.8272">
+        </div>
+
+        <!-- 4. PERHITUNGAN BIAYA JASA OTOMATIS -->
         <div class="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-700/80 space-y-2">
           <div class="flex items-center justify-between pb-1.5 border-b border-slate-800 text-[11px]">
             <span class="text-slate-300 font-bold flex items-center space-x-1.5">
@@ -1340,132 +1897,22 @@
           </div>
         </div>
 
-        <!-- METODE PEMBAYARAN REKBER RESMI KE ADMIN SOBATSERABUT -->
-        <div class="p-3.5 rounded-2xl bg-gradient-to-r from-blue-950/40 to-slate-900 border border-blue-500/40 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <label class="block font-bold text-white text-[11px] flex items-center space-x-1.5">
-              <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-              <span>Pembayaran Rekber Aman ke Admin SobatSerabut</span>
-            </label>
-            <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">Dana Terproteksi</span>
+        <!-- 5. INFO RADAR JARAK ADMIN -->
+        <div class="p-2.5 rounded-xl bg-blue-950/30 border border-blue-500/30 text-[11px] text-blue-300 flex items-center space-x-2.5">
+          <i class="fa-solid fa-radar text-blue-400 text-base animate-pulse flex-shrink-0"></i>
+          <div>
+            <span class="font-bold text-white block">Pancaran Radar Otomatis ke Driver Terdekat</span>
+            <span class="text-[10px] text-slate-400">Radar otomatis mencari driver terdekat dalam radius <span id="postTaskRadarRadiusDisplay" class="font-bold text-blue-300">...</span></span>
           </div>
-          <p class="text-[10px] text-slate-400 leading-tight">
-            Pembayaran diamankan langsung di rekening/ewallet Admin: <strong>QRIS</strong>, <strong>SeaBank (901771223812)</strong>, atau <strong>GoPay (087735170386)</strong>.
-          </p>
-
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <label class="block text-[10px] text-slate-400 mb-1">Pilih Metode Pembayaran ke Admin:</label>
-              <select id="postTaskPaymentMethodSelect" onchange="handlePaymentMethodChange(this.value)" class="w-full px-2.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-semibold text-xs focus:border-blue-500">
-                <option value="seabank">SeaBank Admin (901771223812)</option>
-                <option value="gopay">GoPay Admin (087735170386)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[10px] text-slate-400 mb-1">No. HP / Rek Pembayar:</label>
-              <input type="text" id="postTaskAccountNoInput" placeholder="No. HP / Rek Anda" class="w-full px-2.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs font-semibold focus:border-blue-500">
-            </div>
-          </div>
-          <input type="text" id="postTaskAccountNameInput" placeholder="Nama Pemilik Akun / Pengirim (Sesuai Rekening Anda)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-blue-500">
-        </div>
-
-
-        <!-- Titik Lokasi & Alamat Sangat Akurat (No. Rumah, RT/RW, Kelurahan, Kecamatan, Kota, Patokan) -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block font-semibold text-slate-300 text-xs flex items-center space-x-1">
-              <span class="material-symbols-outlined text-sm text-blue-400">location_on</span>
-              <span>Alamat Lengkap &amp; Titik Lokasi Presisi</span>
-            </label>
-            <div class="flex space-x-1.5">
-              <button type="button" onclick="useCurrentGpsLocation()" class="px-2.5 py-1 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 text-[10px] font-bold flex items-center space-x-1 transition-all">
-                <span class="material-symbols-outlined text-xs">my_location</span>
-                <span>GPS Saya</span>
-              </button>
-              <button type="button" onclick="openGoogleMapPicker()" class="px-2.5 py-1 rounded-xl bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-[10px] font-bold flex items-center space-x-1 transition-all">
-                <span class="material-symbols-outlined text-xs">map</span>
-                <span>Pin Peta</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Structured Address Grid -->
-          <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
-            <div class="grid grid-cols-3 gap-2">
-              <div class="col-span-2">
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Nama Jalan / Gang</label>
-                <input type="text" id="postTaskStreet" placeholder="Contoh: Jl. Margonda / Gang Niih" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-              <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">No. Rumah / Blok</label>
-                <input type="text" id="postTaskHouseNumber" placeholder="No. 12B" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-4 gap-2">
-              <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">RT</label>
-                <input type="text" id="postTaskRt" placeholder="001" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-              <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">RW</label>
-                <input type="text" id="postTaskRw" placeholder="005" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-              <div class="col-span-2">
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Kelurahan / Desa</label>
-                <input type="text" id="postTaskKelurahan" placeholder="Kemiri Muka / Kebagusan" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Kecamatan</label>
-                <input type="text" id="postTaskKecamatan" placeholder="Beji / Pasar Minggu" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-              <div>
-                <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Kota / Kabupaten</label>
-                <input type="text" id="postTaskCity" placeholder="Kota Depok / Jakarta Selatan" oninput="updateFullAddressDisplay()" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-              </div>
-            </div>
-
-            <div>
-              <label class="text-[10px] font-bold text-amber-400 block mb-0.5 flex items-center space-x-1">
-                <span class="material-symbols-outlined text-xs">flag</span>
-                <span>Catatan Patokan (Sangat Membantu Mitra Menemukan Rumah Anda)</span>
-              </label>
-              <input type="text" id="postTaskBenchmark" placeholder="Contoh: Pagar hitam tinggi, seberang warung Madura, ada pohon mangga" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:border-blue-500">
-            </div>
-
-            <!-- Full Address Preview & Coordinates Hidden Fields -->
-            <input type="hidden" id="postTaskAddressInput">
-            <input type="hidden" id="postTaskLat" value="-6.1754">
-            <input type="hidden" id="postTaskLng" value="106.8272">
-            <input type="hidden" id="postTaskAccuracy" value="5">
-
-            <div class="pt-1 border-t border-slate-800 text-[10px] space-y-1">
-              <div class="text-slate-300 font-medium">
-                <span class="text-slate-500">Ringkasan Alamat:</span>
-                <span id="postTaskFullAddressPreview" class="text-white font-semibold block mt-0.5">Belum ditentukan</span>
-              </div>
-              <div id="postTaskCoordsBadge" class="text-blue-400 font-mono flex items-center justify-between">
-                <span id="postTaskCoordsText" class="flex items-center space-x-1">
-                  <span class="material-symbols-outlined text-xs text-rose-500">pin_drop</span>
-                  <span>Lat -6.1754, Lng 106.8272</span>
-                </span>
-                <span id="postTaskAccuracyText" class="text-emerald-400 font-bold">Akurasi GPS: ~5m</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-3 rounded-xl bg-blue-900/20 border border-blue-500/30 text-blue-300 text-[11px] leading-relaxed">
-          <i class="fa-solid fa-shield-halved mr-1 text-emerald-400"></i> Uang Anda 100% aman di <strong>Rekber SobatSerabut</strong> dan baru dicairkan setelah Anda puas dan menekan tombol selesai.
         </div>
       </div>
 
       <div class="flex space-x-2 pt-2 border-t border-slate-800">
-        <button onclick="closePostTaskModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Batal</button>
-        <button onclick="submitNewTaskPost()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/30">Post Tugas Sekarang</button>
+        <button onclick="closePostTaskModal()" class="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Batal</button>
+        <button onclick="submitNewTaskPost()" id="btnSubmitNewTask" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-paper-plane text-xs"></i>
+          <span>Pancarkan Tugas Sekarang</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1681,7 +2128,77 @@
   </div>
 
   <!-- ========================================================
-       MODAL 5: TOP-UP SALDO DOMPET NYATA KE ADMIN SOBATSERABUT
+       MODAL: KELOLA & TAMBAH ALAMAT LENGKAP DI PROFIL SAYA
+       ======================================================== -->
+  <div id="modalManageAddress" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl my-6">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
+            <span class="material-symbols-outlined text-base">home_pin</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-xs">Atur Alamat di Profil Saya</h3>
+            <p class="text-[10px] text-slate-400">Otomatis sinkron saat posting tugas</p>
+          </div>
+        </div>
+        <button onclick="closeManageAddressModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-2">
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Nama Jalan / Gang <span class="text-rose-500">*</span></label>
+            <input type="text" id="editAddressStreet" placeholder="Contoh: Jl. Margonda / Gang Niih" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">No. Rumah <span class="text-rose-500">*</span></label>
+            <input type="text" id="editAddressHouseNumber" placeholder="No. 12B" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">RT</label>
+            <input type="text" id="editAddressRt" placeholder="001" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">RW</label>
+            <input type="text" id="editAddressRw" placeholder="005" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Kelurahan / Desa <span class="text-rose-500">*</span></label>
+            <input type="text" id="editAddressKelurahan" placeholder="Kemiri Muka / Kebagusan" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Kecamatan <span class="text-rose-500">*</span></label>
+            <input type="text" id="editAddressKecamatan" placeholder="Beji / Pasar Minggu" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Kota / Kabupaten <span class="text-rose-500">*</span></label>
+            <input type="text" id="editAddressCity" placeholder="Kota Depok / Jakarta" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-amber-400 block mb-0.5">Patokan Rumah</label>
+          <input type="text" id="editAddressBenchmark" placeholder="Contoh: Pagar hitam tinggi, seberang warung Madura" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-medium text-xs focus:border-blue-500">
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeManageAddressModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Batal</button>
+        <button type="button" onclick="saveClientProfileAddress()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/30">Simpan Alamat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 5: TOP-UP VIRTUAL ACCOUNT APLIKASI SENDIRI SOBATSERABUT
+       (E-Wallet, Rekening Bank, Alfamart, Indomaret)
        ======================================================== -->
   <div id="topupModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl my-6">
@@ -1689,8 +2206,8 @@
         <div class="flex items-center space-x-2">
           <div class="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-wallet text-sm"></i></div>
           <div>
-            <h3 class="font-black text-white text-xs">Isi Saldo Dompet (Top-Up)</h3>
-            <p class="text-[10px] text-slate-400">Transfer ke Rekening &amp; QRIS Admin</p>
+            <h3 class="font-black text-white text-xs">Top Up Saldo Virtual Account</h3>
+            <p class="text-[10px] text-slate-400">Langsung masuk ke dompet aplikasi Anda</p>
           </div>
         </div>
         <button onclick="closeTopupModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -1698,63 +2215,66 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-200 mb-1">Nominal Top-Up (Rp):</label>
-          <input type="number" id="topupAmountInput" value="50000" min="10000" step="10000" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold text-sm focus:border-blue-500">
+          <label class="block font-bold text-slate-200 mb-1">Pilih / Ketik Nominal Top-Up (Rp):</label>
+          <input type="number" id="topupAmountInput" value="50000" min="10000" step="5000" oninput="updateGeneratedVAInfo()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold text-sm focus:border-blue-500">
         </div>
         <div class="grid grid-cols-4 gap-1.5">
-          <button type="button" onclick="setTopupAmount(25000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">25k</button>
-          <button type="button" onclick="setTopupAmount(50000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">50k</button>
-          <button type="button" onclick="setTopupAmount(100000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">100k</button>
-          <button type="button" onclick="setTopupAmount(250000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">250k</button>
+          <button type="button" onclick="setTopupAmount(25000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">25rb</button>
+          <button type="button" onclick="setTopupAmount(50000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">50rb</button>
+          <button type="button" onclick="setTopupAmount(100000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">100rb</button>
+          <button type="button" onclick="setTopupAmount(200000)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px]">200rb</button>
         </div>
 
-        <!-- Pilihan Tujuan Transfer Admin -->
+        <!-- Pilihan Saluran Top Up -->
         <div class="space-y-2 pt-1">
-          <label class="block font-bold text-slate-200">Pilih Tujuan Pembayaran Admin:</label>
-          <div class="grid grid-cols-3 gap-1.5">
-            <button type="button" id="topupTabBtn-seabank" onclick="selectTopupAdminMethod('seabank')" class="p-2 rounded-xl border border-blue-500 bg-blue-600/20 text-center font-bold text-[11px] text-white">SeaBank</button>
-            <button type="button" id="topupTabBtn-gopay" onclick="selectTopupAdminMethod('gopay')" class="p-2 rounded-xl border border-slate-700 bg-slate-950 text-center font-bold text-[11px] text-slate-300">GoPay</button>
-            <button type="button" id="topupTabBtn-qris" onclick="selectTopupAdminMethod('qris')" class="p-2 rounded-xl border border-slate-700 bg-slate-950 text-center font-bold text-[11px] text-slate-300">QRIS Asli</button>
-          </div>
+          <label class="block font-bold text-slate-200">Pilih Jalur Pengiriman / Top-Up:</label>
+          <select id="topupChannelSelect" onchange="onTopupChannelChange(this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold text-xs focus:border-blue-500">
+            <optgroup label="Virtual Account Bank">
+              <option value="seabank" selected>SeaBank (No: 901771223812)</option>
+              <option value="bca_va">BCA Virtual Account</option>
+              <option value="bri_va">BRI BRIVA</option>
+              <option value="mandiri_va">Mandiri Virtual Account</option>
+              <option value="bni_va">BNI Virtual Account</option>
+            </optgroup>
+            <optgroup label="E-Wallet">
+              <option value="dana">DANA (087735170386)</option>
+              <option value="gopay">GoPay (087735170386)</option>
+              <option value="ovo">OVO (087735170386)</option>
+              <option value="shopeepay">ShopeePay (087735170386)</option>
+            </optgroup>
+            <optgroup label="Gerai Retail Minimarket">
+              <option value="alfamart">Alfamart / Alfamidi</option>
+              <option value="indomaret">Indomaret / Ceriamart</option>
+            </optgroup>
+          </select>
 
-          <!-- Box SeaBank Admin -->
-          <div id="topupBox-seabank" class="p-3 rounded-2xl bg-blue-950/40 border border-blue-500/40 space-y-1">
-            <span class="text-blue-300 font-bold text-[11px] block">SeaBank Admin Resmi:</span>
-            <div class="flex items-center justify-between bg-slate-950 p-2 rounded-xl border border-slate-800 font-mono">
-              <span class="text-sm font-black text-emerald-400 tracking-wider">901771223812</span>
-              <button type="button" onclick="copyToClipboard('901771223812', 'No. SeaBank Admin')" class="px-2 py-1 rounded bg-blue-600 text-white text-[10px] font-bold">Salin</button>
+          <!-- Tampilan Nomor VA & Kode Bayar -->
+          <div class="p-3.5 rounded-2xl bg-gradient-to-br from-blue-950/60 to-slate-950 border border-blue-500/40 space-y-2">
+            <div class="flex items-center justify-between text-[11px]">
+              <span id="vaChannelTitle" class="text-blue-300 font-bold">Nomor Virtual Account SobatSerabut:</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">OTOMATIS</span>
             </div>
-            <p class="text-[10px] text-slate-400">a.n. SobatSerabut Admin</p>
-          </div>
-
-          <!-- Box GoPay Admin -->
-          <div id="topupBox-gopay" class="hidden p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-1">
-            <span class="text-emerald-300 font-bold text-[11px] block">GoPay Admin Resmi:</span>
-            <div class="flex items-center justify-between bg-slate-950 p-2 rounded-xl border border-slate-800 font-mono">
-              <span class="text-sm font-black text-emerald-400 tracking-wider">087735170386</span>
-              <button type="button" onclick="copyToClipboard('087735170386', 'No. GoPay Admin')" class="px-2 py-1 rounded bg-emerald-600 text-white text-[10px] font-bold">Salin</button>
+            <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800 font-mono">
+              <span id="vaNumberDisplay" class="text-sm font-black text-emerald-400 tracking-wider">901771223812</span>
+              <button type="button" onclick="copyCurrentVANumber()" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold flex items-center space-x-1 shadow">
+                <i class="fa-solid fa-copy text-[10px]"></i>
+                <span>Salin</span>
+              </button>
             </div>
-            <p class="text-[10px] text-slate-400">a.n. SobatSerabut Admin</p>
+            <div class="text-[10px] text-slate-400 space-y-0.5">
+              <p>Atas Nama: <strong class="text-white">SobatSerabut Admin</strong></p>
+              <p id="vaInstructionShort" class="text-slate-400 leading-tight">Transfer nominal tepat ke nomor di atas. Saldo otomatis masuk seketika.</p>
+            </div>
           </div>
-
-          <!-- Box QRIS Admin -->
-          <div id="topupBox-qris" class="hidden p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-center">
-            <span class="text-purple-300 font-bold text-[11px] block text-left">Scan QRIS SobatSerabut Resmi:</span>
-            <img src="uploads/qris_sobatserabut.svg" class="w-44 h-auto mx-auto rounded-xl border border-slate-700 shadow">
-            <p class="text-[9px] text-slate-400">Bisa di-scan dari aplikasi bank atau e-wallet apa saja</p>
-          </div>
-        </div>
-
-        <!-- Bukti Transfer -->
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Lampirkan Bukti Transfer (Screenshot):</label>
-          <input type="file" id="topupProofFileInput" accept="image/*" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-800 file:text-blue-300">
         </div>
       </div>
 
       <div class="flex space-x-2 pt-2 border-t border-slate-800">
-        <button onclick="closeTopupModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Batal</button>
-        <button onclick="submitTopup()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-lg shadow-emerald-500/30">Saya Sudah Transfer (Kirim)</button>
+        <button onclick="closeTopupModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Tutup</button>
+        <button onclick="confirmAutoTopupPayment()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-circle-check text-xs"></i>
+          <span>Konfirmasi &amp; Masuk Saldo</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1779,12 +2299,20 @@
           </select>
         </div>
         <div>
-          <label class="block font-semibold text-slate-300 mb-1">Nomor Rekening / No HP:</label>
-          <input type="text" id="wdDestinationInput" placeholder="Contoh: 081234567890 a.n Nama Anda" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
+          <label class="block font-semibold text-slate-300 mb-1">Nomor Rekening / No HP Tujuan:</label>
+          <input type="text" id="wdDestinationInput" placeholder="Contoh: 081234567890" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono font-bold">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Nama Pemilik Rekening / Akun:</label>
+          <input type="text" id="wdAccountHolderInput" placeholder="Contoh: Nama Anda Sesuai KTP" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
         </div>
         <div>
           <label class="block font-semibold text-slate-300 mb-1">Jumlah Penarikan (Rp):</label>
           <input type="number" id="wdAmountInput" value="50000" min="20000" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-bold">
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="wdSaveAccountCheckbox" checked class="rounded bg-slate-950 border-slate-700 text-emerald-500">
+          <label for="wdSaveAccountCheckbox" class="text-[11px] text-slate-300 select-none cursor-pointer">Simpan rekening ini untuk penarikan berikutnya</label>
         </div>
       </div>
       <div class="flex space-x-2 pt-2 border-t border-slate-800">

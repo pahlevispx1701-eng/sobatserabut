@@ -1,45 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 120" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200" width="900" height="200">
   <defs>
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1D4ED8" />
-      <stop offset="100%" stop-color="#3B82F6" />
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DC2626" />
+      <stop offset="100%" stop-color="#B91C1C" />
     </linearGradient>
-    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F59E0B" />
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
       <stop offset="100%" stop-color="#D97706" />
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.25"/>
+    <linearGradient id="bgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF7ED" />
+      <stop offset="100%" stop-color="#FEF2F2" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#7F1D1D" flood-opacity="0.2"/>
     </filter>
   </defs>
 
-  <!-- Logo Mark Icon -->
-  <g transform="translate(10, 10)">
-    <!-- Hexagonal Shield Badge -->
-    <path d="M 50,2 L 94,24 L 94,76 L 50,98 L 6,76 L 6,24 Z" 
-          fill="url(#blueGrad)" filter="url(#shadow)" stroke="#60A5FA" stroke-width="2.5" />
-    
-    <!-- Accent Ring / Ribbon -->
-    <path d="M 50,14 L 84,31 L 84,69 L 50,86 L 16,69 L 16,31 Z" 
-          fill="none" stroke="#DBEAFE" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.6"/>
+  <!-- Ikon S squircle merah di kiri - klien versi terang -->
+  <rect x="10" y="15" width="170" height="170" rx="38" fill="url(#bgLight)" stroke="#DC2626" stroke-width="3" filter="url(#shadow)" />
+  <text x="95" y="138" font-family="'Arial Black', sans-serif" font-weight="900" font-size="130" fill="url(#redGrad)" text-anchor="middle" letter-spacing="-3">S</text>
+  <rect x="48" y="150" width="94" height="6" rx="3" fill="url(#goldGrad)" />
 
-    <!-- Dynamic Wrench & Flash Icon in Gold -->
-    <!-- Wrench head -->
-    <path d="M 36,36 L 46,26 C 52,20 62,22 66,28 C 69,32 68,38 64,42 L 58,48 L 68,58 C 70,60 70,64 67,67 C 64,70 60,70 58,68 L 48,58 L 42,64 C 38,68 32,69 28,66 C 22,62 20,52 26,46 Z" 
-          fill="url(#amberGrad)" />
-    <!-- Lightning bolt inside -->
-    <polygon points="52,28 41,47 50,47 45,67 60,45 50,45" fill="#FFFFFF" />
-    <!-- Center Dot / Handshake node -->
-    <circle cx="50" cy="50" r="3.5" fill="#1E3A8A" />
-  </g>
+  <!-- Teks Brand -->
+  <text x="200" y="95" font-family="'Arial Black', 'Helvetica Neue', sans-serif" font-weight="900" font-size="68" fill="url(#redGrad)" letter-spacing="-2">Sobat</text>
+  <text x="200" y="168" font-family="'Arial Black', 'Helvetica Neue', sans-serif" font-weight="900" font-size="60" fill="#1E293B" letter-spacing="-1">Serabut</text>
 
-  <!-- Typography: SOBAT SERABUT -->
-  <text x="125" y="58" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="900" font-size="40" letter-spacing="-1">
-    <tspan fill="#1E293B">Sobat</tspan><tspan fill="#2563EB">Serabut</tspan>
-  </text>
+  <!-- Garis bawah kuning aksen -->
+  <rect x="200" y="176" width="340" height="6" rx="3" fill="url(#goldGrad)" />
+
+  <!-- Tagline kanan -->
+  <text x="555" y="80" font-family="'Arial', sans-serif" font-weight="700" font-size="20" fill="#DC2626" letter-spacing="0.5">Butuh Bantuan?</text>
+  <text x="555" y="108" font-family="'Arial', sans-serif" font-weight="600" font-size="16" fill="#64748B">Kami Siap Membantu Anda</text>
+  <text x="555" y="132" font-family="'Arial', sans-serif" font-weight="500" font-size="14" fill="#94A3B8">Jasa Serabutan Terpercaya 🇮🇩</text>
   
-  <!-- Slogan / Subtitle -->
-  <rect x="125" y="70" width="70" height="20" rx="4" fill="#FEF3C7" />
-  <text x="131" y="84" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="11" fill="#B45309" letter-spacing="0.5">MITRA ON</text>
-  <text x="205" y="84" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#64748B">Solusi Jasa &amp; Serabutan Cepat</text>
+  <!-- Stars rating -->
+  <text x="555" y="160" font-family="'Arial', sans-serif" font-size="20" fill="#FBBF24">★★★★★</text>
 </svg>

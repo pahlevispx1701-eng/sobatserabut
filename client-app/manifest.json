@@ -3,11 +3,37 @@
   "short_name": "SobatSerabut",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#2563EB",
+  "background_color": "#08060A",
+  "theme_color": "#EE4D2D",
   "orientation": "portrait",
-  "description": "SobatSerabut - Solusi Cepat Serabutan & Jasa Harian",
+  "description": "SobatSerabut — Pesan Jasa Harian Terpercaya: Tukang, Cleaning, AC & Lebih",
+  "categories": ["lifestyle", "utilities", "shopping"],
+  "lang": "id",
   "icons": [
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "48x48",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/uploads/logo_icon.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/uploads/logo_icon.svg",
       "sizes": "192x192",
@@ -19,6 +45,22 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pesan Jasa",
+      "short_name": "Pesan",
+      "description": "Pesan jasa harian sekarang",
+      "url": "./index.html#order",
+      "icons": [{ "src": "/uploads/logo_icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Lacak Order",
+      "short_name": "Lacak",
+      "description": "Lacak status pesanan aktif",
+      "url": "./index.html#track",
+      "icons": [{ "src": "/uploads/logo_icon.svg", "sizes": "96x96" }]
     }
   ]
 }

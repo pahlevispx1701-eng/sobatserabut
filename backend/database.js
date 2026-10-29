@@ -20,7 +20,8 @@ const defaultState = {
     secondaryColor: "#F59E0B",
     maintenanceMode: false,
     maintenanceMessage: "Aplikasi SobatSerabut sedang menjalani pemeliharaan berkala untuk peningkatan server. Kami akan segera kembali!",
-    maxRadiusKm: 10,
+    maxRadiusKm: 2,
+    radarRadiusMeters: 2000, // Radar pencarian jarak driver (100 m - 2000 m / 2 km, dapat diubah admin)
     baseFare: 25000,
     farePerKm: 3500,
     platformFee: 3000,
@@ -52,15 +53,15 @@ const defaultState = {
     updatedAt: new Date().toISOString()
   },
   categories: [
-    { id: "cat-1", name: "Servis AC", icon: "snowflake", image: "/uploads/service_ac.png", baseFare: 75000, description: "Cuci, tambah freon, dan perbaikan AC", active: true },
-    { id: "cat-2", name: "Pembersih Rumah", icon: "sparkles", image: "/uploads/service_clean.png", baseFare: 50000, description: "Bersih-bersih kamar, toilet, dan dapur", active: true },
-    { id: "cat-3", name: "Angkat Barang & Pindahan", icon: "truck", image: "/uploads/service_lifting.png", baseFare: 80000, description: "Bantuan angkut mebel, kardus, dan pindahan", active: true },
-    { id: "cat-4", name: "Tukang Ledeng & Pipa", icon: "wrench", image: "/uploads/service_plumber.png", baseFare: 60000, description: "Perbaikan pipa bocor, wastafel, dan pompa air", active: true },
-    { id: "cat-5", name: "Kelistrikan & Instalasi", icon: "zap", image: "/uploads/service_electric.png", baseFare: 65000, description: "Perbaikan korsleting, pasang lampu & saklar", active: true },
-    { id: "cat-6", name: "Runner / Belanja Kilat", icon: "shopping-bag", image: "/uploads/service_runner.png", baseFare: 25000, description: "Beli gas, galon, belanja pasar & titipan kilat", active: true },
-    { id: "cat-7", name: "Pertukangan Kayu & Cat", icon: "hammer", image: "/uploads/service_carpentry.png", baseFare: 90000, description: "Cat dinding, perbaikan kusen, dan furnitur", active: true },
-    { id: "cat-8", name: "Tambal Ban & Darurat", icon: "tool", image: "/uploads/service_tire.png", baseFare: 30000, description: "Tambal ban tubeless, jumper aki di tempat", active: true },
-    { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", active: true }
+    { id: "cat-1", name: "Servis AC", icon: "snowflake", image: "/uploads/service_ac.png", baseFare: 75000, description: "Cuci, tambah freon, dan perbaikan AC", estimatedMinutes: 60, active: true },
+    { id: "cat-2", name: "Pembersih Rumah", icon: "sparkles", image: "/uploads/service_clean.png", baseFare: 50000, description: "Bersih-bersih kamar, toilet, dan dapur", estimatedMinutes: 90, active: true },
+    { id: "cat-3", name: "Angkat Barang & Pindahan", icon: "truck", image: "/uploads/service_lifting.png", baseFare: 80000, description: "Bantuan angkut mebel, kardus, dan pindahan", estimatedMinutes: 60, active: true },
+    { id: "cat-4", name: "Tukang Ledeng & Pipa", icon: "wrench", image: "/uploads/service_plumber.png", baseFare: 60000, description: "Perbaikan pipa bocor, wastafel, dan pompa air", estimatedMinutes: 45, active: true },
+    { id: "cat-5", name: "Kelistrikan & Instalasi", icon: "zap", image: "/uploads/service_electric.png", baseFare: 65000, description: "Perbaikan korsleting, pasang lampu & saklar", estimatedMinutes: 45, active: true },
+    { id: "cat-6", name: "Runner / Belanja Kilat", icon: "shopping-bag", image: "/uploads/service_runner.png", baseFare: 25000, description: "Beli gas, galon, belanja pasar & titipan kilat", estimatedMinutes: 30, active: true },
+    { id: "cat-7", name: "Pertukangan Kayu & Cat", icon: "hammer", image: "/uploads/service_carpentry.png", baseFare: 90000, description: "Cat dinding, perbaikan kusen, dan furnitur", estimatedMinutes: 120, active: true },
+    { id: "cat-8", name: "Tambal Ban & Darurat", icon: "tool", image: "/uploads/service_tire.png", baseFare: 30000, description: "Tambal ban tubeless, jumper aki di tempat", estimatedMinutes: 25, active: true },
+    { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", estimatedMinutes: 60, active: true }
   ],
   users: [],
   mitra: [], // synced automatically from users with role == 'mitra'
@@ -68,7 +69,8 @@ const defaultState = {
   kycRequests: [],
   withdrawals: [],
   routeHistory: {},
-  transactions: []
+  transactions: [],
+  broadcasts: []
 };
 
 // Database class
@@ -121,12 +123,26 @@ class Database {
 
         if (this.data.config) {
           this.data.config = { ...defaultState.config, ...this.data.config };
+          this.data.config.radarRadiusMeters = Number(this.data.config.radarRadiusMeters) || ((this.data.config.maxRadiusKm || 2) * 1000);
+          if (this.data.config.radarRadiusMeters < 100) this.data.config.radarRadiusMeters = 100;
+          if (this.data.config.radarRadiusMeters > 2000) this.data.config.radarRadiusMeters = 2000;
           this.data.config.escrowAccountInfo = defaultState.config.escrowAccountInfo;
           this.data.config.adminSeaBank = defaultState.config.adminSeaBank;
           this.data.config.adminGopay = defaultState.config.adminGopay;
           this.data.config.adminQris = defaultState.config.adminQris;
         } else {
           this.data.config = JSON.parse(JSON.stringify(defaultState.config));
+        }
+
+        if (this.data.categories && Array.isArray(this.data.categories)) {
+          this.data.categories.forEach(c => {
+            const defCat = defaultState.categories.find(dc => dc.id === c.id || dc.name === c.name);
+            if (defCat && (!c.estimatedMinutes || c.estimatedMinutes <= 0)) {
+              c.estimatedMinutes = defCat.estimatedMinutes;
+            } else if (!c.estimatedMinutes) {
+              c.estimatedMinutes = 60;
+            }
+          });
         }
       } else {
         this.data = JSON.parse(JSON.stringify(defaultState));
@@ -145,6 +161,7 @@ class Database {
   syncMitraArray() {
     if (!this.data) return;
     if (!this.data.users) this.data.users = [];
+    if (!this.data.broadcasts) this.data.broadcasts = [];
     this.data.mitra = this.data.users.filter(u => u.role === 'mitra');
   }
 

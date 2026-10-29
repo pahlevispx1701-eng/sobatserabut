@@ -31,13 +31,18 @@
           extend: {
             colors: {
               brand: {
-                50: '#eff6ff',
-                100: '#dbeafe',
-                500: '#3b82f6',
-                600: '#2563eb',
-                700: '#1d4ed8',
-                800: '#1e40af',
-                900: '#1e3a8a',
+                50: '#fef2f2',
+                100: '#fee2e2',
+                500: '#DC2626',
+                600: '#DC2626',
+                700: '#b91c1c',
+                800: '#991b1b',
+                900: '#7f1d1d',
+              },
+              amber: {
+                400: '#FBBF24',
+                500: '#f59e0b',
+                600: '#d97706',
               }
             }
           }
@@ -89,18 +94,422 @@
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
     .radar-wave {
       position: absolute;
-      border: 2px solid rgba(59, 130, 246, 0.5);
+      border: 2px solid rgba(16,185,129,0.6);
       border-radius: 50%;
       animation: radar-pulse 2.2s infinite ease-out;
     }
     @keyframes radar-pulse {
       0% { width: 40px; height: 40px; opacity: 1; }
-      100% { width: 140px; height: 140px; opacity: 0; }
+      100% { width: 160px; height: 160px; opacity: 0; }
     }
     .leaflet-popup-content-wrapper {
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 0;
     }
+
+/* ============================================================
+   DRIVER APP v6.0 — ULTRA PREMIUM DARK EMERALD GENESIS EDITION
+   Deep Space Green × Glassmorphism × Neon Glow
+   ============================================================ */
+
+/* ---- ROOT DESIGN TOKENS ---- */
+:root {
+  --g-primary:    #059669;
+  --g-bright:     #10B981;
+  --g-ultra:      #34D399;
+  --g-dark:       #047857;
+  --g-glow:       rgba(16,185,129,0.45);
+  --g-glow-soft:  rgba(5,150,105,0.18);
+  --amber:        #F59E0B;
+  --amber-glow:   rgba(245,158,11,0.35);
+  --bg-void:      #020810;
+  --bg-deep:      #050D1A;
+  --bg-dark:      #081526;
+  --bg-mid:       #0D1F38;
+  --bg-card:      #0F2440;
+  --bg-card2:     #132B4A;
+  --bg-glass:     rgba(13,31,56,0.75);
+  --border-g:     rgba(16,185,129,0.2);
+  --border-g2:    rgba(16,185,129,0.35);
+  --text-primary: #F0FDF4;
+  --text-sec:     #A7F3D0;
+  --text-muted:   #6EE7B7;
+}
+
+/* ---- BODY: Cosmic Deep Dark ---- */
+body {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(5,150,105,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 40% at 15% 80%, rgba(245,158,11,0.05) 0%, transparent 50%),
+    linear-gradient(175deg, #020810 0%, #050D1A 35%, #081526 65%, #0D1F38 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* ---- AMBIENT LAYER: Floating Orbs ---- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle 600px at 20% 20%, rgba(5,150,105,0.09) 0%, transparent 70%),
+    radial-gradient(circle 400px at 85% 75%, rgba(245,158,11,0.05) 0%, transparent 60%),
+    radial-gradient(circle 300px at 50% 50%, rgba(16,185,129,0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: cosmicDrift 18s ease-in-out infinite alternate;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310B981' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") !important;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+@keyframes cosmicDrift {
+  0%   { transform: translate(0,0) scale(1); }
+  33%  { transform: translate(1.5%, 2%) scale(1.01); }
+  66%  { transform: translate(-1%, 3%) scale(0.99); }
+  100% { transform: translate(2%, -1%) scale(1.02); }
+}
+
+/* ---- SCROLLBAR: Emerald Glow ---- */
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #10B981, #059669);
+  border-radius: 10px;
+  box-shadow: 0 0 6px rgba(16,185,129,0.5);
+}
+
+/* ---- BOTTOM NAVIGATION: Floating Glass ---- */
+nav.fixed.bottom-0, [id*="bottomNav"], .bottom-nav {
+  background: linear-gradient(180deg,
+    rgba(2,8,16,0) 0%,
+    rgba(5,13,26,0.92) 12%,
+    rgba(5,13,26,0.99) 100%) !important;
+  backdrop-filter: blur(32px) saturate(200%) brightness(0.9) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(0.9) !important;
+  border-top: 1px solid rgba(16,185,129,0.12) !important;
+  box-shadow:
+    0 -1px 0 rgba(16,185,129,0.08),
+    0 -16px 48px rgba(0,0,0,0.8),
+    0 -2px 24px rgba(5,150,105,0.06) !important;
+}
+
+/* Active nav icon glow */
+nav.fixed.bottom-0 button.text-emerald-400,
+nav.fixed.bottom-0 button[class*="text-emerald"],
+nav.fixed.bottom-0 button.active {
+  color: #10B981 !important;
+  text-shadow: 0 0 16px rgba(16,185,129,0.7), 0 0 32px rgba(16,185,129,0.3) !important;
+  filter: drop-shadow(0 0 4px rgba(16,185,129,0.5)) !important;
+}
+
+/* ---- HEADER: Frosted Glass Dark ---- */
+header,
+[class*="bg-slate-900"][class*="sticky"],
+[class*="bg-slate"][class*="top-0"],
+[class*="sticky"][class*="top-0"] {
+  background: linear-gradient(180deg,
+    rgba(2,8,16,0.98) 0%,
+    rgba(8,21,38,0.96) 100%) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border-bottom: 1px solid rgba(16,185,129,0.1) !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.6), 0 1px 0 rgba(16,185,129,0.06) !important;
+}
+
+/* ---- CARDS: Deep Glass Morphism ---- */
+.bg-slate-800, .bg-slate-900,
+.bg-gray-800, .bg-gray-900,
+.bg-slate-950 {
+  background: linear-gradient(135deg,
+    rgba(15,36,64,0.82) 0%,
+    rgba(13,31,56,0.78) 100%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border-color: rgba(16,185,129,0.12) !important;
+}
+
+/* ---- AUTH CONTAINER ---- */
+#authContainer,
+#authScreenLogin,
+#authScreenRegister {
+  background: linear-gradient(160deg, #020810 0%, #050D1A 50%, #0D1F38 100%) !important;
+}
+
+/* ---- STATUS TOGGLE (ONLINE/OFFLINE) ---- */
+[id*="statusToggle"], [id*="onlineToggle"], [id*="statusBtn"] {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  position: relative !important;
+}
+
+/* Online state mega glow */
+[id*="statusToggle"].online,
+.online-state-active {
+  box-shadow:
+    0 0 0 3px rgba(16,185,129,0.25),
+    0 0 20px rgba(5,150,105,0.5),
+    0 0 60px rgba(5,150,105,0.2) !important;
+}
+
+/* ---- EARNINGS / SALDO CARD: Premium Green Glow ---- */
+[id*="earning"], [id*="saldo"], [id*="balance"], [id*="income"],
+[id*="totalEarn"], [id*="todayEarn"] {
+  background: linear-gradient(135deg,
+    rgba(5,150,105,0.22) 0%,
+    rgba(8,21,38,0.95) 50%,
+    rgba(13,31,56,0.9) 100%) !important;
+  border: 1px solid rgba(16,185,129,0.3) !important;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(16,185,129,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(5,150,105,0.1) !important;
+}
+
+/* ---- ORDER CARDS: Animated Hover ---- */
+[id*="orderCard"], [class*="order-card"], .order-item,
+[id*="jobCard"], [id*="taskCard"] {
+  background: linear-gradient(145deg,
+    rgba(15,36,64,0.92) 0%,
+    rgba(13,31,56,0.88) 100%) !important;
+  border: 1px solid rgba(16,185,129,0.15) !important;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.5),
+    0 1px 0 rgba(255,255,255,0.04) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[id*="orderCard"]:hover, [class*="order-card"]:hover {
+  border-color: rgba(16,185,129,0.35) !important;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(16,185,129,0.15),
+    0 2px 16px rgba(5,150,105,0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+[id*="orderCard"]:active, [class*="order-card"]:active {
+  transform: scale(0.98) translateY(0) !important;
+}
+
+/* ---- BUTTONS: Gradient + Glow ---- */
+button[class*="bg-emerald"],
+button[class*="bg-green"] {
+  background: linear-gradient(135deg, #10B981 0%, #059669 55%, #047857 100%) !important;
+  box-shadow:
+    0 6px 24px rgba(5,150,105,0.4),
+    0 2px 8px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  border: none !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button[class*="bg-emerald"]::after,
+button[class*="bg-green"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+button[class*="bg-emerald"]:active,
+button[class*="bg-green"]:active {
+  transform: scale(0.97) !important;
+  box-shadow: 0 2px 12px rgba(5,150,105,0.35) !important;
+}
+
+/* CTA Primary Button — Mega Glow */
+button[class*="bg-emerald-600"],
+button[class*="bg-emerald-500"],
+[id*="btnAccept"], [id*="btnStart"],
+[id*="btnComplete"], [id*="goOnlineBtn"] {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 30%, #059669 70%, #047857 100%) !important;
+  box-shadow:
+    0 10px 32px rgba(5,150,105,0.5),
+    0 4px 16px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(52,211,153,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.2) !important;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+button[class*="bg-emerald-600"]:active,
+[id*="btnAccept"]:active,
+[id*="goOnlineBtn"]:active {
+  transform: scale(0.96) !important;
+}
+
+/* ---- INPUTS: Deep Glass ---- */
+input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]),
+textarea, select {
+  background: rgba(2,8,16,0.75) !important;
+  border: 1px solid rgba(16,185,129,0.2) !important;
+  color: #E2FFF5 !important;
+  transition: all 0.25s ease !important;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #10B981 !important;
+  box-shadow:
+    0 0 0 3px rgba(16,185,129,0.15),
+    inset 0 2px 8px rgba(0,0,0,0.4) !important;
+  outline: none !important;
+  background: rgba(5,20,40,0.85) !important;
+}
+
+/* ---- LEAFLET MAP: Premium Framed ---- */
+.leaflet-container {
+  background: #050D1A !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(16,185,129,0.2) !important;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(16,185,129,0.06),
+    inset 0 0 0 1px rgba(255,255,255,0.02) !important;
+  overflow: hidden !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(8,21,38,0.97) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(16,185,129,0.2) !important;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.7) !important;
+  color: #E2FFF5 !important;
+  border-radius: 16px !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(8,21,38,0.97) !important;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(13,31,56,0.95) !important;
+  color: #10B981 !important;
+  border-color: rgba(16,185,129,0.2) !important;
+}
+
+/* ---- STATUS BADGES ---- */
+.bg-emerald-500, .bg-green-500 {
+  box-shadow: 0 0 12px rgba(16,185,129,0.7), 0 0 24px rgba(16,185,129,0.3) !important;
+}
+
+.bg-amber-500, .bg-yellow-500 {
+  box-shadow: 0 0 12px rgba(245,158,11,0.6), 0 0 24px rgba(245,158,11,0.2) !important;
+}
+
+.bg-red-500 {
+  box-shadow: 0 0 12px rgba(239,68,68,0.6) !important;
+}
+
+/* ---- LOGO GLOW ---- */
+[id*="authRegAppLogo"], [id*="loginLogo"], [id*="appLogo"] img,
+[id*="authRegAppLogo"] img {
+  filter: drop-shadow(0 0 16px rgba(16,185,129,0.6)) drop-shadow(0 0 32px rgba(5,150,105,0.3)) !important;
+}
+
+/* ---- RATING STARS ---- */
+.text-amber-400, .text-yellow-400 {
+  text-shadow: 0 0 12px rgba(245,158,11,0.6), 0 0 24px rgba(245,158,11,0.2) !important;
+}
+
+/* ---- TOAST NOTIFICATIONS ---- */
+#toastContainer, [id*="toast"] {
+  z-index: 9999 !important;
+}
+
+/* ---- BORDER SUBTLE ---- */
+.border-slate-700, .border-slate-800 {
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+.border-slate-600 {
+  border-color: rgba(255,255,255,0.09) !important;
+}
+
+/* ---- ANIMATE PING ---- */
+.animate-ping {
+  animation: liveRing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+}
+
+@keyframes liveRing {
+  0%   { transform: scale(1); opacity: 0.8; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ---- KEYFRAMES ---- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  50%       { box-shadow: 0 0 0 8px rgba(16,185,129,0.1), 0 0 32px rgba(5,150,105,0.4); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ---- SCREEN TRANSITIONS ---- */
+[id*="Screen"]:not(.hidden), [id*="Tab"]:not(.hidden) {
+  animation: fadeInUp 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ---- BOTTOM SHEETS ---- */
+[id*="bottomSheet"]:not(.hidden), [id*="sheet"]:not(.hidden),
+[id*="modal"]:not(.hidden) {
+  animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ---- SPECIAL: Shimmer loading state ---- */
+.loading-shimmer {
+  background: linear-gradient(90deg,
+    rgba(15,36,64,0.5) 0%,
+    rgba(52,211,153,0.08) 50%,
+    rgba(15,36,64,0.5) 100%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.5s ease infinite !important;
+}
+
+/* ---- RADAR ANIMATION fix ---- */
+.radar-wave {
+  border-color: rgba(16,185,129,0.5) !important;
+}
+
+/* ---- BORDER subtle elevation ---- */
+.border-slate-700, .border-slate-800 {
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
+.border-slate-600 {
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
+/* ---- SECTIONS slide in ---- */
+[id*="Screen"]:not(.hidden), [id*="Tab"]:not(.hidden) {
+  animation: fadeInUp 0.2s ease forwards;
+}
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden">
@@ -130,6 +539,18 @@
           </span>
           <h2 class="text-xl font-black text-white">Pendaftaran Driver Baru</h2>
           <p class="text-[11px] text-slate-400 max-w-xs mx-auto">Verifikasi KYC kamera selfie &amp; KTP untuk aktivasi akun dan pencairan saldo tugas.</p>
+        </div>
+
+        <!-- Banner Error: Akun Klien Mencoba Masuk ke Driver App -->
+        <div id="authKlienErrorBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 border-2 border-red-500/70 text-left space-y-2 shadow-2xl">
+          <div class="flex items-center space-x-2 text-red-300 font-black text-xs">
+            <i class="fa-solid fa-circle-exclamation text-red-400 text-base"></i>
+            <span>Akun Klien Tidak Dapat Masuk ke Driver App</span>
+          </div>
+          <p class="text-[11px] text-slate-200 leading-relaxed">
+            Akun ini adalah akun <strong>SobatSerabut (Klien)</strong>. Aplikasi Driver hanya untuk <strong>Mitra Driver</strong>. Silakan daftar akun baru sebagai Mitra Driver di bawah, atau buka Aplikasi SobatSerabut untuk memesan jasa.
+          </p>
+          <button type="button" onclick="document.getElementById('authKlienErrorBanner').classList.add('hidden')" class="text-[10px] text-red-400 hover:text-red-300 font-bold underline">Tutup Peringatan Ini</button>
         </div>
 
         <!-- Form Pendaftaran Lengkap Driver -->
@@ -289,21 +710,6 @@
             <input type="text" id="regBankHolderInput" placeholder="Nama Pemilik Rekening (Sesuai KTP)" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none">
           </div>
 
-          <!-- Khusus Mitra: Keahlian Jasa Utama -->
-          <div id="regMitraExtraFields" class="space-y-2">
-            <label class="block font-semibold text-slate-300 mb-1">Keahlian Jasa Utama</label>
-            <select id="regSkillSelect" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-medium focus:border-blue-500 focus:outline-none">
-              <option value="Runner / Belanja Kilat">Runner / Belanja Kilat &amp; Beli Gas</option>
-              <option value="Servis AC">Servis AC &amp; Pendingin</option>
-              <option value="Pembersih Rumah">Pembersih Rumah &amp; Kost</option>
-              <option value="Tukang Ledeng & Pipa">Tukang Ledeng &amp; Pipa</option>
-              <option value="Kelistrikan & Instalasi">Kelistrikan &amp; Pasang Lampu</option>
-              <option value="Angkat Barang & Pindahan">Angkat Barang &amp; Pindahan</option>
-              <option value="Pertukangan Kayu & Cat">Pertukangan Kayu &amp; Cat</option>
-              <option value="Tambal Ban & Darurat">Tambal Ban &amp; Darurat</option>
-            </select>
-          </div>
-
           <!-- Alamat Lengkap Domisili -->
           <div>
             <label class="block font-semibold text-slate-300 mb-1">Alamat Domisili Lengkap</label>
@@ -367,12 +773,12 @@
         </form>
       </div>
 
-      <!-- Footer: Link Masuk ke Akun Terdaftar -->
+      <!-- Footer: Link Masuk ke Akun Driver Terdaftar -->
       <div class="pt-4 pb-2 text-center border-t border-slate-800">
-        <p class="text-xs text-slate-400">Sudah pernah mendaftar akun sebelumnya?</p>
-        <button type="button" onclick="navigateToAuthScreen('login')" class="mt-1 text-xs text-blue-400 hover:text-blue-300 font-extrabold flex items-center justify-center space-x-1 mx-auto underline">
-          <i class="fa-solid fa-right-to-bracket text-[11px]"></i>
-          <span>Masuk di sini menggunakan Akun &amp; Kata Sandi</span>
+        <p class="text-xs text-slate-400">Sudah memiliki Akun Driver SobatSerabut?</p>
+        <button type="button" onclick="navigateToAuthScreen('login')" class="mt-2 py-2 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-emerald-400 hover:text-emerald-300 font-extrabold text-xs inline-flex items-center space-x-2 shadow-lg transition-all active:scale-95">
+          <i class="fa-solid fa-right-to-bracket text-xs"></i>
+          <span>Masuk ke Akun Driver</span>
         </button>
       </div>
     </div>
@@ -471,38 +877,56 @@
       </div>
     </div>
 
-    <!-- 3. SCREEN MASUK (LOGIN UNTUK PENGGUNA TERDAFTAR DI SEMUA HP) -->
+    <!-- 3. SCREEN MASUK (LOGIN DEDIKASI KHUSUS AKUN DRIVER MITRA) -->
     <div id="authScreenLogin" class="hidden flex-col justify-between min-h-screen p-5 pb-8 space-y-6">
-      <div class="space-y-5 pt-4">
-        <!-- Header Login -->
+      <div class="space-y-4 pt-4">
+        <!-- Header Login Driver Khusus -->
         <div class="text-center space-y-1">
-          <div class="w-16 h-16 rounded-3xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-2 shadow-lg">
+          <div class="w-16 h-16 rounded-3xl bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-2 shadow-lg">
             <img id="authLoginAppLogo" src="uploads/logo_icon.svg" class="w-11 h-11 object-contain">
           </div>
-          <h2 class="text-2xl font-black text-white">Masuk Akun</h2>
-          <p class="text-xs text-slate-400">Masukkan nama akun atau nomor HP dan kata sandi yang dibuat saat pendaftaran</p>
+          <span class="inline-block px-3 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+            KHUSUS DRIVER &amp; MITRA KERJA
+          </span>
+          <h2 class="text-2xl font-black text-white">🚗 Masuk Akun Driver Mitra</h2>
+          <p class="text-xs text-slate-400">Khusus Mitra Driver — Bukan untuk Pelanggan SobatSerabut</p>
         </div>
 
-        <!-- Form Login Akun -->
+        <!-- Banner Sukses Pendaftaran Driver Baru (Otomatis Muncul Setelah Daftar) -->
+        <div id="driverRegisteredNotice" class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border border-emerald-500/60 text-left space-y-1.5 shadow-2xl">
+          <div class="flex items-center space-x-2 text-emerald-300 font-black text-xs">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+            <span>Pendaftaran Driver Berhasil Disimpan!</span>
+          </div>
+          <p class="text-[11px] text-slate-200 leading-relaxed">
+            Data Anda telah tersimpan rapi. Nomor akun Anda telah terisi otomatis di bawah. Silakan masukkan kata sandi yang baru Anda buat untuk masuk ke Akun Driver Anda.
+          </p>
+        </div>
+
+        <!-- Form Login Driver -->
         <form id="formPasswordLogin" onsubmit="handlePasswordLoginSubmit(event)" class="space-y-4 text-xs">
           <div>
-            <label class="block font-semibold text-slate-300 mb-1.5">Nama Akun / Nomor WhatsApp / NIK</label>
+            <label class="block font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Nomor WhatsApp / HP Driver Terdaftar</span>
+              <span id="loginDriverSavedBadge" class="hidden text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-bookmark mr-0.5"></i>Tersimpan</span>
+            </label>
             <div class="relative">
-              <span class="absolute left-3.5 top-3 text-slate-400"><i class="fa-solid fa-user text-xs"></i></span>
-              <input type="text" id="loginPassPhoneInput" placeholder="Nama Akun atau No. HP (08xxx)" required class="w-full pl-10 pr-3.5 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 font-semibold focus:border-blue-500 focus:outline-none">
+              <span class="absolute left-3.5 top-3 text-emerald-400"><i class="fa-solid fa-id-badge text-xs"></i></span>
+              <input type="text" id="loginPassPhoneInput" placeholder="Contoh: 081234567890" required class="w-full pl-10 pr-3.5 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 font-semibold focus:border-emerald-500 focus:outline-none">
             </div>
+            <p class="text-[10px] text-slate-500 mt-1">Nomor HP driver otomatis tersimpan di HP ini untuk mempermudah masuk.</p>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-1.5">
-              <label class="font-semibold text-slate-300">Kata Sandi Akun</label>
-              <button type="button" onclick="navigateToAuthScreen('forgot')" class="text-xs text-blue-400 hover:underline font-bold">
+              <label class="font-semibold text-slate-300">Kata Sandi Akun Driver</label>
+              <button type="button" onclick="navigateToAuthScreen('forgot')" class="text-xs text-emerald-400 hover:underline font-bold">
                 Lupa Kata Sandi?
               </button>
             </div>
             <div class="relative">
               <span class="absolute left-3.5 top-3 text-slate-400"><i class="fa-solid fa-lock text-xs"></i></span>
-              <input type="password" id="loginPassSecretInput" placeholder="Masukkan kata sandi akun Anda" required class="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none">
+              <input type="password" id="loginPassSecretInput" placeholder="Masukkan kata sandi akun Driver" required class="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none">
               <button type="button" onclick="togglePasswordVisibility('loginPassSecretInput', this)" class="absolute right-3.5 top-3 text-slate-400 hover:text-white">
                 <i class="fa-solid fa-eye text-xs"></i>
               </button>
@@ -524,9 +948,9 @@
             </button>
           </div>
 
-          <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-xl shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
-            <i class="fa-solid fa-right-to-bracket"></i>
-            <span>Masuk Akun Sekarang</span>
+          <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+            <i class="fa-solid fa-truck-fast text-sm"></i>
+            <span>Masuk ke Akun Driver Sekarang</span>
           </button>
 
           <!-- Masuk Cepat Langsung via OTP WhatsApp & SMS Fonnte -->
@@ -564,17 +988,17 @@
               <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
               <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
             </svg>
-            <span>Masuk / Sambungkan Akun Google</span>
+            <span>Masuk / Sambungkan Akun Google Driver</span>
           </button>
         </form>
       </div>
 
-      <!-- Footer: Link Daftar Baru -->
+      <!-- Footer: Link Daftar Driver Baru -->
       <div class="pt-4 pb-2 text-center border-t border-slate-800">
-        <p class="text-xs text-slate-400">Belum memiliki akun SobatSerabut?</p>
-        <button type="button" onclick="navigateToAuthScreen('register')" class="mt-1 text-xs text-blue-400 hover:text-blue-300 font-extrabold flex items-center justify-center space-x-1 mx-auto underline">
-          <i class="fa-solid fa-user-plus text-[11px]"></i>
-          <span>Daftar Akun Baru (Verifikasi KYC) di sini</span>
+        <p class="text-xs text-slate-400">Belum memiliki Akun Driver Mitra?</p>
+        <button type="button" onclick="navigateToAuthScreen('register')" class="mt-2 py-2 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-blue-500/40 text-blue-400 hover:text-blue-300 font-extrabold text-xs inline-flex items-center space-x-2 shadow-lg transition-all active:scale-95">
+          <i class="fa-solid fa-user-plus text-xs"></i>
+          <span>Daftar Akun Driver Baru di Sini</span>
         </button>
       </div>
     </div>
@@ -694,36 +1118,46 @@
   <!-- ========================================================
        TOP APP BAR / HEADER
        ======================================================== -->
-  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 safe-top">
-    <div class="flex items-center justify-between">
-      <!-- App Brand & Dynamic Logo -->
-      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchMainTab('profile')">
-        <div class="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center overflow-hidden shadow-inner">
-          <img id="appHeaderLogo" src="uploads/logo_icon.svg" class="w-7 h-7 object-contain">
-        </div>
-        <div>
-          <div class="flex items-center space-x-1">
-            <span id="appHeaderName" class="font-black text-sm tracking-tight text-white">Driver <span class="text-emerald-400">SobatSerabut</span></span>
-            <span id="roleHeaderBadge" class="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30">MITRA RESMI</span>
+  <header class="sticky top-0 z-40 safe-top" style="background: linear-gradient(135deg, #0a0f1e 0%, #0d1529 50%, #0a1220 100%); border-bottom: 1px solid rgba(16,185,129,0.15);">
+    <div class="px-4 pt-3 pb-2">
+      <div class="flex items-center justify-between">
+        <!-- App Name Only (NO LOGO ICON) -->
+        <div class="cursor-pointer" onclick="switchMainTab('profile')">
+          <div class="flex items-center space-x-2">
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #a7f3d0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
+                <span id="roleHeaderBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">DRIVER MITRA</span>
+              </div>
+              <div class="flex items-center space-x-1.5 mt-0.5">
+                <p id="currentUserHeaderName" class="text-[11px] truncate max-w-[120px]" style="color: #64748b;">Halo, Mitra! 👋</p>
+                <!-- Status Online/Offline Pill di Header -->
+                <span id="headerDriverStatusPill" onclick="toggleDriverWorkStatus()" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider border transition-all hidden" style="background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3);" title="Ketuk untuk ubah status">● ONLINE</span>
+              </div>
+            </div>
           </div>
-          <p id="currentUserHeaderName" class="text-[11px] text-slate-400 truncate max-w-[130px]">Mitra Driver</p>
         </div>
-      </div>
 
-      <!-- Header Action: Wallet Quick View & Server Settings -->
-      <div class="flex items-center space-x-1.5">
-        <div onclick="switchMainTab('wallet')" class="px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 cursor-pointer flex items-center space-x-1.5">
-          <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
-          <span id="headerWalletDisplay" class="font-mono text-xs font-bold text-emerald-300">Rp 0</span>
+        <!-- Header Actions -->
+        <div class="flex items-center space-x-1.5">
+          <!-- Poin Kinerja Driver Badge -->
+          <div onclick="switchMainTab('profile')" class="flex items-center space-x-1.5 cursor-pointer px-2.5 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-black text-xs hover:bg-amber-500/20 transition-all shadow-sm" title="Poin Kinerja Driver SobatSerabut">
+            <i class="fa-solid fa-medal text-amber-400 text-xs"></i>
+            <span id="driverHeaderPoints">100</span>
+            <span class="text-[9px] text-amber-400/80">Pts</span>
+          </div>
+          <div onclick="switchMainTab('wallet')" class="flex items-center space-x-1.5 cursor-pointer px-2.5 py-1.5 rounded-2xl" style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2);">
+            <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+            <span id="headerWalletDisplay" class="font-mono text-xs font-bold" style="color: #34d399;">Rp 0</span>
+          </div>
+          <button onclick="openServerSettingsModal()" title="Pengaturan" class="w-8 h-8 rounded-2xl flex items-center justify-center transition-all" style="background: rgba(51,65,85,0.6); border: 1px solid rgba(71,85,105,0.4); color: #94a3b8;">
+            <i class="fa-solid fa-sliders text-xs"></i>
+          </button>
+          <button onclick="handleLogout()" title="Keluar" class="w-8 h-8 rounded-2xl flex items-center justify-center transition-all" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171;">
+            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+          </button>
         </div>
-        <button onclick="openServerSettingsModal()" title="Pengaturan Koneksi Server" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-blue-400 flex items-center justify-center border border-slate-700">
-          <i class="fa-solid fa-server text-xs"></i>
-        </button>
-        <button onclick="handleLogout()" title="Keluar / Ganti Akun" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-rose-400 flex items-center justify-center border border-slate-700">
-          <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
-        </button>
       </div>
-    </div>
 
     <!-- GLOBAL ANNOUNCEMENT BANNER FOR PEMOHON & MITRA -->
     <div id="globalAnnouncementBanner" class="hidden mt-2 p-2 rounded-xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/30 text-xs text-blue-200 flex items-center justify-between">
@@ -737,24 +1171,67 @@
       </a>
     </div>
 
-    <!-- MITRA ONLY: WORKER STATUS TOGGLE BAR (Online / On Job / Offline) -->
-    <div id="mitraStatusBarContainer" class="mt-3 p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-      <div class="flex items-center space-x-2.5">
-        <div id="statusPulseDot" class="w-3.5 h-3.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+    <!-- MITRA STATUS BAR MODERN: FITUR MULAI BEKERJA / OFF -->
+    <div id="mitraStatusBarContainer" class="mt-3 rounded-2xl space-y-2.5" style="background: rgba(2,6,23,0.85); border: 1px solid rgba(16,185,129,0.15); padding: 12px;">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div id="statusPulseDot" class="w-3 h-3 rounded-full bg-emerald-500 relative flex items-center justify-center flex-shrink-0">
+            <span id="statusPulsePing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          </div>
+          <div>
+            <span id="statusTextLabel" class="text-xs font-black block tracking-wider" style="color: #34d399;">SIAP MENERIMA PESANAN</span>
+            <span id="gpsStatusSubtext" class="text-[10px] flex items-center space-x-1" style="color: #64748b;">
+              <i class="fa-solid fa-satellite text-amber-400 text-[9px]"></i>
+              <span>GPS Live Aktif</span>
+            </span>
+          </div>
         </div>
-        <div>
-          <span id="statusTextLabel" class="text-xs font-bold text-emerald-400 block">SIAP MENERIMA ORDER</span>
-          <span id="gpsStatusSubtext" class="text-[10px] text-slate-400 flex items-center space-x-1">
-            <i class="fa-solid fa-satellite text-blue-400"></i>
-            <span>GPS Live Aktif (Update tiap 4 dtk)</span>
-          </span>
-        </div>
+        <button onclick="openDailyFaceVerifyModal()" title="Verifikasi Wajah Harian" class="flex items-center space-x-1 text-[10px] font-bold px-2.5 py-1.5 rounded-xl transition-all" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #fbbf24;">
+          <i class="fa-solid fa-camera text-[9px]"></i>
+          <span>Verifikasi</span>
+        </button>
       </div>
 
-      <button id="toggleOnlineBtn" onclick="toggleOnlineStatus()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md transition-all">
-        ONLINE
+      <!-- MASTER MULAI BEKERJA / OFF BIG TOGGLE BUTTON -->
+      <button type="button" id="btnMasterWorkToggle" onclick="toggleDriverWorkStatus()" class="w-full py-4 px-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-between transition-all active:scale-95 select-none" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; box-shadow: 0 6px 24px rgba(16,185,129,0.45);">
+        <div class="flex items-center space-x-3">
+          <span id="masterToggleIconCircle" class="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow animate-pulse">
+            <i id="masterToggleIcon" class="fa-solid fa-power-off"></i>
+          </span>
+          <div class="text-left">
+            <span id="masterToggleTitle" class="block text-sm font-black tracking-wide">SEDANG BEKERJA (ONLINE)</span>
+            <span id="masterToggleSubtext" class="block text-[11px] font-medium opacity-90">Ketuk untuk Berhenti / Off</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span id="masterTogglePill" class="px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider">ONLINE</span>
+          <i class="fa-solid fa-repeat text-sm opacity-75"></i>
+        </div>
       </button>
+
+      <!-- Status Toggle: Hanya ON (Hijau) dan OFF (Merah) -->
+      <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+        <button type="button" id="btnStatusReady" onclick="setDriverStatus('ready')" class="py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95" style="background: linear-gradient(135deg, #059669, #16a34a); color: #fff; box-shadow: 0 4px 14px rgba(22,163,74,0.5); border: 2px solid rgba(74,222,128,0.4);">
+          <span class="w-2.5 h-2.5 rounded-full bg-white shadow" style="box-shadow: 0 0 6px #fff;"></span>
+          <span class="font-black tracking-wider">ON</span>
+        </button>
+        <button type="button" id="btnStatusOffline" onclick="setDriverStatus('offline')" class="py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,0.5); border: 2px solid rgba(252,165,165,0.3);">
+          <span class="w-2.5 h-2.5 rounded-full bg-white shadow" style="box-shadow: 0 0 6px #fff;"></span>
+          <span class="font-black tracking-wider">OFF</span>
+        </button>
+      </div>
+
+      <!-- ID DRIVER & TOTAL DRIVER TERDAFTAR UNTUK PENGECEKAN -->
+      <div class="grid grid-cols-2 gap-2 text-xs font-mono p-2.5 rounded-xl bg-slate-950/90 border border-slate-800">
+        <div class="space-y-0.5">
+          <span class="text-[9px] text-slate-400 uppercase tracking-wider block font-sans">ID Driver Anda</span>
+          <span id="driverAppIdDisplay" class="font-black text-emerald-400 text-xs">MTR-...</span>
+        </div>
+        <div class="space-y-0.5 text-right">
+          <span class="text-[9px] text-slate-400 uppercase tracking-wider block font-sans">Total Driver Terdaftar</span>
+          <span id="driverAppTotalCountDisplay" class="font-black text-blue-400 text-xs">... Driver</span>
+        </div>
+      </div>
     </div>
 
   </header>
@@ -781,31 +1258,41 @@
       </div>
 
 
-      <!-- Radar Header Card -->
-      <div class="relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-blue-900/40 via-slate-900 to-slate-900 border border-blue-500/30 shadow-xl">
-        <div class="flex items-center justify-between relative z-10">
-          <div>
+      <!-- Radar Header Card - Modern Redesign -->
+      <div class="relative overflow-hidden rounded-3xl shadow-2xl" style="background: linear-gradient(135deg, #060d1f 0%, #0f1e3d 50%, #0a1829 100%); border: 1px solid rgba(59,130,246,0.2); padding: 16px;">
+        <!-- Decorative gradient blobs -->
+        <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20" style="background: radial-gradient(circle, #3b82f6 0%, transparent 70%);"></div>
+        <div class="absolute -bottom-6 -left-6 w-24 h-24 rounded-full opacity-10" style="background: radial-gradient(circle, #10b981 0%, transparent 70%);"></div>
+
+        <div class="relative z-10">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center space-x-2 mb-1">
+                <div class="w-7 h-7 rounded-xl flex items-center justify-center" style="background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3);">
+                  <i class="fa-solid fa-radar text-blue-400 text-xs"></i>
+                </div>
+                <h2 class="text-sm font-black text-white">Radar Tugas Terdekat</h2>
+                <span id="mitraRadarBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold" style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25);">Memindai...</span>
+              </div>
+              <p class="text-[11px]" style="color: #64748b;">Klien terdekat dalam radius <strong id="mitraRadiusLabel" class="font-bold" style="color: #60a5fa;">10 km</strong></p>
+            </div>
+
+            <div class="w-14 h-14 relative flex items-center justify-center flex-shrink-0">
+              <div class="radar-wave"></div>
+              <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm shadow-lg" style="background: rgba(59,130,246,0.2); border: 1.5px solid rgba(59,130,246,0.5);">
+                <i class="fa-solid fa-location-crosshairs text-blue-400 animate-spin"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIP Banner modernized -->
+          <div id="vipPromoBanner" class="mt-3 p-2.5 rounded-2xl flex items-center justify-between" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);">
             <div class="flex items-center space-x-2">
-              <h2 class="text-base font-extrabold text-white">Radar Tugas Terdekat</h2>
-              <span id="mitraRadarBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">Memindai...</span>
+              <i class="fa-solid fa-crown text-amber-400 text-xs"></i>
+              <span class="text-[11px]" style="color: #fde68a;">Upgrade <strong style="color: #fbbf24;">Mitra VIP</strong> — terima tugas 2 menit lebih awal!</span>
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">Mendeteksi permintaan klien dalam radius <strong id="mitraRadiusLabel" class="text-blue-400">10 km</strong></p>
+            <button onclick="switchMainTab('profile')" class="px-3 py-1 rounded-xl font-black text-[10px] transition-all" style="background: linear-gradient(135deg, #d97706, #f59e0b); color: #1c1917; box-shadow: 0 2px 6px rgba(245,158,11,0.3);">VIP</button>
           </div>
-
-          <div class="w-12 h-12 relative flex items-center justify-center">
-            <div class="radar-wave"></div>
-            <div class="w-10 h-10 rounded-full bg-blue-600/30 border border-blue-400 flex items-center justify-center text-blue-300 text-sm shadow">
-              <i class="fa-solid fa-location-crosshairs animate-spin"></i>
-            </div>
-          </div>
-        </div>
-
-        <div id="vipPromoBanner" class="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs">
-          <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-crown text-amber-400"></i>
-            <span class="text-[11px] text-amber-200">Aktifkan <strong>Mitra VIP</strong> agar tugas muncul 2 menit lebih awal!</span>
-          </div>
-          <button onclick="switchMainTab('profile')" class="px-2 py-1 rounded-md bg-amber-500 text-slate-950 font-bold text-[10px]">Upgrade</button>
         </div>
       </div>
 
@@ -868,34 +1355,56 @@
           </div>
         </div>
 
-        <!-- ACTION BUTTONS: GOOGLE MAPS NAVIGASI, LOG GEOFENCING, CHAT, CALL, COMPLETE -->
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <button onclick="openGoogleMapsTurnByTurn()" class="col-span-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all">
+        <!-- ACTION BUTTONS: GOOGLE MAPS NAVIGASI, LOG GEOFENCING, CHAT, CALL, START WORK, COMPLETE -->
+        <div class="space-y-2 text-xs">
+          <!-- Tombol Navigasi Live Google Maps -->
+          <button onclick="openGoogleMapsTurnByTurn()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all">
             <i class="fa-solid fa-diamond-turn-right text-base"></i>
-            <span>Arahkan ke Lokasi (Google Maps)</span>
+            <span>Arahkan ke Lokasi Pemohon (Live Maps)</span>
           </button>
 
-          <button onclick="openGeofencingLogModal()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold border border-slate-700 flex items-center justify-center space-x-1.5">
-            <i class="fa-solid fa-route"></i>
-            <span>Log Geofencing &amp; Rute</span>
-          </button>
+          <!-- TAHAP 1: SUDAH TIBA DI ALAMAT TUJUAN - WAJIB FOTO MULAI KERJA -->
+          <div id="mitraActionArriveSection">
+            <button onclick="openStartWorkPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-black text-xs shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+              <i class="fa-solid fa-camera text-sm"></i>
+              <span>📸 Tiba di Tujuan - Wajib Foto Pekerjaan Dimulai</span>
+            </button>
+          </div>
 
-          <button onclick="openChatForActiveJob()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold border border-slate-700 flex items-center justify-center space-x-1.5">
-            <i class="fa-solid fa-comments"></i>
-            <span>Chat In-App</span>
-          </button>
-        </div>
+          <!-- TAHAP 2: SEDANG DIKERJAKAN - WAJIB FOTO SELESAI TUGAS -->
+          <div id="mitraActionFinishSection" class="hidden">
+            <button onclick="openProofPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+              <i class="fa-solid fa-circle-check text-sm"></i>
+              <span>📸 Selesai Mengerjakan - Wajib Foto Tugas Selesai</span>
+            </button>
+          </div>
 
-        <div class="grid grid-cols-2 gap-2 text-xs pt-1">
-          <button onclick="callClientForActiveJob()" class="py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold border border-blue-500/30 flex items-center justify-center space-x-1.5">
-            <i class="fa-solid fa-phone"></i>
-            <span>Telepon In-App</span>
-          </button>
+          <!-- TAHAP 3: MENUNGGU TRANSFER PEMBAYARAN KLIEN -->
+          <div id="mitraActionWaitingPaymentSection" class="hidden p-3 rounded-xl bg-blue-950/70 border border-blue-500/50 space-y-1 text-center">
+            <div class="text-amber-300 font-black text-xs flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-clock-rotate-left animate-spin text-sm"></i>
+              <span>Menunggu Transfer Klien ke SeaBank</span>
+            </div>
+            <p class="text-[10px] text-slate-300 leading-tight">
+              Klien sedang mentransfer ke SeaBank 901771223812. Begitu terverifikasi, pendapatan bersih (potongan 3rb layanan &amp; 10% komisi) akan otomatis masuk ke dompet Anda tanpa menunggu admin!
+            </p>
+          </div>
 
-          <button onclick="openProofPhotoModal()" class="py-2 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 hover:to-emerald-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-1.5">
-            <i class="fa-solid fa-camera"></i>
-            <span>Selesaikan &amp; Foto</span>
-          </button>
+          <!-- Komunikasi & Log -->
+          <div class="grid grid-cols-3 gap-1.5 pt-1">
+            <button onclick="openGeofencingLogModal()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold border border-slate-700 flex items-center justify-center space-x-1">
+              <i class="fa-solid fa-route text-[11px]"></i>
+              <span class="text-[10px]">Log Rute</span>
+            </button>
+            <button onclick="openChatForActiveJob()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold border border-slate-700 flex items-center justify-center space-x-1">
+              <i class="fa-brands fa-whatsapp text-xs"></i>
+              <span class="text-[10px]">Chat WA</span>
+            </button>
+            <button onclick="callClientForActiveJob()" class="py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold border border-blue-500/30 flex items-center justify-center space-x-1">
+              <i class="fa-solid fa-phone text-[10px]"></i>
+              <span class="text-[10px]">Telepon</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -963,6 +1472,37 @@
             <i class="fa-solid fa-image"></i>
             <span>Atur / Ubah Foto Profil Asli</span>
           </button>
+        </div>
+      </div>
+
+      <!-- POIN KINERJA & KEDISIPLINAN KERJA DRIVER (GAMIFIKASI KERJA SUNGGUH-SUNGGUH) -->
+      <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/40 shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30 shadow-inner">
+              <i class="fa-solid fa-medal"></i>
+            </div>
+            <div>
+              <h4 class="font-black text-white text-xs">Poin Kinerja &amp; Kedisiplinan Driver</h4>
+              <p class="text-[10px] text-amber-300 font-semibold">Penghargaan Bekerja Sungguh-Sungguh</p>
+            </div>
+          </div>
+          <div class="text-right bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-500/30">
+            <span id="profileDriverPointsDisplay" class="font-black font-mono text-xl text-amber-300">100</span>
+            <span class="text-[9px] text-amber-400 block font-black uppercase">Poin</span>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
+          <div class="flex items-center justify-between font-bold">
+            <span class="text-slate-400">Tingkat Performa:</span>
+            <span id="profileDriverTierBadge" class="text-emerald-400 font-black"><i class="fa-solid fa-star text-amber-400 mr-1"></i>Driver Teladan</span>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            Admin memberikan poin bonus setiap Anda menyelesaikan tugas tepat waktu &amp; memuaskan klien. Driver dengan poin tinggi mendapatkan prioritas penugasan radar kilat!
+          </p>
+        </div>
+        <div id="profileDriverPointHistory" class="space-y-1 pt-1 text-[10px] max-h-36 overflow-y-auto">
+          <!-- Populated via JS -->
         </div>
       </div>
 
@@ -1409,23 +1949,70 @@
   <div id="topupModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h3 class="font-bold text-white text-sm">Isi Saldo E-Wallet (Top-Up)</h3>
+        <h3 class="font-bold text-white text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-wallet text-amber-400"></i>
+          <span>Isi Saldo Driver (Top-Up)</span>
+        </h3>
         <button onclick="closeTopupModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-300 mb-1">Nominal Top-Up (Rp):</label>
-          <input type="number" id="topupAmountInput" value="100000" step="50000" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold">
+          <input type="number" id="topupAmountInput" value="100000" step="25000" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold">
         </div>
-        <div class="grid grid-cols-3 gap-2">
-          <button type="button" onclick="document.getElementById('topupAmountInput').value = 50000" class="p-2 rounded-lg bg-slate-800 text-white font-bold">50k</button>
-          <button type="button" onclick="document.getElementById('topupAmountInput').value = 100000" class="p-2 rounded-lg bg-slate-800 text-white font-bold">100k</button>
-          <button type="button" onclick="document.getElementById('topupAmountInput').value = 250000" class="p-2 rounded-lg bg-slate-800 text-white font-bold">250k</button>
+        <div class="grid grid-cols-4 gap-1.5">
+          <button type="button" onclick="document.getElementById('topupAmountInput').value = 25000" class="py-1.5 rounded-lg bg-slate-800 text-white font-bold text-[10px]">25rb</button>
+          <button type="button" onclick="document.getElementById('topupAmountInput').value = 50000" class="py-1.5 rounded-lg bg-slate-800 text-white font-bold text-[10px]">50rb</button>
+          <button type="button" onclick="document.getElementById('topupAmountInput').value = 100000" class="py-1.5 rounded-lg bg-slate-800 text-white font-bold text-[10px]">100rb</button>
+          <button type="button" onclick="document.getElementById('topupAmountInput').value = 200000" class="py-1.5 rounded-lg bg-slate-800 text-white font-bold text-[10px]">200rb</button>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Pilih Saluran Top-Up (VA / E-Wallet / Retail):</label>
+          <select id="topupMethodSelect" onchange="onDriverTopupChannelChange(this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold text-xs focus:outline-none focus:border-amber-500">
+            <optgroup label="Virtual Account Bank">
+              <option value="seabank" selected>SeaBank (No: 901771223812)</option>
+              <option value="bca_va">Bank BCA (Virtual Account)</option>
+              <option value="bri_va">Bank BRI (BRIVA)</option>
+              <option value="mandiri_va">Bank Mandiri (Livin)</option>
+              <option value="bni_va">Bank BNI (Virtual Account)</option>
+            </optgroup>
+            <optgroup label="E-Wallet">
+              <option value="dana">DANA E-Wallet</option>
+              <option value="gopay">GoPay</option>
+              <option value="ovo">OVO</option>
+              <option value="shopeepay">ShopeePay</option>
+            </optgroup>
+            <optgroup label="Gerai Retail Modern">
+              <option value="alfamart">Alfamart / Alfamidi</option>
+              <option value="indomaret">Indomaret / Ceriamart</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Tampilan Nomor VA & Kode Bayar Driver -->
+        <div class="p-3.5 rounded-2xl bg-gradient-to-br from-blue-950/60 to-slate-950 border border-blue-500/40 space-y-2">
+          <div class="flex items-center justify-between text-[11px]">
+            <span id="vaChannelTitle" class="text-blue-300 font-bold">Nomor Virtual Account SobatSerabut:</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">OTOMATIS</span>
+          </div>
+          <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800 font-mono">
+            <span id="vaNumberDisplay" class="text-sm font-black text-emerald-400 tracking-wider">901771223812</span>
+            <button type="button" onclick="copyCurrentVANumber()" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold flex items-center space-x-1 shadow">
+              <i class="fa-solid fa-copy text-[10px]"></i>
+              <span>Salin</span>
+            </button>
+          </div>
+          <p id="vaInstructionShort" class="text-[10px] text-slate-400 leading-relaxed">
+            Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo langsung masuk otomatis.
+          </p>
         </div>
       </div>
       <div class="flex space-x-2 pt-2 border-t border-slate-800">
         <button onclick="closeTopupModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
-        <button onclick="submitTopup()" class="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">Proses Top-Up</button>
+        <button onclick="submitTopup()" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-circle-check text-xs"></i>
+          <span>Konfirmasi Masuk Saldo</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1433,34 +2020,140 @@
   <div id="withdrawModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h3 class="font-bold text-white text-sm">Tarik Saldo ke Rekening / E-Wallet</h3>
+        <h3 class="font-bold text-white text-sm flex items-center space-x-2">
+          <i class="fa-solid fa-money-bill-transfer text-emerald-400"></i>
+          <span>Tarik Saldo ke Rekening / E-Wallet</span>
+        </h3>
         <button onclick="closeWithdrawModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-300 mb-1">Pilih Metode Pencairan:</label>
-          <select id="wdChannelSelect" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
-            <option value="DANA">DANA E-Wallet</option>
-            <option value="GoPay">GoPay</option>
-            <option value="OVO">OVO</option>
-            <option value="ShopeePay">ShopeePay</option>
-            <option value="BCA">Bank BCA</option>
-            <option value="BRI">Bank BRI</option>
-            <option value="Mandiri">Bank Mandiri</option>
+          <select id="wdChannelSelect" onchange="handleWithdrawChannelChange(this.value)" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-semibold">
+            <optgroup label="E-Wallet">
+              <option value="DANA">DANA E-Wallet</option>
+              <option value="GoPay">GoPay</option>
+              <option value="OVO">OVO</option>
+              <option value="ShopeePay">ShopeePay</option>
+            </optgroup>
+            <optgroup label="Transfer Bank">
+              <option value="BCA">Bank BCA</option>
+              <option value="BRI">Bank BRI</option>
+              <option value="Mandiri">Bank Mandiri</option>
+              <option value="BNI">Bank BNI</option>
+              <option value="Bank Jago">Bank Jago</option>
+              <option value="SeaBank">SeaBank</option>
+            </optgroup>
           </select>
         </div>
         <div>
-          <label class="block font-semibold text-slate-300 mb-1">Nomor Rekening / No HP:</label>
-          <input type="text" id="wdDestinationInput" placeholder="Contoh: 081234567890 a.n Nama Anda" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
+          <label class="block font-semibold text-slate-300 mb-1">Nomor Rekening / No HP Tujuan:</label>
+          <input type="text" id="wdDestinationInput" placeholder="Contoh: 081234567890" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono font-bold">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Nama Pemilik Rekening / Akun:</label>
+          <input type="text" id="wdAccountHolderInput" placeholder="Contoh: Muhammad Rizky" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white">
         </div>
         <div>
           <label class="block font-semibold text-slate-300 mb-1">Jumlah Penarikan (Rp):</label>
-          <input type="number" id="wdAmountInput" value="50000" min="20000" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-bold">
+          <input type="number" id="wdAmountInput" value="50000" min="20000" step="10000" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-bold">
+          <p class="text-[10px] text-slate-400 mt-0.5">Minimal penarikan Rp 20.000. Bebas biaya admin.</p>
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="wdSaveAccountCheckbox" checked class="rounded bg-slate-950 border-slate-700 text-emerald-500">
+          <label for="wdSaveAccountCheckbox" class="text-[11px] text-slate-300 select-none cursor-pointer">Simpan rekening ini untuk penarikan berikutnya</label>
         </div>
       </div>
       <div class="flex space-x-2 pt-2 border-t border-slate-800">
         <button onclick="closeWithdrawModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
-        <button onclick="submitWithdrawForm()" class="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow">Ajukan Tarik</button>
+        <button onclick="submitWithdrawForm()" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow">Ajukan Penarikan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 5B: VERIFIKASI WAJAH HARIAN (DAILY FACE VERIFICATION)
+       ======================================================== -->
+  <div id="dailyFaceVerifyModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-center">
+      <div class="space-y-1">
+        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Keamanan Harian</span>
+        <h3 class="font-extrabold text-white text-base">Verifikasi Wajah Harian Driver</h3>
+        <p class="text-[11px] text-slate-400">Ambil selfie wajah sebelum memulai kerja hari ini untuk memastikan keamanan akun.</p>
+      </div>
+
+      <!-- Kamera Preview dengan Circle Frame -->
+      <div class="relative w-56 h-56 mx-auto rounded-full overflow-hidden bg-slate-950 border-4 border-amber-400 shadow-2xl flex items-center justify-center">
+        <video id="dailyFaceVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+        <canvas id="dailyFaceCanvas" class="hidden"></canvas>
+        <div class="absolute inset-0 border-2 border-dashed border-white/50 rounded-full pointer-events-none"></div>
+      </div>
+
+      <p id="dailyFaceFeedback" class="text-xs text-amber-300 font-medium">Posisikan wajah Anda tepat di dalam lingkaran dan tekan tombol di bawah.</p>
+
+      <div class="space-y-2 pt-2">
+        <button type="button" id="btnSnapDailyFace" onclick="captureDailyFaceVerification()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all">
+          <i class="fa-solid fa-camera"></i>
+          <span>Ambil Foto &amp; Verifikasi Wajah</span>
+        </button>
+        <button type="button" onclick="closeDailyFaceVerifyModal()" class="w-full py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold">
+          Nanti Saja (Mode Standby)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 5C: POPUP NOTIFIKASI ORDER BARU (MASUK KE RADAR)
+       ======================================================== -->
+  <div id="incomingOrderModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-500 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-bounce-subtle">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="text-xs uppercase font-extrabold tracking-wider text-amber-400">📢 PESANAN BARU MASUK!</span>
+        </div>
+        <span id="incomingOrderTimerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">30s</span>
+      </div>
+
+      <!-- Info Layanan & Klien -->
+      <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h4 id="incomingOrderTitle" class="font-extrabold text-white text-sm">Layanan Runner / Belanja</h4>
+            <span id="incomingOrderCategory" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">Runner</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block">Pendapatan Bersih:</span>
+            <span id="incomingOrderFare" class="font-mono font-black text-emerald-400 text-sm">Rp 35.000</span>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800/80 space-y-1 text-xs text-slate-300">
+          <div class="flex items-center space-x-1.5">
+            <i class="fa-solid fa-user text-slate-400 text-[10px]"></i>
+            <span id="incomingOrderClientName" class="font-semibold text-white">Pemohon Jasa</span>
+          </div>
+          <div class="flex items-start space-x-1.5">
+            <i class="fa-solid fa-location-dot text-rose-400 text-[10px] mt-0.5"></i>
+            <span id="incomingOrderAddress" class="text-[11px] text-slate-300 line-clamp-2">Jl. Sudirman No. 12</span>
+          </div>
+          <div class="flex items-center space-x-1.5 text-blue-300 font-semibold text-[11px]">
+            <i class="fa-solid fa-route text-[10px]"></i>
+            <span>Estimasi Jarak: <strong id="incomingOrderDistance">1.2 km</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tombol Aksi: TERIMA / ABAIKAN -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onclick="rejectIncomingOrder()" class="py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all active:scale-95">
+          Abaikan / Lewati
+        </button>
+        <button type="button" onclick="acceptIncomingOrder()" class="py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-1.5 transition-all active:scale-95">
+          <i class="fa-solid fa-check"></i>
+          <span>TERIMA PESANAN</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1592,6 +2285,71 @@
         <i class="fa-solid fa-diamond-turn-right text-base"></i>
         <span>Buka Arah Navigasi Google Maps</span>
       </button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: WAJIB FOTO PEKERJAAN YANG AKAN DIMULAI SAAT TIBA
+       ======================================================== -->
+  <div id="modalStartWorkPhoto" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-camera"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-xs">Foto Pekerjaan yang Akan Dimulai</h3>
+            <p class="text-[10px] text-slate-400">Wajib Saat Tiba di Alamat Tujuan</p>
+          </div>
+        </div>
+        <button onclick="closeStartWorkPhotoModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-300 text-[11px] leading-relaxed">
+          Ambil foto rumah / lokasi tugas yang akan Anda kerjakan guna memantau pekerjaan yang sedang berlangsung dengan estimasi waktu sesuai kategori jasa.
+        </p>
+
+        <!-- Kategori & Estimasi Waktu Info -->
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-400 block font-semibold">Kategori Jasa:</span>
+            <span id="startWorkCategoryLabel" class="text-xs font-bold text-blue-400">Pekerjaan</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block font-semibold">Estimasi Waktu:</span>
+            <span id="startWorkEstMinutesLabel" class="text-xs font-mono font-bold text-emerald-400">60 Menit</span>
+          </div>
+        </div>
+
+        <div id="startWorkPhotoPreviewContainer" onclick="openDirectCamera('start_work', 'environment')" class="h-44 rounded-2xl bg-slate-950 border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-400 overflow-hidden relative cursor-pointer hover:border-blue-500 transition-all">
+          <i class="fa-solid fa-camera text-3xl mb-1 text-slate-500"></i>
+          <span class="text-[11px] font-bold text-white">📸 Ketuk untuk Buka Kamera Langsung</span>
+          <span class="text-[10px] text-slate-500">Foto rumah / objek yang akan dikerjakan</span>
+          <img id="startWorkPhotoPreviewImg" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl">
+        </div>
+
+        <div class="space-y-1.5">
+          <button type="button" onclick="openDirectCamera('start_work', 'environment')" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-black text-xs flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+            <i class="fa-solid fa-camera"></i>
+            <span>📸 Buka Kamera Langsung</span>
+          </button>
+          <input type="file" id="startWorkPhotoFileInput" accept="image/*" capture="environment" onchange="previewStartWorkImage(this)" class="hidden">
+          <div class="flex items-center justify-between text-[10px] text-slate-500 px-0.5">
+            <span>Kamera belakang langsung aktif</span>
+            <button type="button" onclick="document.getElementById('startWorkPhotoFileInput').click()" class="text-blue-400 hover:underline">Pilih dari Galeri</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeStartWorkPhotoModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Batal</button>
+        <button id="btnSubmitStartWork" onclick="submitStartWorkWithPhoto()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 text-white text-xs font-black shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-1.5 transition-all">
+          <i class="fa-solid fa-play"></i>
+          <span>Mulai Kerjakan Tugas</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1901,6 +2659,73 @@
       <div id="networkStatusDetail" class="text-[10px] text-slate-500 font-mono">
         Status: Menunggu Jaringan Aktif...
       </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: AKUN DRIVER DITANGGUHKAN SEMENTARA (SUSPENDED) OLEH ADMIN
+       ======================================================== -->
+  <div id="driverSuspendedModal" class="fixed inset-0 bg-slate-950/98 backdrop-blur-xl z-[99990] hidden flex flex-col items-center justify-center p-6 text-center select-none">
+    <div class="max-w-sm w-full bg-slate-900 border border-amber-500/50 rounded-3xl p-6 shadow-2xl space-y-4">
+      <div class="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-400 mx-auto flex items-center justify-center shadow-lg animate-pulse">
+        <i class="fa-solid fa-triangle-exclamation text-4xl"></i>
+      </div>
+      <div class="space-y-2">
+        <span class="inline-block px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
+          STATUS: SUSPENDED
+        </span>
+        <h3 class="text-lg font-black text-white">Akun Driver Ditangguhkan</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Admin SobatSerabut telah menangguhkan akun Driver Anda untuk sementara waktu.
+        </p>
+        <div class="p-3 rounded-2xl bg-slate-950 border border-amber-500/30 text-left space-y-1">
+          <span class="text-[10px] text-amber-400 font-bold block uppercase">Alasan Penangguhan dari Admin:</span>
+          <p id="suspendedReasonText" class="text-xs text-slate-200 font-medium italic leading-snug">
+            "Sedang dalam peninjauan verifikasi data &amp; kedisiplinan kerja."
+          </p>
+        </div>
+      </div>
+      <div class="pt-2 space-y-2">
+        <a id="suspendedWaBtn" href="https://wa.me/6287791201091?text=Halo%20Admin%20SobatSerabut,%20saya%20ingin%20mengajukan%20pembukaan%20suspen%20akun%20Driver%20saya" target="_blank" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+          <i class="fa-brands fa-whatsapp text-base"></i>
+          <span>Hubungi Admin Pusat Buka Suspen</span>
+        </a>
+        <button type="button" onclick="handleLogout()" class="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-bold transition-all">
+          <span>Keluar dari Akun</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: SIARAN NOTIFIKASI PROMO & PENGUMUMAN DARI ADMIN
+       ======================================================== -->
+  <div id="broadcastNotificationModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9990] hidden flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-5 shadow-2xl space-y-4 animate-scaleUp">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span id="broadcastTypeBadgeIcon" class="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-bullhorn"></i>
+          </span>
+          <span id="broadcastTypeBadgeText" class="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+            PROMO RESMI SOBATSERABUT
+          </span>
+        </div>
+        <button type="button" onclick="closeBroadcastModal()" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="space-y-2 text-left">
+        <h3 id="broadcastTitleDisplay" class="text-sm font-black text-white leading-snug">
+          Judul Siaran Promo
+        </h3>
+        <p id="broadcastMessageDisplay" class="text-xs text-slate-300 leading-relaxed">
+          Pesan siaran notifikasi dari admin...
+        </p>
+      </div>
+      <button type="button" onclick="closeBroadcastModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs shadow-lg transition-all active:scale-95">
+        <span>Saya Mengerti &amp; Lanjutkan</span>
+      </button>
     </div>
   </div>
 

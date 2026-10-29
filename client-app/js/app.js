@@ -26,7 +26,7 @@ function getApiBase() {
     }
   }
 
-  return 'https://structure-crane-princess.ngrok-free.dev';
+  return 'https://app.sobatserabut.id';
 }
 
 let API_BASE = getApiBase();
@@ -167,6 +167,24 @@ async function checkAppConnectivity(showFeedback = false) {
     }
   }
 
+  // 2b. Fallback darurat ke Cloud VPS DomaiNesia (160.19.166.231)
+  if (!isConnected) {
+    const cloudUrl = 'https://sobatserabut.160.19.166.231.sslip.io';
+    if (API_BASE !== cloudUrl) {
+      try {
+        const c3 = new AbortController();
+        const t3 = setTimeout(() => c3.abort(), 3000);
+        const r3 = await fetch(`${cloudUrl}/api/ping?_t=${Date.now()}`, { cache: 'no-store', signal: c3.signal });
+        clearTimeout(t3);
+        if (r3.ok) {
+          API_BASE = cloudUrl;
+          localStorage.setItem('sobatserabut_server_url', API_BASE);
+          isConnected = true;
+        }
+      } catch(e3) {}
+    }
+  }
+
   if (isConnected) {
     handleNetworkState(true);
     if (showFeedback) showToast('✅ Terhubung ke Server SobatSerabut', 'success', 2500);
@@ -276,12 +294,25 @@ async function requestAllDevicePermissions() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. First install check: Bersihkan riwayat tugas lama
-  if (!localStorage.getItem('sobatserabut_client_installed_v2')) {
-    localStorage.removeItem('sobatserabut_cached_orders');
-    localStorage.removeItem('sobatserabut_orders');
+  // Bersihkan data palsu/simulasi — hanya data nyata dari pendaftaran yang valid
+  const DATA_VERSION = 'sobatserabut_client_v3_real';
+  if (localStorage.getItem('_data_version') !== DATA_VERSION) {
+    const savedUser = localStorage.getItem('sobatserabut_client_user');
+    localStorage.clear();
+    sessionStorage.clear();
+    if (savedUser) localStorage.setItem('sobatserabut_client_user', savedUser);
+    localStorage.setItem('_data_version', DATA_VERSION);
     localStorage.setItem('sobatserabut_client_installed_v2', 'true');
     clientOrders = [];
+    console.log('[Klien] Cache lama & data simulasi dihapus.');
+  } else {
+    // 1. First install check: Bersihkan riwayat tugas lama
+    if (!localStorage.getItem('sobatserabut_client_installed_v2')) {
+      localStorage.removeItem('sobatserabut_cached_orders');
+      localStorage.removeItem('sobatserabut_orders');
+      localStorage.setItem('sobatserabut_client_installed_v2', 'true');
+      clientOrders = [];
+    }
   }
 
   // 2. Render UI & Kategori langsung (Frame 0, Instan tanpa tunggu jaringan)
@@ -455,6 +486,31 @@ function initSocket() {
       }
     });
 
+    socket.on('categories:update', (cats) => {
+      if (Array.isArray(cats)) {
+        categoriesList = cats;
+        renderKlienCategoriesGrid();
+        populatePostTaskCategorySelect();
+      }
+    });
+
+    socket.on('categories:updated', (cats) => {
+      if (Array.isArray(cats)) {
+        categoriesList = cats;
+        renderKlienCategoriesGrid();
+        populatePostTaskCategorySelect();
+      }
+    });
+
+    socket.on('config:icon_updated', (data) => {
+      if (data && (data.target === 'client' || data.target === 'all')) {
+        const logoUrl = (data.iconUrl || '/uploads/logo_icon_client.svg') + '?t=' + Date.now();
+        document.querySelectorAll('#appHeaderLogo, #headerAppBrandLogo').forEach(el => {
+          el.src = logoUrl;
+        });
+      }
+    });
+
     socket.on('order:assigned', (data) => {
       if (currentUser?.id === data.order.clientId) {
         showCustomDialog({
@@ -583,7 +639,14 @@ function checkAuthSession() {
     try {
       const parsed = JSON.parse(saved);
       // Hanya terima data akun nyata yang terdaftar (bukan simulasi / rekayasa)
-      if (parsed && (!parsed.role || parsed.role === 'klien') && !String(parsed.id).startsWith('klien_') && parsed.id !== 'KLN-001') {
+      // TOLAK akun dengan role 'mitra' — mereka harus menggunakan Aplikasi Driver
+      if (parsed && parsed.role === 'mitra') {
+        // Akun driver mencoba masuk ke Client App — tolak dan bersihkan
+        localStorage.removeItem('sobatserabut_client_user');
+        localStorage.removeItem('sobatserabut_user');
+        currentUser = null;
+        // Akan jatuh ke onGuestSessionInit di bawah
+      } else if (parsed && (!parsed.role || parsed.role === 'klien') && !String(parsed.id).startsWith('klien_') && parsed.id !== 'KLN-001') {
         currentUser = parsed;
         localStorage.setItem('sobatserabut_client_user', JSON.stringify(currentUser));
         onUserAuthenticated(currentUser);
@@ -596,14 +659,8 @@ function checkAuthSession() {
   localStorage.removeItem('sobatserabut_client_user');
   currentUser = null;
 
-  // Hanya data nyata: minta pendaftaran / login resmi
-  const isRegistered = localStorage.getItem('sobatserabut_registered') === 'true';
-  showAuthOverlay();
-  if (isRegistered) {
-    navigateToAuthScreen('login');
-  } else {
-    navigateToAuthScreen('register');
-  }
+  // Langsung buka beranda marketplace (Guest Session) agar mudah diakses tanpa blank/stuck
+  onGuestSessionInit();
 }
 
 function onGuestSessionInit() {
@@ -664,6 +721,16 @@ function updateProfileTabUI() {
     if (phoneEl) phoneEl.innerText = currentUser.phone || '';
     const addrEl = document.getElementById('profileUserAddress');
     if (addrEl) addrEl.innerText = currentUser.address || 'Indonesia';
+    const fullAddrBox = document.getElementById('profileUserFullAddressBox');
+    if (fullAddrBox) fullAddrBox.innerText = currentUser.address || 'Belum diatur (Silakan atur alamat lengkap)';
+    const benchBox = document.getElementById('profileUserBenchmarkBox');
+    if (benchBox) {
+      benchBox.innerText = currentUser.structuredAddress?.benchmark ? `📍 Patokan: ${currentUser.structuredAddress.benchmark}` : '';
+    }
+    const walletBalText = document.getElementById('profileWalletBalanceText');
+    if (walletBalText) {
+      walletBalText.innerText = `Rp ${Number(currentUser.balance || 0).toLocaleString('id-ID')}`;
+    }
     const avatarEl = document.getElementById('profileUserAvatar');
     if (avatarEl) {
       let src = 'uploads/avatar_default.svg';
@@ -1427,6 +1494,33 @@ function toggleStage5PasswordVisibility() {
   }
 }
 
+function validateStage5Form() {
+  const psw = document.getElementById('stage5PasswordInput')?.value || '';
+  const isLen = psw.length >= 8 && psw.length <= 16;
+  const hasUpper = /[A-Z]/.test(psw);
+  const hasLower = /[a-z]/.test(psw);
+  const pswValid = isLen && hasUpper && hasLower;
+
+  const street = document.getElementById('regStreetInput')?.value.trim() || '';
+  const houseNumber = document.getElementById('regHouseNumberInput')?.value.trim() || '';
+  const kelurahan = document.getElementById('regKelurahanInput')?.value.trim() || '';
+  const kecamatan = document.getElementById('regKecamatanInput')?.value.trim() || '';
+  const city = document.getElementById('regCityInput')?.value.trim() || '';
+
+  const addressValid = street.length > 0 && houseNumber.length > 0 && kelurahan.length > 0 && kecamatan.length > 0 && city.length > 0;
+  const isValid = pswValid && addressValid;
+
+  const btnFinal = document.getElementById('btnStage5RegisterFinal');
+  if (btnFinal) {
+    btnFinal.disabled = !isValid;
+    if (isValid) {
+      btnFinal.className = 'w-full py-4 rounded-2xl bg-[#EE4D2D] hover:bg-[#d84022] text-white font-black text-sm cursor-pointer transition-all duration-300 flex items-center justify-center space-x-2 select-none shadow-lg shadow-orange-500/30 active:scale-98';
+    } else {
+      btnFinal.className = 'w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-black text-sm cursor-not-allowed transition-all duration-300 flex items-center justify-center space-x-2 select-none shadow-none';
+    }
+  }
+}
+
 function onStage5PasswordInput(val) {
   const isLen = val.length >= 8 && val.length <= 16;
   const hasUpper = /[A-Z]/.test(val);
@@ -1436,50 +1530,80 @@ function onStage5PasswordInput(val) {
   const ruleBox = document.getElementById('stage5RuleBox');
   const ruleIcon = document.getElementById('stage5RuleIcon');
   const ruleText = document.getElementById('stage5RuleText');
-  const btnFinal = document.getElementById('btnStage5RegisterFinal');
 
   if (isValid) {
     if (ruleBox) ruleBox.className = 'mt-3 p-3 rounded-2xl border text-xs leading-relaxed transition-all duration-300 border-emerald-300 bg-emerald-50 text-emerald-700 flex items-start space-x-2';
     if (ruleIcon) ruleIcon.className = 'fa-solid fa-circle-check text-sm mt-0.5 flex-shrink-0 text-emerald-600';
     if (ruleText) ruleText.innerHTML = '<strong>Sandi Kuat!</strong> Syarat terpenuhi (8-16 karakter, minimal 1 huruf besar dan 1 huruf kecil).';
-    if (btnFinal) {
-      btnFinal.disabled = false;
-      btnFinal.className = 'w-full py-4 rounded-2xl bg-[#EE4D2D] hover:bg-[#d84022] text-white font-black text-sm cursor-pointer transition-all duration-300 flex items-center justify-center space-x-2 select-none shadow-lg shadow-orange-500/30 active:scale-98';
-    }
   } else {
     if (ruleBox) ruleBox.className = 'mt-3 p-3 rounded-2xl border text-xs leading-relaxed transition-all duration-300 border-rose-200 bg-rose-50 text-rose-600 flex items-start space-x-2';
     if (ruleIcon) ruleIcon.className = 'fa-solid fa-circle-xmark text-sm mt-0.5 flex-shrink-0 text-rose-500';
     if (ruleText) ruleText.innerText = 'Password harus terdiri dari 8-16 karakter dan mengandung minimal 1 huruf besar dan 1 huruf kecil.';
-    if (btnFinal) {
-      btnFinal.disabled = true;
-      btnFinal.className = 'w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-black text-sm cursor-not-allowed transition-all duration-300 flex items-center justify-center space-x-2 select-none shadow-none';
-    }
   }
+  validateStage5Form();
 }
 
 async function submitStage5RegisterFinal() {
   const input = document.getElementById('stage5PasswordInput');
   const password = input ? input.value.trim() : '';
 
+  const nameInput = document.getElementById('stage5NameInput');
+  const cleanPhone = pendingRegPhone.replace(/[^0-9]/g, '');
+  const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : ('Sobat ' + (cleanPhone ? cleanPhone.slice(-4) : 'User'));
+
+  const street = document.getElementById('regStreetInput')?.value.trim() || '';
+  const houseNumber = document.getElementById('regHouseNumberInput')?.value.trim() || '';
+  const rt = document.getElementById('regRtInput')?.value.trim() || '';
+  const rw = document.getElementById('regRwInput')?.value.trim() || '';
+  const kelurahan = document.getElementById('regKelurahanInput')?.value.trim() || '';
+  const kecamatan = document.getElementById('regKecamatanInput')?.value.trim() || '';
+  const city = document.getElementById('regCityInput')?.value.trim() || '';
+  const benchmark = document.getElementById('regBenchmarkInput')?.value.trim() || '';
+
   if (!password || password.length < 8) {
-    showToast('Harap atur kata sandi sesuai kriteria keamanan.', 'warning');
+    showToast('Harap atur kata sandi sesuai kriteria keamanan (min. 8 karakter).', 'warning');
+    return;
+  }
+  if (!street || !houseNumber || !kelurahan || !kecamatan || !city) {
+    showToast('Harap lengkapi alamat lengkap Anda (Jalan, No Rumah, Kelurahan, Kecamatan, Kota).', 'warning');
     return;
   }
 
-  const cleanPhone = pendingRegPhone.replace(/[^0-9]/g, '');
-  const autoName = 'Sobat ' + (cleanPhone ? cleanPhone.slice(-4) : 'User');
+  const parts = [street, `No. ${houseNumber}`];
+  if (rt || rw) parts.push(`RT ${rt || '-'}/RW ${rw || '-'}`);
+  parts.push(`Kel. ${kelurahan}`, `Kec. ${kecamatan}`, city);
+  const fullAddress = parts.join(', ');
+
+  const structuredAddress = {
+    street,
+    houseNumber,
+    rt,
+    rw,
+    kelurahan,
+    kecamatan,
+    city,
+    benchmark
+  };
 
   try {
     showToast('Menyelesaikan pendaftaran akun SobatSerabut...', 'info');
-    const res = await fetch(`${API_BASE}/api/auth/register`, {
+    const res = await fetch(`${API_BASE}/api/auth/client/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: autoName,
+        name,
         phone: pendingRegPhone,
-        password: password,
-        role: 'klien',
-        address: 'Indonesia'
+        password,
+        street,
+        houseNumber,
+        rt,
+        rw,
+        kelurahan,
+        kecamatan,
+        city,
+        benchmark,
+        address: fullAddress,
+        structuredAddress
       })
     }).then(r => r.json());
 
@@ -1499,7 +1623,7 @@ async function submitStage5RegisterFinal() {
       onUserAuthenticated(currentUser);
       switchMainTab('home');
 
-      showToast('🎉 Pendaftaran Selesai! Selamat datang di SobatSerabut.', 'success', 5000);
+      showToast('🎉 Pendaftaran Selesai! Alamat domisili Anda berhasil disinkronkan.', 'success', 5000);
       playSuccessChime();
     } else {
       showToast(res.message || 'Pendaftaran gagal.', 'error');
@@ -2797,6 +2921,18 @@ async function toggleUserRoleSwitch() {
  * 3. AUTHENTICATED APP INITIALIZATION (CLIENT APP)
  * ======================================================== */
 function onUserAuthenticated(user) {
+  // Tolak akun Driver Mitra masuk ke Client App
+  if (user && user.role === 'mitra') {
+    saveClientSession(null);
+    currentUser = null;
+    showToast(
+      'Akun ini adalah Akun Mitra Driver. Gunakan Aplikasi Driver SobatSerabut untuk masuk.',
+      'error', 8000
+    );
+    onGuestSessionInit();
+    return;
+  }
+
   hideAuthOverlay();
   closeRegisterFlow();
   closeLoginFlow();
@@ -3072,161 +3208,366 @@ function handlePaymentMethodChange(val) {
 }
 
 /* ========================================================
- * 6. ALUR KERJA KLIEN (POSTING TUGAS DENGAN SUMBER PEMBAYARAN NYATA)
+ * 6. ALUR KERJA KLIEN (POSTING TUGAS DENGAN SINKRONISASI ALAMAT PROFIL & RADAR OTOMATIS)
  * ======================================================== */
+function syncTaskAddressFromProfile() {
+  const addrDisplay = document.getElementById('postTaskSyncedAddressDisplay');
+  const benchDisplay = document.getElementById('postTaskSyncedBenchmarkDisplay');
+  const hiddenInput = document.getElementById('postTaskAddressInput');
+
+  if (currentUser && currentUser.address) {
+    if (addrDisplay) addrDisplay.innerText = currentUser.address;
+    if (benchDisplay) {
+      benchDisplay.innerText = currentUser.structuredAddress?.benchmark 
+        ? `📍 Patokan: ${currentUser.structuredAddress.benchmark}`
+        : '';
+    }
+    if (hiddenInput) hiddenInput.value = currentUser.address;
+  } else {
+    if (addrDisplay) addrDisplay.innerHTML = '<span class="text-amber-400">Belum ada alamat. Silakan atur di Profil Saya terlebih dahulu.</span>';
+    if (benchDisplay) benchDisplay.innerText = '';
+    if (hiddenInput) hiddenInput.value = '';
+  }
+}
+
 function openPostTaskModal() {
   if (!currentUser) {
     checkAuthSession();
   }
   const modal = document.getElementById('postTaskModal');
   if (modal) modal.classList.remove('hidden');
+  syncTaskAddressFromProfile();
+  populatePostTaskCategorySelect();
   updateAutoFareDisplay();
+
+  const radarRadius = systemConfig?.radarRadiusMeters || ((systemConfig?.maxRadiusKm || 2) * 1000);
+  const radarDisp = document.getElementById('postTaskRadarRadiusDisplay');
+  if (radarDisp) {
+    if (radarRadius >= 1000) {
+      radarDisp.innerText = `${(radarRadius / 1000).toFixed(1)} KM (${radarRadius.toLocaleString('id-ID')} m)`;
+    } else {
+      radarDisp.innerText = `${radarRadius.toLocaleString('id-ID')} Meter`;
+    }
+  }
 }
 
 function closePostTaskModal() {
-  document.getElementById('postTaskModal').classList.add('hidden');
+  const modal = document.getElementById('postTaskModal');
+  if (modal) modal.classList.add('hidden');
 }
 
-let postTaskPhotoBase64 = null;
+/* KELOLA & TAMBAH ALAMAT DI PROFIL SAYA */
+function openManageAddressModal() {
+  if (!currentUser) {
+    showToast('Silakan login terlebih dahulu.', 'warning');
+    return;
+  }
+  const modal = document.getElementById('modalManageAddress');
+  if (!modal) return;
 
-function handlePostTaskPhotoSelect(input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    postTaskPhotoBase64 = e.target.result;
-    const previewBox = document.getElementById('postTaskPhotoPreviewBox');
-    const previewImg = document.getElementById('postTaskPhotoPreviewImg');
-    const statusText = document.getElementById('postTaskPhotoStatus');
+  const struct = currentUser.structuredAddress || {};
+  if (document.getElementById('editAddressStreet')) document.getElementById('editAddressStreet').value = struct.street || '';
+  if (document.getElementById('editAddressHouseNumber')) document.getElementById('editAddressHouseNumber').value = struct.houseNumber || '';
+  if (document.getElementById('editAddressRt')) document.getElementById('editAddressRt').value = struct.rt || '';
+  if (document.getElementById('editAddressRw')) document.getElementById('editAddressRw').value = struct.rw || '';
+  if (document.getElementById('editAddressKelurahan')) document.getElementById('editAddressKelurahan').value = struct.kelurahan || '';
+  if (document.getElementById('editAddressKecamatan')) document.getElementById('editAddressKecamatan').value = struct.kecamatan || '';
+  if (document.getElementById('editAddressCity')) document.getElementById('editAddressCity').value = struct.city || '';
+  if (document.getElementById('editAddressBenchmark')) document.getElementById('editAddressBenchmark').value = struct.benchmark || '';
 
-    if (previewImg) previewImg.src = postTaskPhotoBase64;
-    if (previewBox) previewBox.classList.remove('hidden');
-    if (statusText) statusText.innerHTML = '<span class="text-emerald-400 font-bold">✓ Foto Terlampir</span>';
-    showToast('Foto tugas berhasil dilampirkan!', 'success');
-  };
-  reader.readAsDataURL(file);
+  modal.classList.remove('hidden');
 }
 
-function removePostTaskPhoto() {
-  postTaskPhotoBase64 = null;
-  const input = document.getElementById('postTaskPhotoInput');
-  if (input) input.value = '';
-  const previewBox = document.getElementById('postTaskPhotoPreviewBox');
-  const statusText = document.getElementById('postTaskPhotoStatus');
-  if (previewBox) previewBox.classList.add('hidden');
-  if (statusText) statusText.innerText = 'Belum ada foto';
+function closeManageAddressModal() {
+  const modal = document.getElementById('modalManageAddress');
+  if (modal) modal.classList.add('hidden');
 }
 
-function updateFullAddressDisplay() {
-  const street = document.getElementById('postTaskStreet')?.value.trim() || '';
-  const houseNumber = document.getElementById('postTaskHouseNumber')?.value.trim() || '';
-  const rt = document.getElementById('postTaskRt')?.value.trim() || '';
-  const rw = document.getElementById('postTaskRw')?.value.trim() || '';
-  const kelurahan = document.getElementById('postTaskKelurahan')?.value.trim() || '';
-  const kecamatan = document.getElementById('postTaskKecamatan')?.value.trim() || '';
-  const city = document.getElementById('postTaskCity')?.value.trim() || '';
+async function saveClientProfileAddress() {
+  if (!currentUser) return;
+  const street = document.getElementById('editAddressStreet')?.value.trim() || '';
+  const houseNumber = document.getElementById('editAddressHouseNumber')?.value.trim() || '';
+  const rt = document.getElementById('editAddressRt')?.value.trim() || '';
+  const rw = document.getElementById('editAddressRw')?.value.trim() || '';
+  const kelurahan = document.getElementById('editAddressKelurahan')?.value.trim() || '';
+  const kecamatan = document.getElementById('editAddressKecamatan')?.value.trim() || '';
+  const city = document.getElementById('editAddressCity')?.value.trim() || '';
+  const benchmark = document.getElementById('editAddressBenchmark')?.value.trim() || '';
 
-  const parts = [];
-  if (street) parts.push(street);
-  if (houseNumber) parts.push(`No. ${houseNumber}`);
+  if (!street || !houseNumber || !kelurahan || !kecamatan || !city) {
+    showToast('Harap isi Jalan, No Rumah, Kelurahan, Kecamatan, dan Kota/Kabupaten.', 'warning');
+    return;
+  }
+
+  const parts = [street, `No. ${houseNumber}`];
   if (rt || rw) parts.push(`RT ${rt || '-'}/RW ${rw || '-'}`);
-  if (kelurahan) parts.push(`Kel. ${kelurahan}`);
-  if (kecamatan) parts.push(`Kec. ${kecamatan}`);
-  if (city) parts.push(city);
+  parts.push(`Kel. ${kelurahan}`, `Kec. ${kecamatan}`, city);
+  const fullAddress = parts.join(', ');
 
-  const fullAddr = parts.join(', ');
-  const preview = document.getElementById('postTaskFullAddressPreview');
-  const hiddenInput = document.getElementById('postTaskAddressInput');
-
-  if (preview) preview.innerText = fullAddr || 'Belum ditentukan';
-  if (hiddenInput) hiddenInput.value = fullAddr;
-  return fullAddr;
-}
-
-async function submitNewTaskPost() {
-  const title = document.getElementById('postTaskTitleInput').value.trim();
-  const category = document.getElementById('postTaskCategorySelect').value;
-  const description = document.getElementById('postTaskDescInput').value.trim();
-  const paymentMethod = document.getElementById('postTaskPaymentMethodSelect')?.value || 'ewallet';
-  const paymentProvider = document.getElementById('postTaskProviderSelect')?.value || 'DANA';
-  const paymentAccountNo = document.getElementById('postTaskAccountNoInput')?.value.trim() || '';
-  const paymentAccountName = document.getElementById('postTaskAccountNameInput')?.value.trim() || '';
-
-  if (!title) {
-    showToast('Harap isi judul pekerjaan yang Anda butuhkan.', 'warning');
-    return;
-  }
-  if (!paymentAccountNo || !paymentAccountName) {
-    showToast('Harap lengkapi nomor akun dan nama pemilik rekening / e-wallet pembayar.', 'warning');
-    return;
-  }
-
-  const cat = categoriesList.find(c => c.name === category);
-  const baseFare = cat ? cat.baseFare : 25000;
-
-  const houseNumber = document.getElementById('postTaskHouseNumber')?.value.trim() || '';
-  const street = document.getElementById('postTaskStreet')?.value.trim() || '';
-  const rt = document.getElementById('postTaskRt')?.value.trim() || '';
-  const rw = document.getElementById('postTaskRw')?.value.trim() || '';
-  const kelurahan = document.getElementById('postTaskKelurahan')?.value.trim() || '';
-  const kecamatan = document.getElementById('postTaskKecamatan')?.value.trim() || '';
-  const city = document.getElementById('postTaskCity')?.value.trim() || '';
-  const benchmark = document.getElementById('postTaskBenchmark')?.value.trim() || '';
-  const accuracyMeters = Number(document.getElementById('postTaskAccuracy')?.value) || 5;
-  const fullAddress = updateFullAddressDisplay() || document.getElementById('postTaskAddressInput')?.value.trim() || (currentUser?.address || 'Indonesia');
-
-  const payload = {
-    title,
-    category,
-    description: description || 'Tolong dibantu dengan cepat dan rapi.',
-    budget: baseFare,
-    baseFare,
-    address: fullAddress,
-    houseNumber,
+  const structuredAddress = {
     street,
+    houseNumber,
     rt,
     rw,
     kelurahan,
     kecamatan,
     city,
-    benchmark,
-    accuracyMeters,
-    taskPhoto: postTaskPhotoBase64 || null,
+    benchmark
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/profile/${currentUser.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        address: fullAddress,
+        structuredAddress
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.data) {
+      currentUser = res.data;
+      saveClientSession(currentUser);
+      updateProfileTabUI();
+      syncTaskAddressFromProfile();
+      closeManageAddressModal();
+      showToast('✓ Alamat di Profil Saya berhasil disimpan & tersinkronisasi otomatis!', 'success');
+    } else {
+      showToast(res.message || 'Gagal menyimpan alamat.', 'error');
+    }
+  } catch (err) {
+    showToast('Koneksi gagal: ' + err.message, 'error');
+  }
+}
+
+async function submitNewTaskPost() {
+  if (!currentUser) {
+    showToast('Silakan login terlebih dahulu untuk posting kebutuhan.', 'warning');
+    return;
+  }
+
+  const category = document.getElementById('postTaskCategorySelect')?.value || 'Bantuan Umum';
+  const description = document.getElementById('postTaskDescInput')?.value.trim() || '';
+
+  if (!currentUser.address) {
+    showToast('Harap lengkapi alamat lengkap di Profil Saya terlebih dahulu.', 'warning');
+    openManageAddressModal();
+    return;
+  }
+
+  const cat = categoriesList.find(c => c.name === category);
+  const baseFare = cat ? cat.baseFare : 25000;
+  const struct = currentUser.structuredAddress || {};
+
+  const payload = {
+    title: category,
+    category,
+    description: description || 'Tolong dibantu dengan cepat dan rapi sesuai kebutuhan.',
+    budget: baseFare,
+    baseFare,
+    address: currentUser.address,
+    street: struct.street || '',
+    houseNumber: struct.houseNumber || '',
+    rt: struct.rt || '',
+    rw: struct.rw || '',
+    kelurahan: struct.kelurahan || '',
+    kecamatan: struct.kecamatan || '',
+    city: struct.city || '',
+    benchmark: struct.benchmark || '',
     clientId: currentUser.id,
     clientName: currentUser.name,
     clientPhone: currentUser.phone,
     clientAvatar: currentUser.avatar,
-    paymentMethod,
-    paymentProvider,
-    paymentAccountNo,
-    paymentAccountName,
     lat: Number(document.getElementById('postTaskLat')?.value) || currentUser.lat || -6.1754,
     lng: Number(document.getElementById('postTaskLng')?.value) || currentUser.lng || 106.8272
   };
 
   try {
+    showToast('📡 Mengaktifkan radar & menyiarkan tugas ke driver terdekat...', 'info');
     const res = await fetch(`${API_BASE}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
-    if (res.success) {
-      showToast(`Tugas "${title}" berhasil diposting! Radar pencarian mitra terdekat aktif memindai.`, 'success', 5000);
+    if (res.success && res.data) {
       closePostTaskModal();
-      document.getElementById('postTaskTitleInput').value = '';
-      document.getElementById('postTaskDescInput').value = '';
-      removePostTaskPhoto();
+      const descInput = document.getElementById('postTaskDescInput');
+      if (descInput) descInput.value = '';
 
-      // Alihkan langsung ke tab Pesanan Aktif untuk memantau radar maps secara live
+      showToast(`📡 Radar aktif! Menyiarkan tugas ke driver terdekat dalam radius radar admin (${res.data.radarRadiusMeters || 2000} m).`, 'success', 5000);
+      playSuccessChime();
+
       switchMainTab('orders');
       switchOrdersSubTab('active');
       loadClientOrders();
     } else {
-      showToast(res.message, 'error');
+      showToast(res.message || 'Gagal memposting tugas.', 'error');
     }
   } catch(err) {
+    console.error('Post task error:', err);
     showToast('Gagal memposting tugas: ' + err.message, 'error');
+  }
+}
+
+/* ========================================================
+ * VIRTUAL ACCOUNT APLIKASI SENDIRI (TOP UP LANGSUNG MASUK SALDO)
+ * ======================================================== */
+let currentTopupChannel = 'seabank';
+
+function openTopupModal() {
+  const modal = document.getElementById('topupModal');
+  if (modal) modal.classList.remove('hidden');
+  updateGeneratedVAInfo();
+}
+
+function closeTopupModal() {
+  const modal = document.getElementById('topupModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function setTopupAmount(amt) {
+  const input = document.getElementById('topupAmountInput');
+  if (input) input.value = amt;
+  updateGeneratedVAInfo();
+}
+
+function onTopupChannelChange(channel) {
+  currentTopupChannel = channel;
+  updateGeneratedVAInfo();
+}
+
+function updateGeneratedVAInfo() {
+  const sel = document.getElementById('topupChannelSelect');
+  const channel = sel ? sel.value : currentTopupChannel;
+  currentTopupChannel = channel;
+
+  const phoneSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-7) : '3517038';
+  const phoneRetailSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-6) : '881234';
+
+  const titleEl = document.getElementById('vaChannelTitle');
+  const numEl = document.getElementById('vaNumberDisplay');
+  const instEl = document.getElementById('vaInstructionShort');
+
+  let vaNum = '901771223812';
+  let title = 'Nomor Rekening SeaBank SobatSerabut:';
+  let inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo langsung masuk otomatis.';
+
+  if (channel === 'seabank') {
+    vaNum = '901771223812';
+    title = 'Nomor Rekening SeaBank SobatSerabut:';
+    inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo seketika masuk ke dompet Anda.';
+  } else if (channel === 'bca_va') {
+    vaNum = '88077' + phoneSuffix;
+    title = 'BCA Virtual Account SobatSerabut:';
+    inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor VA di atas. Otomatis masuk seketika.';
+  } else if (channel === 'bri_va') {
+    vaNum = '12877' + phoneSuffix;
+    title = 'BRI BRIVA SobatSerabut:';
+    inst = 'Transfer via BRImo / ATM BRI ke nomor BRIVA di atas. Otomatis masuk seketika.';
+  } else if (channel === 'mandiri_va') {
+    vaNum = '89077' + phoneSuffix;
+    title = 'Mandiri Virtual Account SobatSerabut:';
+    inst = 'Transfer via Livin\' by Mandiri / ATM ke nomor Mandiri VA.';
+  } else if (channel === 'bni_va') {
+    vaNum = '98077' + phoneSuffix;
+    title = 'BNI Virtual Account SobatSerabut:';
+    inst = 'Transfer via BNI Mobile Banking / ATM BNI ke nomor BNI VA.';
+  } else if (['dana', 'gopay', 'ovo', 'shopeepay'].includes(channel)) {
+    vaNum = '087735170386';
+    title = `E-Wallet (${channel.toUpperCase()}) SobatSerabut:`;
+    inst = `Kirim transfer saldo melalui ${channel.toUpperCase()} ke nomor 087735170386 a.n SobatSerabut Admin.`;
+  } else if (channel === 'alfamart') {
+    vaNum = 'SS-ALFA-' + phoneRetailSuffix;
+    title = 'Kode Pembayaran Kasir Alfamart / Alfamidi:';
+    inst = 'Tunjukkan kode ini kepada kasir Alfamart / Alfamidi dan sebutkan pembayaran SobatSerabut.';
+  } else if (channel === 'indomaret') {
+    vaNum = 'SS-INDO-' + phoneRetailSuffix;
+    title = 'Kode Pembayaran Kasir Indomaret / Ceriamart:';
+    inst = 'Tunjukkan kode ini kepada kasir Indomaret / Ceriamart dan sebutkan pembayaran SobatSerabut.';
+  }
+
+  if (titleEl) titleEl.innerText = title;
+  if (numEl) numEl.innerText = vaNum;
+  if (instEl) instEl.innerText = inst;
+}
+
+function copyCurrentVANumber() {
+  const numEl = document.getElementById('vaNumberDisplay');
+  if (numEl && numEl.innerText) {
+    navigator.clipboard.writeText(numEl.innerText).then(() => {
+      showToast('Nomor VA / Rekening berhasil disalin ke clipboard!', 'success');
+    }).catch(() => {
+      showToast('Nomor: ' + numEl.innerText, 'info');
+    });
+  }
+}
+
+async function confirmAutoTopupPayment() {
+  if (!currentUser) return;
+  const amtInput = document.getElementById('topupAmountInput');
+  const amount = Number(amtInput?.value) || 50000;
+  if (amount < 10000) {
+    showToast('Minimal top-up saldo adalah Rp 10.000', 'warning');
+    return;
+  }
+
+  const numEl = document.getElementById('vaNumberDisplay');
+  const vaNumber = numEl ? numEl.innerText : '901771223812';
+
+  try {
+    showToast('Memproses top up saldo ke dompet SobatSerabut...', 'info');
+    const res = await fetch(`${API_BASE}/api/wallet/pay-va`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        amount,
+        channel: currentTopupChannel,
+        vaNumber
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.data) {
+      currentUser.balance = res.data.newBalance;
+      saveClientSession(currentUser);
+      updateProfileTabUI();
+      if (typeof updateWalletDisplay === 'function') updateWalletDisplay();
+      closeTopupModal();
+      showToast(`🎉 Top-up berhasil! Saldo Rp ${amount.toLocaleString('id-ID')} langsung masuk ke dompet Anda.`, 'success', 5000);
+      playSuccessChime();
+    } else {
+      showToast(res.message || 'Gagal memproses top up.', 'error');
+    }
+  } catch (err) {
+    showToast('Koneksi gagal: ' + err.message, 'error');
+  }
+}
+
+async function confirmPayTaskOrder(orderId) {
+  if (!confirm('Pastikan Anda telah mentransfer pembayaran ke SeaBank 901771223812 a.n SobatSerabut Admin. Lanjutkan konfirmasi dan kirim otomatis ke mitra tanpa persetujuan admin?')) {
+    return;
+  }
+
+  try {
+    showToast('Memvalidasi pembayaran & mentransfer otomatis ke mitra...', 'info');
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}/confirm-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bankDestination: 'SeaBank 901771223812'
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.data) {
+      showToast('🎉 Pembayaran lunas terverifikasi! Saldo bersih driver telah terkirim otomatis tanpa menunggu persetujuan admin.', 'success', 6000);
+      playSuccessChime();
+      loadClientOrders();
+    } else {
+      showToast(res.message || 'Gagal konfirmasi pembayaran.', 'error');
+    }
+  } catch (err) {
+    showToast('Koneksi gagal: ' + err.message, 'error');
   }
 }
 
@@ -3470,6 +3811,66 @@ function renderClientOrdersList(isCommunityFeed = false) {
                 </div>
               </div>
             </div>
+
+            <!-- Foto Mulai Kerja & Estimasi Pengerjaan -->
+            ${ord.startWorkPhoto ? `
+              <div class="p-3 rounded-2xl bg-blue-950/40 border border-blue-500/40 space-y-2 text-xs">
+                <div class="flex items-center justify-between text-blue-300">
+                  <span class="font-extrabold flex items-center space-x-1.5">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Foto Bukti Driver Tiba &amp; Mulai Bekerja</span>
+                  </span>
+                  <span class="text-[10px] text-slate-400">Estimasi: ${ord.estimatedMinutes || 60} Menit</span>
+                </div>
+                <img src="${ord.startWorkPhoto.startsWith('http') || ord.startWorkPhoto.startsWith('data:') ? ord.startWorkPhoto : API_BASE + ord.startWorkPhoto}" class="w-full h-36 object-cover rounded-xl border border-slate-700 shadow">
+              </div>
+            ` : ''}
+
+            <!-- WAJIB TRANSFER KE SEABANK SAAT DRIVER SELESAI PEKERJAAN -->
+            ${(ord.step === 'waiting_payment' || ord.status === 'waiting_payment' || ord.proofPhoto) ? `
+              <div class="p-4 rounded-2xl bg-gradient-to-br from-amber-950/60 to-slate-950 border-2 border-amber-500/80 shadow-2xl space-y-3">
+                <div class="flex items-center space-x-2 text-amber-300 font-black text-xs">
+                  <i class="fa-solid fa-bell text-sm animate-bounce"></i>
+                  <span>TUGAS SELESAI - WAJIB TRANSFER KE SEABANK</span>
+                </div>
+                ${ord.proofPhoto ? `
+                  <div class="space-y-1">
+                    <span class="text-[10px] text-slate-300 font-bold block">Foto Bukti Tugas yang Selesai Dikerjakan Mitra:</span>
+                    <img src="${ord.proofPhoto.startsWith('http') || ord.proofPhoto.startsWith('data:') ? ord.proofPhoto : API_BASE + ord.proofPhoto}" class="w-full h-44 object-cover rounded-xl border border-amber-500/50 shadow">
+                  </div>
+                ` : ''}
+                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-300">
+                    <span>Tarif Jasa:</span>
+                    <span class="font-mono font-bold text-white">Rp ${Number(ord.budget || ord.baseFare || 25000).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-300">
+                    <span>Biaya Layanan Platform:</span>
+                    <span class="font-mono font-bold text-white">Rp 3.000</span>
+                  </div>
+                  <div class="pt-1.5 border-t border-slate-800 flex items-center justify-between text-xs font-black text-emerald-400">
+                    <span>Total Ditransfer ke Rekber:</span>
+                    <span class="font-mono text-sm">Rp ${(Number(ord.budget || ord.baseFare || 25000) + 3000).toLocaleString('id-ID')}</span>
+                  </div>
+                  
+                  <div class="mt-2 p-2.5 rounded-xl bg-blue-950/70 border border-blue-500/40 text-[11px] space-y-1">
+                    <div class="text-blue-300 font-bold">Transfer Sekarang ke Rekening SeaBank:</div>
+                    <div class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-700 font-mono">
+                      <span class="text-emerald-400 font-black text-xs">SeaBank: 901771223812</span>
+                      <span class="text-[10px] text-slate-400 font-sans">a.n SobatSerabut Admin</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-tight">
+                      * Setelah transfer, dana bersih dipotong komisi 10% langsung otomatis masuk ke e-wallet / rekening driver tanpa menunggu persetujuan admin.
+                    </p>
+                  </div>
+                </div>
+
+                <button onclick="confirmPayTaskOrder('${ord.id}')" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-98 transition-all">
+                  <i class="fa-solid fa-circle-check text-sm"></i>
+                  <span>Konfirmasi Sudah Transfer &amp; Otomatis Teruskan ke Driver</span>
+                </button>
+              </div>
+            ` : ''}
 
             <!-- Action Buttons -->
             <div class="flex space-x-2 pt-1">
@@ -4776,33 +5177,70 @@ async function submitTopup() {
   }
 }
 
-function openWithdrawModal() { document.getElementById('withdrawModal').classList.remove('hidden'); }
+function openWithdrawModal() {
+  const modal = document.getElementById('withdrawModal');
+  if (!modal) return;
+
+  // Auto-fill rekening tersimpan
+  try {
+    const saved = JSON.parse(localStorage.getItem('sobat_saved_client_payout') || '{}');
+    if (saved.channelType && document.getElementById('wdChannelSelect')) {
+      document.getElementById('wdChannelSelect').value = saved.channelType;
+    }
+    if (saved.destination && document.getElementById('wdDestinationInput')) {
+      document.getElementById('wdDestinationInput').value = saved.destination;
+    }
+    if (saved.accountHolder && document.getElementById('wdAccountHolderInput')) {
+      document.getElementById('wdAccountHolderInput').value = saved.accountHolder;
+    }
+  } catch(e) {}
+
+  modal.classList.remove('hidden');
+}
 function closeWithdrawModal() { document.getElementById('withdrawModal').classList.add('hidden'); }
 
 async function submitWithdrawForm() {
   const channelType = document.getElementById('wdChannelSelect').value;
-  const destination = document.getElementById('wdDestinationInput').value;
+  const destination = document.getElementById('wdDestinationInput').value.trim();
+  const accountHolder = document.getElementById('wdAccountHolderInput')?.value.trim() || currentUser?.name || '';
   const amount = Number(document.getElementById('wdAmountInput').value);
+  const saveCheck = document.getElementById('wdSaveAccountCheckbox')?.checked;
 
   if (!destination) {
     showToast('Masukkan nomor rekening atau nomor HP tujuan pencairan.', 'warning');
     return;
   }
+  if (!amount || amount < 20000) {
+    showToast('Minimal penarikan saldo adalah Rp 20.000.', 'warning');
+    return;
+  }
+  if (currentUser?.walletBalance && amount > currentUser.walletBalance) {
+    showToast('Saldo Anda tidak mencukupi untuk penarikan ini.', 'warning');
+    return;
+  }
 
-  const res = await fetch(`${API_BASE}/api/mitra/${currentUser.id}/withdraw`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, channelType, destination: `${channelType} ${destination}` })
-  }).then(r => r.json());
+  if (saveCheck) {
+    localStorage.setItem('sobat_saved_client_payout', JSON.stringify({ channelType, destination, accountHolder }));
+  }
 
-  if (res.success) {
-    showToast('Permintaan penarikan dana diajukan ke admin untuk diproses.', 'success');
-    currentUser.walletBalance = res.newBalance;
-    saveClientSession(currentUser);
-    updateWalletDisplay();
-    closeWithdrawModal();
-  } else {
-    showToast(res.message, 'error');
+  try {
+    const res = await fetch(`${API_BASE}/api/client/withdraw`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: currentUser.id, amount, bankName: channelType, accountNumber: destination, accountHolder })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('Permintaan penarikan dana berhasil diajukan dan segera diproses.', 'success');
+      if (res.newBalance !== undefined) currentUser.walletBalance = res.newBalance;
+      saveClientSession(currentUser);
+      updateWalletDisplay();
+      closeWithdrawModal();
+    } else {
+      showToast(res.message || 'Gagal mengajukan penarikan.', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi server gagal: ' + e.message, 'error');
   }
 }
 
