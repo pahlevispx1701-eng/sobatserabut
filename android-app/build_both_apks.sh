@@ -28,7 +28,7 @@ echo " - JAVAC: $JAVAC ($($JAVAC -version 2>&1 | head -1))"
 echo " - Platform: API 34 | Min SDK: API 24 (Android 7+)"
 
 # Domain Cloud VPS 24 Jam Permanen
-DEFAULT_PROD_URL="https://sobatserabut.160.19.166.231.sslip.io"
+DEFAULT_PROD_URL="https://app.sobatserabut.id"
 
 # Ambil URL publik aktif yang terverifikasi bisa diakses
 PUBLIC_URL=""

@@ -1,40 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:background="#0F172A"
-    android:padding="24dp">
+    android:background="#080E1C">
 
-    <ImageView
-        android:id="@+id/splashLogo"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@drawable/app_logo"
-        android:contentDescription="SobatSerabut Logo" />
+    <!-- Gradient Background Overlay -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/splash_gradient_bg" />
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Main Center Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp">
+
+        <!-- Logo Container with glow effect -->
+        <FrameLayout
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_gravity="center_horizontal">
+
+            <!-- Outer glow ring -->
+            <View
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:layout_gravity="center"
+                android:background="@drawable/splash_logo_glow" />
+
+            <!-- Logo Image -->
+            <ImageView
+                android:id="@+id/splashLogo"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:layout_gravity="center"
+                android:src="@drawable/app_logo"
+                android:contentDescription="Sobatserabut Logo" />
+        </FrameLayout>
+
+        <!-- App Name -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Sobatserabut"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp"
+            android:letterSpacing="0.02"
+            android:fontFamily="sans-serif-black"
+            android:textStyle="bold" />
+
+        <!-- Tagline -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Solusi Cepat Serabutan &amp; Jasa Harian"
+            android:textColor="#94A3B8"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:letterSpacing="0.01" />
+
+        <!-- Verified Badge -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/splash_badge_bg"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✓"
+                android:textColor="#10B981"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:text="Mitra Terverifikasi &amp; Aman"
+                android:textColor="#10B981"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Loading Indicator -->
+        <ProgressBar
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="48dp"
+            android:indeterminateTint="#3B82F6" />
+
+        <!-- Version -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="v1.1.0"
+            android:textColor="#334155"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+    <!-- Bottom brand bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="SobatSerabut"
-        android:textColor="#FFFFFF"
-        android:textSize="26sp"
-        android:textStyle="bold" />
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:paddingBottom="32dp"
+        android:paddingTop="16dp"
+        android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="Aplikasi Mitra Pekerja Terpercaya"
-        android:textColor="#94A3B8"
-        android:textSize="13sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Didukung oleh"
+            android:textColor="#1E293B"
+            android:textSize="10sp" />
 
-    <ProgressBar
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="40dp"
-        android:indeterminateTint="#3B82F6" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="SobatSerabut Cloud Platform"
+            android:textColor="#334155"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

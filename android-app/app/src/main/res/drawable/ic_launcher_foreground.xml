@@ -1,31 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Foreground: Logo SobatSerabut (Perisai + Kunci) untuk Adaptive Icon -->
+<!-- Foreground: Sobatserabut Modern Icon - Tangan + Bintang + Gelombang -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Perisai utama -->
+    <!-- Outer glow ring -->
     <path
-        android:fillColor="#1E3A8A"
-        android:strokeColor="#93C5FD"
-        android:strokeWidth="2"
-        android:pathData="M54,18 L86,32 L86,62 C86,80 54,92 54,92 C54,92 22,80 22,62 L22,32 Z" />
+        android:fillColor="#30FFFFFF"
+        android:pathData="M54,18 A36,36 0 1,1 54,90 A36,36 0 1,1 54,18 Z" />
 
-    <!-- Kunci atas (lingkaran) -->
+    <!-- Inner circle background -->
+    <path
+        android:fillColor="#1E40AF"
+        android:pathData="M54,22 A32,32 0 1,1 54,86 A32,32 0 1,1 54,22 Z" />
+
+    <!-- Gear/Wrench shape - left arm -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M34,52 C32,48 33,43 37,41 C38,40 40,40 41,41 L46,46 L44,48 L40,44 C38,43 36,44 35,46 C34,48 35,50 37,51 L52,56 L50,59 Z" />
+
+    <!-- Gear/Wrench shape - right arm -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M74,52 C76,48 75,43 71,41 C70,40 68,40 67,41 L62,46 L64,48 L68,44 C70,43 72,44 73,46 C74,48 73,50 71,51 L56,56 L58,59 Z" />
+
+    <!-- Central diamond/star -->
     <path
         android:fillColor="#F59E0B"
-        android:pathData="M54,36 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0" />
+        android:pathData="M54,42 L58,50 L66,50 L60,55 L62,63 L54,58 L46,63 L48,55 L42,50 L50,50 Z" />
 
-    <!-- Badan kunci -->
+    <!-- Checkmark badge bottom right -->
     <path
-        android:fillColor="#F59E0B"
-        android:pathData="M44,48 L64,48 L64,66 L44,66 Z" />
-
-    <!-- Lubang kunci -->
+        android:fillColor="#10B981"
+        android:pathData="M66,66 A10,10 0 1,1 66,86 A10,10 0 1,1 66,66 Z" />
     <path
-        android:fillColor="#1E3A8A"
-        android:pathData="M54,54 m-4,0 a4,4 0 1,1 8,0 L60,64 L48,64 L48,54 Z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,76 L65,79 L72,72"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 
 </vector>

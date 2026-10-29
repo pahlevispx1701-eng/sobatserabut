@@ -101,7 +101,7 @@
 
         <div class="space-y-2.5 pt-2">
           <!-- Buka Web / PWA -->
-          <a href="/" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl shadow-blue-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
+          <a id="btnClientApp" href="https://app.sobatserabut.id" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl shadow-blue-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
             <span>Buka Aplikasi SobatSerabut (Web / PWA)</span>
           </a>
@@ -155,7 +155,7 @@
 
         <div class="space-y-2.5 pt-2">
           <!-- Buka Web / PWA (Android Browser & iOS Safari) -->
-          <a href="/driver" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-xl shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
+          <a id="btnDriverApp" href="https://driver.sobatserabut.id" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-xl shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all text-center">
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
             <span>Buka Aplikasi Mitra / Driver (Semua HP: Android &amp; iOS)</span>
           </a>
@@ -183,7 +183,7 @@
           </p>
         </div>
       </div>
-      <a href="/admin" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/30 flex items-center justify-center space-x-2 transition-all flex-shrink-0">
+      <a id="btnAdminDashboard" href="https://admin.sobatserabut.id" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-500/30 flex items-center justify-center space-x-2 transition-all flex-shrink-0">
         <i class="fa-solid fa-lock text-xs"></i>
         <span>Buka Dasbor Admin</span>
       </a>
@@ -235,5 +235,19 @@
     <p class="text-[10px] text-slate-600 mt-0.5">Sistem Terintegrasi Cloudflare Global Tunnel &amp; Socket.io Real-Time.</p>
   </footer>
 
+  <script>
+    // Penyesuaian link dinamis: jika diakses via IP DomaiNesia atau domain sslip.io cloud
+    (function() {
+      const h = window.location.hostname;
+      if (!h.endsWith('sobatserabut.id')) {
+        const c = document.getElementById('btnClientApp');
+        const d = document.getElementById('btnDriverApp');
+        const a = document.getElementById('btnAdminDashboard');
+        if (c) c.href = '/';
+        if (d) d.href = '/driver';
+        if (a) a.href = '/admin';
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -1,45 +1,72 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 120" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 140" width="560" height="140">
   <defs>
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1D4ED8" />
-      <stop offset="100%" stop-color="#3B82F6" />
+    <linearGradient id="iconBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="50%" stop-color="#E63030"/>
+      <stop offset="100%" stop-color="#B71C1C"/>
     </linearGradient>
-    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F59E0B" />
-      <stop offset="100%" stop-color="#D97706" />
+    <linearGradient id="goldG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="100%" stop-color="#FFB300"/>
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.25"/>
+    <linearGradient id="textG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A1A2E"/>
+      <stop offset="100%" stop-color="#16213E"/>
+    </linearGradient>
+    <filter id="iconShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#7B0000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- Logo Mark Icon -->
-  <g transform="translate(10, 10)">
-    <!-- Hexagonal Shield Badge -->
-    <path d="M 50,2 L 94,24 L 94,76 L 50,98 L 6,76 L 6,24 Z" 
-          fill="url(#blueGrad)" filter="url(#shadow)" stroke="#60A5FA" stroke-width="2.5" />
-    
-    <!-- Accent Ring / Ribbon -->
-    <path d="M 50,14 L 84,31 L 84,69 L 50,86 L 16,69 L 16,31 Z" 
-          fill="none" stroke="#DBEAFE" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.6"/>
+  <!-- ===== IKON KIRI ===== -->
+  <!-- Background bulat merah -->
+  <rect x="10" y="10" width="120" height="120" rx="28" fill="url(#iconBg)" filter="url(#iconShadow)"/>
+  <!-- Highlight -->
+  <ellipse cx="48" cy="36" rx="40" ry="24" fill="#FFFFFF" fill-opacity="0.1"/>
 
-    <!-- Dynamic Wrench & Flash Icon in Gold -->
-    <!-- Wrench head -->
-    <path d="M 36,36 L 46,26 C 52,20 62,22 66,28 C 69,32 68,38 64,42 L 58,48 L 68,58 C 70,60 70,64 67,67 C 64,70 60,70 58,68 L 48,58 L 42,64 C 38,68 32,69 28,66 C 22,62 20,52 26,46 Z" 
-          fill="url(#amberGrad)" />
-    <!-- Lightning bolt inside -->
-    <polygon points="52,28 41,47 50,47 45,67 60,45 50,45" fill="#FFFFFF" />
-    <!-- Center Dot / Handshake node -->
-    <circle cx="50" cy="50" r="3.5" fill="#1E3A8A" />
+  <!-- Wrench kiri dalam ikon -->
+  <g transform="translate(70,70) rotate(-32)">
+    <rect x="-7" y="-44" width="14" height="58" rx="7" fill="white" fill-opacity="0.92"/>
+    <rect x="-17" y="-56" width="34" height="22" rx="6" fill="white" fill-opacity="0.92"/>
+    <ellipse cx="0" cy="-45" rx="7" ry="7" fill="#E63030"/>
+    <rect x="10" y="-62" width="7" height="10" rx="3" fill="white" fill-opacity="0.92"/>
+    <rect x="-17" y="-62" width="7" height="10" rx="3" fill="white" fill-opacity="0.92"/>
   </g>
+  <!-- Screwdriver kanan dalam ikon -->
+  <g transform="translate(70,70) rotate(32)">
+    <rect x="-6" y="-44" width="12" height="56" rx="6" fill="white" fill-opacity="0.92"/>
+    <rect x="-10" y="-58" width="20" height="8" rx="4" fill="url(#goldG)"/>
+    <rect x="-9" y="14" width="18" height="22" rx="6" fill="white" fill-opacity="0.85"/>
+    <rect x="-5" y="17" width="10" height="3" rx="1.5" fill="#E63030" fill-opacity="0.5"/>
+    <rect x="-5" y="23" width="10" height="3" rx="1.5" fill="#E63030" fill-opacity="0.5"/>
+    <rect x="-5" y="29" width="10" height="3" rx="1.5" fill="#E63030" fill-opacity="0.5"/>
+  </g>
+  <!-- Lingkaran emas tengah ikon -->
+  <circle cx="70" cy="70" r="18" fill="url(#goldG)" filter="url(#glow)"/>
+  <circle cx="70" cy="70" r="13" fill="#C0392B"/>
+  <text x="70" y="76" font-family="Arial Black, sans-serif" font-size="15" font-weight="900" text-anchor="middle" fill="white">S</text>
 
-  <!-- Typography: SOBAT SERABUT -->
-  <text x="125" y="58" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="900" font-size="40" letter-spacing="-1">
-    <tspan fill="#1E293B">Sobat</tspan><tspan fill="#2563EB">Serabut</tspan>
-  </text>
-  
-  <!-- Slogan / Subtitle -->
-  <rect x="125" y="70" width="70" height="20" rx="4" fill="#FEF3C7" />
-  <text x="131" y="84" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="11" fill="#B45309" letter-spacing="0.5">MITRA ON</text>
-  <text x="205" y="84" font-family="'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#64748B">Solusi Jasa &amp; Serabutan Cepat</text>
+  <!-- ===== TEKS BRAND ===== -->
+  <!-- "Sobat" merah tebal -->
+  <text x="148" y="73" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="46" font-weight="900" fill="#DC2626" letter-spacing="-1.5">Sobat</text>
+  <!-- "Serabut" dark dengan garis bawah merah -->
+  <text x="148" y="115" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="700" fill="#1F2937" letter-spacing="0.5">Serabut</text>
+  <!-- Aksen garis merah di bawah "Serabut" -->
+  <rect x="148" y="121" width="220" height="4" rx="2" fill="url(#iconBg)"/>
+  <!-- Tagline kecil -->
+  <text x="148" y="136" font-family="Arial, sans-serif" font-size="11" fill="#6B7280" letter-spacing="1.5">SOLUSI JASA HARIAN TERPERCAYA</text>
+
+  <!-- Aksen bintang kecil -->
+  <g filter="url(#glow)">
+    <circle cx="536" cy="52" r="6" fill="url(#goldG)"/>
+    <circle cx="550" cy="70" r="4" fill="#FFB300" fill-opacity="0.7"/>
+    <circle cx="536" cy="88" r="5" fill="url(#goldG)"/>
+  </g>
+  <!-- Dot separator dekoratif -->
+  <circle cx="141" cy="70" r="3" fill="#DC2626"/>
+  <circle cx="141" cy="108" r="2.5" fill="#DC2626" fill-opacity="0.5"/>
 </svg>
