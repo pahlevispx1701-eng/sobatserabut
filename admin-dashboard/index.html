@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SobatSerabut - Dashboard Admin Terpusat & Sistem Otomasi Data</title>
   
+  <!-- Anti-Cache Meta Tags: Menghindari cache browser & webview -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -1598,11 +1603,28 @@ input:focus, select:focus, textarea:focus {
               </div>
               <div>
                 <label class="block font-bold text-slate-300 mb-1.5">Kategori / Tipe Notifikasi</label>
-                <select id="broadcastTypeSelect" required class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
-                  <option value="promo" selected>🔥 Promo &amp; Bonus Spesial</option>
+                <select id="broadcastTypeSelect" onchange="handleBroadcastTypeChange(this.value)" required class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
+                  <option value="app_update" selected>🚀 Pembaruan Aplikasi (Update App)</option>
+                  <option value="promo">🔥 Promo &amp; Bonus Spesial</option>
                   <option value="announcement">📢 Pengumuman Resmi Admin</option>
                   <option value="urgent">⚠️ Peringatan Keamanan / Penting</option>
                 </select>
+              </div>
+            </div>
+
+            <div id="broadcastVersionContainer" class="bg-slate-900/80 p-3 rounded-xl border border-red-500/30 space-y-2">
+              <label class="block font-bold text-slate-300 text-[11px]">Pengaturan Pembaruan (Update):</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                <div>
+                  <span class="text-[10px] text-slate-400 block mb-1">Versi Target:</span>
+                  <input type="text" id="broadcastVersionInput" value="6.2.0" placeholder="6.2.0" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:border-red-500">
+                </div>
+                <div class="pt-3">
+                  <label class="flex items-center space-x-2 text-slate-300 cursor-pointer text-xs">
+                    <input type="checkbox" id="broadcastForceReloadCheck" checked class="rounded text-red-600 focus:ring-0">
+                    <span class="text-[11px] font-semibold text-emerald-400">⚡ Muat Ulang Otomatis (Live Refresh)</span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -1683,6 +1705,66 @@ input:focus, select:focus, textarea:focus {
         <div id="broadcastHistoryList" class="space-y-2 text-xs">
           <!-- populated via JS -->
         </div>
+      </div>
+
+      <!-- ===== MANAJEMEN VERSI & UPDATE NOTIFIKASI ===== -->
+      <div class="bg-slate-800 border border-amber-500/30 rounded-2xl p-6 shadow-xl space-y-5">
+        <div class="flex items-center space-x-3 pb-3 border-b border-slate-700">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-white">Manajemen Update Versi Aplikasi</h3>
+            <p class="text-[11px] text-slate-400">Kirim notifikasi update ke semua pengguna Driver & Client agar segera memperbarui aplikasi</p>
+          </div>
+          <div class="ml-auto">
+            <span id="currentVersionBadge" class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 font-mono">Memuat...</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1.5">Versi Terbaru <span class="text-amber-400">*</span></label>
+            <input type="text" id="newVersionInput" placeholder="Contoh: 6.1.0" maxlength="20"
+              class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1.5">Versi Minimum Wajib</label>
+            <input type="text" id="minVersionInput" placeholder="Contoh: 6.0.0" maxlength="20"
+              class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1.5">URL APK Driver (opsional)</label>
+            <input type="text" id="driverApkUrlInput" placeholder="/download/driver-apk"
+              class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1.5">URL APK Client (opsional)</label>
+            <input type="text" id="clientApkUrlInput" placeholder="/download/client-apk"
+              class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1.5 text-xs">Catatan Pembaruan (Release Notes)</label>
+          <textarea id="releaseNotesInput" rows="3" maxlength="500"
+            placeholder="Contoh: Versi 6.1.0 — Tambahan fitur AI Asisten, Pusat Bantuan, notifikasi update otomatis, dan berbagai perbaikan bug."
+            class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed focus:border-amber-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" id="forceUpdateCheck" class="w-4 h-4 rounded accent-amber-500">
+            <span class="text-xs text-slate-300 font-bold">Paksa Update (semua user wajib update, tombol "Nanti" disembunyikan)</span>
+          </label>
+        </div>
+
+        <button onclick="handlePublishAppUpdate()" id="btnPublishUpdate"
+          class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-500 text-white font-black text-xs shadow-xl shadow-amber-600/30 flex items-center justify-center space-x-2 active:scale-98 transition-all">
+          <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+          <span>🚀 Kirim Notifikasi Update ke Semua Pengguna Sekarang</span>
+        </button>
+        <p class="text-[10px] text-slate-500 text-center">Notifikasi akan langsung muncul di aplikasi Driver & Client yang sedang aktif via Socket.IO real-time</p>
       </div>
     </section>
 
@@ -2031,6 +2113,6 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <!-- SCRIPT -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=6.1.1"></script>
 </body>
 </html>

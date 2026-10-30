@@ -14,8 +14,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- Anti-Cache Meta Tags: Menghindari cache browser & webview -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker -->
+  <script>
+    try {
+      if ('caches' in window) {
+        caches.keys().then(function(keys) { keys.forEach(function(k) { caches.delete(k); }); });
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) { regs.forEach(function(r) { r.unregister(); }); });
+      }
+    } catch(e) {}
+  </script>
+
   <!-- SobatSerabut Server Configuration -->
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6.1.1"></script>
 
   <!-- Tailwind CSS Local + Fallback CDN -->
   <script src="vendor/tailwind/tailwind.min.js"></script>
@@ -1159,15 +1176,15 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-    <!-- GLOBAL ANNOUNCEMENT BANNER FOR PEMOHON & MITRA -->
-    <div id="globalAnnouncementBanner" class="hidden mt-2 p-2 rounded-xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/30 text-xs text-blue-200 flex items-center justify-between">
-      <div class="flex items-center space-x-2 truncate">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-        <span id="globalAnnouncementText" class="truncate font-medium text-[11px]"></span>
+    <!-- GLOBAL ANNOUNCEMENT / WELCOME BANNER FOR PEMOHON & MITRA -->
+    <div id="globalAnnouncementBanner" class="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/40 text-xs text-emerald-200 flex items-center justify-between shadow-lg">
+      <div class="flex items-center space-x-2.5 truncate">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0 shadow-sm shadow-emerald-400"></span>
+        <span id="globalAnnouncementText" class="truncate font-semibold text-[11px] leading-tight text-emerald-100">Selamat datang di SobatSerabut! Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.</span>
       </div>
-      <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded-full flex items-center space-x-1">
+      <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-xl flex items-center space-x-1 shadow transition-all active:scale-95">
         <i class="fa-brands fa-whatsapp"></i>
-        <span>087791201091</span>
+        <span>CS</span>
       </a>
     </div>
 
@@ -1245,6 +1262,26 @@ input:focus, textarea:focus, select:focus {
          VIEW: PENYEDIA JASA (DRIVER MITRA)
          ======================================================== -->
     <div id="mitraViewContainer" class="space-y-4">
+
+      <!-- WELCOME HERO BANNER SOBATSERABUT -->
+      <div class="relative overflow-hidden rounded-3xl p-4 shadow-2xl transition-all" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 45%, #047857 100%); border: 1px solid rgba(52, 211, 153, 0.35);">
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 bg-emerald-300 blur-xl pointer-events-none"></div>
+        <div class="relative z-10 flex items-center space-x-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center flex-shrink-0 text-2xl border border-white/25 shadow-lg">
+            👋
+          </div>
+          <div class="flex-1 pr-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 font-extrabold tracking-wider uppercase border border-emerald-400/30">Mitra Driver</span>
+              <span onclick="unlockAudioSystem(); speakVoiceNotification('Suara notifikasi aktif'); showToast('🔊 Suara notifikasi orderan telah aktif!', 'success');" class="text-[9px] px-2 py-0.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-amber-300 font-bold cursor-pointer border border-amber-500/30 flex items-center space-x-1">
+                <span>🔊</span><span>Uji Suara</span>
+              </span>
+            </div>
+            <h2 class="text-sm font-black text-white leading-tight mt-1">Selamat datang di SobatSerabut!</h2>
+            <p class="text-[11px] text-emerald-100 font-medium leading-snug mt-0.5">Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.</p>
+          </div>
+        </div>
+      </div>
 
       <!-- KYC STATUS BANNER KHUSUS MITRA -->
       <div id="mitraKycNoticeBanner" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/40 space-y-1.5 shadow-xl">
@@ -1585,6 +1622,48 @@ input:focus, textarea:focus, select:focus {
           <span class="material-symbols-outlined text-sm">delete_sweep</span>
           <span>Bersihkan Riwayat Tugas Sekarang</span>
         </button>
+      </div>
+
+      <!-- PUSAT BANTUAN -->
+      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+        <div class="flex items-center space-x-2 mb-2">
+          <span class="material-symbols-outlined text-sky-400 text-lg">help_center</span>
+          <h3 class="font-extrabold text-white text-sm">Pusat Bantuan</h3>
+        </div>
+        <div id="driverHelpAccordion" class="space-y-2">
+          <div class="text-[11px] text-slate-400 text-center py-2">Memuat bantuan...</div>
+        </div>
+        <button onclick="loadDriverHelp()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition-all active:scale-95">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          <span>Muat Ulang Bantuan</span>
+        </button>
+      </div>
+
+      <!-- AI ASISTEN SOBATSERABUT -->
+      <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/30 shadow-xl space-y-3">
+        <div class="flex items-center space-x-2 mb-1">
+          <span class="material-symbols-outlined text-emerald-400 text-lg">smart_toy</span>
+          <h3 class="font-extrabold text-white text-sm">AI Asisten SobatSerabut</h3>
+          <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">BARU</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Tanyakan apa saja seputar layanan, pembayaran, atau informasi lainnya kepada AI Asisten kami.</p>
+        <div id="driverAiChatHistory" class="space-y-2 max-h-48 overflow-y-auto bg-slate-950/50 rounded-xl p-2 border border-slate-800/50">
+          <div class="flex items-start space-x-2">
+            <span class="material-symbols-outlined text-emerald-400 text-sm mt-0.5">smart_toy</span>
+            <div class="bg-emerald-900/30 border border-emerald-800/30 rounded-xl px-3 py-2 text-[11px] text-slate-200 max-w-[85%]">
+              Halo! Saya AI Asisten SobatSerabut 🤖 Silakan tanyakan informasi seputar layanan, tarif, cara kerja, atau apapun yang kamu butuhkan!
+            </div>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <input id="driverAiInput" type="text" placeholder="Ketik pertanyaan Anda..."
+            class="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:bg-slate-800"
+            onkeydown="if(event.key==='Enter')sendDriverAiMessage()">
+          <button onclick="sendDriverAiMessage()"
+            class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1 transition-all active:scale-95 shadow-lg">
+            <span class="material-symbols-outlined text-sm">send</span>
+          </button>
+        </div>
       </div>
 
       <!-- Tombol Keluar dari Akun (Logout) -->
@@ -1969,13 +2048,14 @@ input:focus, textarea:focus, select:focus {
         <div>
           <label class="block font-semibold text-slate-300 mb-1">Pilih Saluran Top-Up (VA / E-Wallet / Retail):</label>
           <select id="topupMethodSelect" onchange="onDriverTopupChannelChange(this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold text-xs focus:outline-none focus:border-amber-500">
-            <optgroup label="Virtual Account Bank">
-              <option value="seabank" selected>SeaBank (No: 901771223812)</option>
-              <option value="bca_va">Bank BCA (Virtual Account)</option>
+            <optgroup label="Virtual Account Bank (Resmi Otomatis)">
+              <option value="bca_va" selected>Bank BCA (Virtual Account)</option>
               <option value="bri_va">Bank BRI (BRIVA)</option>
-              <option value="mandiri_va">Bank Mandiri (Livin)</option>
+              <option value="mandiri_va">Bank Mandiri (Livin VA)</option>
               <option value="bni_va">Bank BNI (Virtual Account)</option>
+              <option value="permata_va">Bank Permata (Virtual Account)</option>
             </optgroup>
+            <option value="qris">QRIS Dinamis (Semua Bank/E-Wallet)</option>
             <optgroup label="E-Wallet">
               <option value="dana">DANA E-Wallet</option>
               <option value="gopay">GoPay</option>
@@ -2003,7 +2083,7 @@ input:focus, textarea:focus, select:focus {
             </button>
           </div>
           <p id="vaInstructionShort" class="text-[10px] text-slate-400 leading-relaxed">
-            Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo langsung masuk otomatis.
+            Transfer via ATM/m-BCA/KlikBCA ke nomor Virtual Account di atas. Saldo langsung masuk otomatis ke dompet Anda.
           </p>
         </div>
       </div>
@@ -2077,27 +2157,25 @@ input:focus, textarea:focus, select:focus {
   <div id="dailyFaceVerifyModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-center">
       <div class="space-y-1">
-        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Keamanan Harian</span>
+        <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Otomatis Terverifikasi</span>
         <h3 class="font-extrabold text-white text-base">Verifikasi Wajah Harian Driver</h3>
-        <p class="text-[11px] text-slate-400">Ambil selfie wajah sebelum memulai kerja hari ini untuk memastikan keamanan akun.</p>
+        <p class="text-[11px] text-slate-400">Sistem otomatis mendeteksi wajah asli pendaftar pertama dan langsung disetujui sistem.</p>
       </div>
 
-      <!-- Kamera Preview dengan Circle Frame -->
-      <div class="relative w-56 h-56 mx-auto rounded-full overflow-hidden bg-slate-950 border-4 border-amber-400 shadow-2xl flex items-center justify-center">
+      <!-- Kamera Preview dengan Circle Frame & Biometric Radar -->
+      <div class="relative w-56 h-56 mx-auto rounded-full overflow-hidden bg-slate-950 border-4 border-emerald-400 shadow-2xl flex items-center justify-center">
         <video id="dailyFaceVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
         <canvas id="dailyFaceCanvas" class="hidden"></canvas>
-        <div class="absolute inset-0 border-2 border-dashed border-white/50 rounded-full pointer-events-none"></div>
+        <div class="absolute inset-0 border-2 border-emerald-400/50 rounded-full pointer-events-none animate-pulse"></div>
+        <div id="dailyFaceScannerLine" class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent top-0 animate-bounce pointer-events-none"></div>
       </div>
 
-      <p id="dailyFaceFeedback" class="text-xs text-amber-300 font-medium">Posisikan wajah Anda tepat di dalam lingkaran dan tekan tombol di bawah.</p>
+      <p id="dailyFaceFeedback" class="text-xs text-emerald-300 font-medium">📷 Menghadap ke kamera. Sistem sedang mendeteksi wajah pendaftar asli secara otomatis...</p>
 
       <div class="space-y-2 pt-2">
-        <button type="button" id="btnSnapDailyFace" onclick="captureDailyFaceVerification()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all">
-          <i class="fa-solid fa-camera"></i>
-          <span>Ambil Foto &amp; Verifikasi Wajah</span>
-        </button>
-        <button type="button" onclick="closeDailyFaceVerifyModal()" class="w-full py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold">
-          Nanti Saja (Mode Standby)
+        <button type="button" id="btnSnapDailyFace" onclick="captureDailyFaceVerification()" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all">
+          <i class="fa-solid fa-face-smile"></i>
+          <span>Deteksi Sekarang &amp; Mulai Bekerja</span>
         </button>
       </div>
     </div>
@@ -2732,8 +2810,34 @@ input:focus, textarea:focus, select:focus {
   <!-- FLOATING APP TOAST NOTIFICATIONS (NO UGLY FILE:// POPUPS) -->
   <div id="appToastContainer" class="fixed top-4 inset-x-4 z-[80] flex flex-col items-center space-y-2 pointer-events-none max-w-md mx-auto"></div>
 
+  <!-- ===== MODAL UPDATE NOTIFIKASI ===== -->
+  <div id="updateNotifModal" class="hidden fixed inset-0 z-[9999] flex items-end justify-center pb-6 px-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="dismissUpdateModal()"></div>
+    <div class="relative w-full max-w-sm bg-gradient-to-br from-emerald-900 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl shadow-2xl p-5 space-y-4 animate-bounce-once">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+          <span class="material-symbols-outlined text-emerald-400 text-2xl">system_update</span>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-white text-base">Update Tersedia! 🎉</h3>
+          <p id="updateModalVersion" class="text-[11px] text-emerald-300 font-mono">Versi terbaru siap diunduh</p>
+        </div>
+      </div>
+      <p id="updateModalNotes" class="text-[12px] text-slate-300 leading-relaxed bg-slate-800/50 rounded-xl p-3 border border-slate-700/50"></p>
+      <div class="flex space-x-2">
+        <button onclick="downloadUpdateNow('driver')" class="flex-1 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-sm flex items-center justify-center space-x-2 shadow-lg active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-base">download</span>
+          <span>Update Sekarang</span>
+        </button>
+        <button onclick="dismissUpdateModal()" id="updateDismissBtn" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm border border-slate-700 active:scale-95 transition-all">
+          Nanti
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPT -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=6.1.1"></script>
 </body>
 </html>
 

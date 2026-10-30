@@ -14,8 +14,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- Anti-Cache Meta Tags: Menghindari cache browser & webview -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker -->
+  <script>
+    try {
+      if ('caches' in window) {
+        caches.keys().then(function(keys) { keys.forEach(function(k) { caches.delete(k); }); });
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) { regs.forEach(function(r) { r.unregister(); }); });
+      }
+    } catch(e) {}
+  </script>
+
   <!-- SobatSerabut Server Configuration -->
-  <script src="js/config.js"></script>
+  <script src="js/config.js?v=6.1.1"></script>
 
   <!-- Tailwind CSS Local + Fallback CDN -->
   <script src="vendor/tailwind/tailwind.min.js"></script>
@@ -1159,15 +1176,15 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-    <!-- GLOBAL ANNOUNCEMENT BANNER FOR PEMOHON & MITRA -->
-    <div id="globalAnnouncementBanner" class="hidden mt-2 p-2 rounded-xl bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-500/30 text-xs text-blue-200 flex items-center justify-between">
-      <div class="flex items-center space-x-2 truncate">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-        <span id="globalAnnouncementText" class="truncate font-medium text-[11px]"></span>
+    <!-- GLOBAL ANNOUNCEMENT / WELCOME BANNER FOR PEMOHON & MITRA -->
+    <div id="globalAnnouncementBanner" class="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/40 text-xs text-emerald-200 flex items-center justify-between shadow-lg">
+      <div class="flex items-center space-x-2.5 truncate">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0 shadow-sm shadow-emerald-400"></span>
+        <span id="globalAnnouncementText" class="truncate font-semibold text-[11px] leading-tight text-emerald-100">Selamat datang di SobatSerabut! Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.</span>
       </div>
-      <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded-full flex items-center space-x-1">
+      <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-xl flex items-center space-x-1 shadow transition-all active:scale-95">
         <i class="fa-brands fa-whatsapp"></i>
-        <span>087791201091</span>
+        <span>CS</span>
       </a>
     </div>
 
@@ -1245,6 +1262,26 @@ input:focus, textarea:focus, select:focus {
          VIEW: PENYEDIA JASA (DRIVER MITRA)
          ======================================================== -->
     <div id="mitraViewContainer" class="space-y-4">
+
+      <!-- WELCOME HERO BANNER SOBATSERABUT -->
+      <div class="relative overflow-hidden rounded-3xl p-4 shadow-2xl transition-all" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 45%, #047857 100%); border: 1px solid rgba(52, 211, 153, 0.35);">
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 bg-emerald-300 blur-xl pointer-events-none"></div>
+        <div class="relative z-10 flex items-center space-x-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center flex-shrink-0 text-2xl border border-white/25 shadow-lg">
+            👋
+          </div>
+          <div class="flex-1 pr-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 font-extrabold tracking-wider uppercase border border-emerald-400/30">Mitra Driver</span>
+              <span onclick="unlockAudioSystem(); speakVoiceNotification('Suara notifikasi aktif'); showToast('🔊 Suara notifikasi orderan telah aktif!', 'success');" class="text-[9px] px-2 py-0.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-amber-300 font-bold cursor-pointer border border-amber-500/30 flex items-center space-x-1">
+                <span>🔊</span><span>Uji Suara</span>
+              </span>
+            </div>
+            <h2 class="text-sm font-black text-white leading-tight mt-1">Selamat datang di SobatSerabut!</h2>
+            <p class="text-[11px] text-emerald-100 font-medium leading-snug mt-0.5">Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.</p>
+          </div>
+        </div>
+      </div>
 
       <!-- KYC STATUS BANNER KHUSUS MITRA -->
       <div id="mitraKycNoticeBanner" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/40 space-y-1.5 shadow-xl">
@@ -2733,7 +2770,7 @@ input:focus, textarea:focus, select:focus {
   <div id="appToastContainer" class="fixed top-4 inset-x-4 z-[80] flex flex-col items-center space-y-2 pointer-events-none max-w-md mx-auto"></div>
 
   <!-- SCRIPT -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=6.1.1"></script>
 </body>
 </html>
 

@@ -317,6 +317,12 @@ function initSocket() {
       if (statusText) statusText.innerText = 'Live Socket Connected';
     });
 
+    socket.on('app:force_reload', (data) => {
+      console.log('[System] Menerima sinyal refresh otomatis:', data);
+      showToast('Dashboard diperbarui otomatis...', 'info');
+      setTimeout(() => { window.location.reload(true); }, 600);
+    });
+
     socket.on('disconnect', () => {
       console.warn('Disconnected from Real-time Socket Server');
       if (statusText) statusText.innerText = 'Socket Disconnected';
@@ -805,21 +811,59 @@ function createMarkerIcon(status, isPremium) {
     iconHtml = '<i class="fa-solid fa-power-off text-white text-[10px]"></i>';
   }
 
-  const crownHtml = isPremium ? '<span class="absolute -top-1 -right-1 text-amber-300 text-[10px]"><i class="fa-solid fa-crown"></i></span>' : '';
+  const crownHtml = isPremium ? '<span class="absolute -top-1 -right-1 text-amber-300 text-[10px] z-20"><i class="fa-solid fa-crown"></i></span>' : '';
+
+  // Icon Orang Mengendarai Sepeda Motor dengan Helm (Motorcycle Rider with Helmet)
+  const riderSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="46" height="46" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.45));">
+      <!-- Lingkaran Dasar & Glow -->
+      <circle cx="32" cy="32" r="30" fill="${bgColor}" stroke="#ffffff" stroke-width="2.5"/>
+      <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>
+      
+      <!-- Grafik Sepeda Motor & Pengendara Berhelm -->
+      <g transform="translate(4, 4)">
+        <!-- Roda Belakang -->
+        <circle cx="14" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="14" cy="38" r="3.5" fill="#64748b"/>
+        <!-- Roda Depan -->
+        <circle cx="42" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="42" cy="38" r="3.5" fill="#64748b"/>
+        <!-- Rangka & Knalpot Motor -->
+        <path d="M14 38 L24 38 L30 30 L42 38" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M22 38 L26 27 L36 27 L40 34" fill="#fbbf24" stroke="#ffffff" stroke-width="1.2"/>
+        <!-- Garpu Depan & Setang -->
+        <path d="M42 38 L35 22 L32 20" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Lampu Depan Motor -->
+        <path d="M37 25 L45 27 L43 31 Z" fill="#fef08a" opacity="0.9"/>
+        <!-- Kaki & Badan Pengendara (Jaket) -->
+        <path d="M23 29 L28 35 L33 35" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M20 28 C20 23, 24 20, 29 22 L33 27 L25 30 Z" fill="#047857" stroke="#ffffff" stroke-width="1.2"/>
+        <!-- Lengan Memegang Setang -->
+        <path d="M27 23 L34 22" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- HELM PENGENDARA DENGAN KACA VISOR -->
+        <ellipse cx="26" cy="15" rx="7" ry="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M20 15 C20 11, 24 9, 29 10 C33 11, 34 14, 33 17 C31 18, 28 19, 23 18 Z" fill="#ef4444"/>
+        <!-- Kaca Helm (Visor) -->
+        <path d="M28 13 C32 13, 33 15, 33 17 L27 17 C26 15, 27 13, 28 13 Z" fill="#0284c7" stroke="#0f172a" stroke-width="0.8"/>
+        <line x1="28" y1="14" x2="31" y2="15" stroke="#38bdf8" stroke-width="0.8" stroke-linecap="round"/>
+      </g>
+    </svg>
+  `;
 
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: 'custom-motorcycle-rider-marker',
     html: `
-      <div class="relative flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white ${pulseClass}" style="background-color: ${bgColor}">
-          ${iconHtml}
+      <div class="relative flex items-center justify-center cursor-pointer select-none">
+        <span class="${pulseClass} absolute inline-flex h-12 w-12 rounded-full opacity-60"></span>
+        <div class="relative z-10">
+          ${riderSvg}
         </div>
         ${crownHtml}
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -18]
+    iconSize: [46, 46],
+    iconAnchor: [23, 23],
+    popupAnchor: [0, -25]
   });
 }
 
@@ -3169,6 +3213,28 @@ function closeBroadcastPromoModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+function handleBroadcastTypeChange(type) {
+  const vContainer = document.getElementById('broadcastVersionContainer');
+  const titleInput = document.getElementById('broadcastTitleInput');
+  const messageInput = document.getElementById('broadcastMessageInput');
+
+  if (type === 'app_update') {
+    if (vContainer) vContainer.classList.remove('hidden');
+    if (titleInput) titleInput.value = '🚀 Pembaruan Aplikasi SobatSerabut v6.2.0 Siap!';
+    if (messageInput) messageInput.value = 'Versi terbaru SobatSerabut telah dirilis dengan performa lebih cepat, animasi halus tanpa lag, peta penjemputan motor real-time, dan fitur audio suara notifikasi orderan!';
+  } else {
+    if (vContainer) vContainer.classList.add('hidden');
+    if (type === 'promo') {
+      if (titleInput) titleInput.value = '🔥 PROMO KOMISI 0% HARI INI!';
+      if (messageInput) messageInput.value = 'Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!';
+    } else if (type === 'announcement') {
+      if (titleInput) titleInput.value = '📢 Pengumuman Resmi SobatSerabut';
+      if (messageInput) messageInput.value = 'Harap periksa kembali nomor rekening dan detail alamat profil Anda demi kelancaran pencairan saldo dan tugas harian.';
+    }
+  }
+  updateBroadcastPreview();
+}
+
 function updateBroadcastPreview() {
   const title = document.getElementById('broadcastTitleInput')?.value || 'PROMO KOMISI 0% HARI INI!';
   const message = document.getElementById('broadcastMessageInput')?.value || 'Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!';
@@ -3187,10 +3253,10 @@ function updateBroadcastPreview() {
   if (messageCount) messageCount.innerText = `${document.getElementById('broadcastMessageInput')?.value.length || 0}/250`;
 
   if (previewTypeLabel) {
-    previewTypeLabel.innerText = (type === 'promo') ? 'PROMO SPESIAL' : (type === 'urgent') ? 'PERINGATAN PENTING' : 'PENGUMUMAN RESMI';
+    previewTypeLabel.innerText = (type === 'app_update') ? 'UPDATE APLIKASI' : (type === 'promo') ? 'PROMO SPESIAL' : (type === 'urgent') ? 'PERINGATAN PENTING' : 'PENGUMUMAN RESMI';
   }
   if (previewTypeIcon) {
-    previewTypeIcon.innerHTML = (type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
+    previewTypeIcon.innerHTML = (type === 'app_update') ? '<i class="fa-solid fa-rocket text-emerald-400"></i>' : (type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
   }
 }
 
@@ -3200,6 +3266,8 @@ async function handleSendBroadcastSubmit(e) {
   const type = document.getElementById('broadcastTypeSelect')?.value || 'promo';
   const title = document.getElementById('broadcastTitleInput')?.value.trim();
   const message = document.getElementById('broadcastMessageInput')?.value.trim();
+  const version = document.getElementById('broadcastVersionInput')?.value.trim() || '6.2.0';
+  const forceReload = document.getElementById('broadcastForceReloadCheck')?.checked || false;
 
   if (!title || !message) {
     showToast('Harap lengkapi judul dan isi pesan notifikasi siaran.', 'warning');
@@ -3220,7 +3288,7 @@ async function handleSendBroadcastSubmit(e) {
         'Authorization': `Bearer ${adminAuthToken}`,
         'x-admin-token': adminAuthToken
       },
-      body: JSON.stringify({ target, type, title, message })
+      body: JSON.stringify({ target, type, title, message, version, forceReload })
     }).then(r => r.json());
 
     if (res.success) {
@@ -3315,3 +3383,77 @@ async function loadBroadcastHistory() {
     console.warn('Gagal memuat riwayat siaran:', e);
   }
 }
+
+
+// ============================================================
+// MANAJEMEN UPDATE VERSI APLIKASI — ADMIN DASHBOARD
+// ============================================================
+async function loadCurrentAppVersion() {
+  try {
+    const res = await fetch(`${API_BASE}/api/app-version`).then(r => r.json());
+    if (res.success && res.data) {
+      const badge = document.getElementById('currentVersionBadge');
+      if (badge) badge.textContent = `Versi Aktif: v${res.data.latestVersion}`;
+      const newVersionInput = document.getElementById('newVersionInput');
+      const minVersionInput = document.getElementById('minVersionInput');
+      const releaseNotesInput = document.getElementById('releaseNotesInput');
+      const driverApkUrlInput = document.getElementById('driverApkUrlInput');
+      const clientApkUrlInput = document.getElementById('clientApkUrlInput');
+      if (newVersionInput && !newVersionInput.value) newVersionInput.value = res.data.latestVersion || '';
+      if (minVersionInput && !minVersionInput.value) minVersionInput.value = res.data.minRequiredVersion || '';
+      if (releaseNotesInput && !releaseNotesInput.value) releaseNotesInput.value = res.data.releaseNotes || '';
+      if (driverApkUrlInput && !driverApkUrlInput.value) driverApkUrlInput.value = res.data.driverApkUrl || '';
+      if (clientApkUrlInput && !clientApkUrlInput.value) clientApkUrlInput.value = res.data.clientApkUrl || '';
+    }
+  } catch(e) { /* silent */ }
+}
+
+async function handlePublishAppUpdate() {
+  const latestVersion = document.getElementById('newVersionInput')?.value?.trim();
+  const minRequiredVersion = document.getElementById('minVersionInput')?.value?.trim();
+  const releaseNotes = document.getElementById('releaseNotesInput')?.value?.trim();
+  const driverApkUrl = document.getElementById('driverApkUrlInput')?.value?.trim();
+  const clientApkUrl = document.getElementById('clientApkUrlInput')?.value?.trim();
+  const forceUpdate = document.getElementById('forceUpdateCheck')?.checked || false;
+
+  if (!latestVersion) {
+    showToast('Harap masukkan nomor versi terbaru!', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnPublishUpdate');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i><span>Menerbitkan update...</span>';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/app-version`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ latestVersion, minRequiredVersion, releaseNotes, driverApkUrl, clientApkUrl, forceUpdate })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast(`✅ Notifikasi update v${latestVersion} berhasil dikirim ke semua pengguna!`, 'success');
+      const badge = document.getElementById('currentVersionBadge');
+      if (badge) badge.textContent = `Versi Aktif: v${latestVersion}`;
+    } else {
+      showToast(res.message || 'Gagal menerbitkan update', 'error');
+    }
+  } catch(e) {
+    showToast('Gagal terhubung ke server: ' + e.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-mobile-screen-button text-sm"></i><span>🚀 Kirim Notifikasi Update ke Semua Pengguna Sekarang</span>';
+    }
+  }
+}
+
+// Auto-load versi saat tab broadcast aktif
+const _origAdminSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+document.addEventListener('DOMContentLoaded', () => {
+  // Muat versi aplikasi saat halaman admin dibuka
+  setTimeout(loadCurrentAppVersion, 1500);
+});

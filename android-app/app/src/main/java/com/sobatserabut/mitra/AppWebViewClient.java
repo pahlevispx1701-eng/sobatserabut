@@ -102,6 +102,18 @@ public class AppWebViewClient extends WebViewClient {
             }
         }
 
+        // 7. Unduhan Berkas APK & Pembaruan Versi Aplikasi Otomatis
+        if (url.endsWith(".apk") || url.contains("/download/") || url.contains("download-apk") || url.contains("driver-apk") || url.contains("client-apk") || url.contains("Driver-SobatSerabut") || url.contains("SobatSerabut.apk")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
         return false;
     }
 

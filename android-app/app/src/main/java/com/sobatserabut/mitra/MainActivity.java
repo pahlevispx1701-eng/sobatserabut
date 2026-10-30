@@ -91,6 +91,16 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new AppWebViewClient(this));
         webView.setWebChromeClient(new AppWebChromeClient(this, progressBar));
+
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Gagal mengunduh pembaruan berkas: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public boolean handleFileChooser(ValueCallback<Uri[]> callback, WebChromeClient.FileChooserParams fileChooserParams) {

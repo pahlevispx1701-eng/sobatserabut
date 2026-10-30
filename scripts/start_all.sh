@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SOBATSERABUT v6.0 — ULTRA PREMIUM CLOUD DOMAINESIA ECOSYSTEM
-# Update: UI v6.0 Ultra Premium Phoenix/Genesis Edition, Bug Fixes, Glassmorphism
-#         Driver App: Dark Emerald Genesis | Client App: Volcanic Ember Phoenix
-# Build Date: 2026-10-29
+# SOBATSERABUT v6.2.0 — ULTRA PREMIUM CLOUD DOMAINESIA ECOSYSTEM
+# Update: Notifikasi Pembaruan Admin Terkendali, Banner Sambutan Resmi,
+#         Marker Motor Berhelm Real-time, Audio Suara Order Masuk,
+#         Tampilan Kompak Tanpa Scroll, Sinkronisasi Cloud DomaiNesia & APK
+#         Driver App: Dark Emerald Genesis v6.2.0 | Client App: Volcanic Ember Phoenix v6.2.0
+# Build Date: 2026-10-31
 # VPS DomaiNesia: 160.19.166.231
 # Domain Resmi: https://sobatserabut.160.19.166.231.sslip.io
-# Domain Kustom: http://sobatserabut.co.id
+# Domain Kustom: https://app.sobatserabut.id
 # ==============================================================================
 
 set -euo pipefail
@@ -38,9 +40,10 @@ PROD_IP_URL="http://160.19.166.231"
 clear 2>/dev/null || true
 echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║   🚀 SOBATSERABUT v6.0 — ULTRA PREMIUM LAUNCH               ║"
-echo "║   Driver App: Dark Emerald Genesis Edition                   ║"
-echo "║   Client App: Volcanic Ember Phoenix Edition                 ║"
+echo "║   🚀 SOBATSERABUT v6.2.0 — ULTRA PREMIUM LAUNCH             ║"
+echo "║   Driver App: Dark Emerald Genesis Edition v6.2.0            ║"
+echo "║   Client App: Volcanic Ember Phoenix Edition v6.2.0          ║"
+echo "║   🆕  Notif Update Admin | Marker Motor Berhelm | Audio Alert║"
 echo "║   Cloud VPS  : DomaiNesia ($VPS_IP)               ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${RESET}"
@@ -81,13 +84,14 @@ echo ""
 echo -e "${BOLD}${CYAN}⚙️  2. Menyinkronkan konfigurasi domain produksi...${RESET}"
 
 BUILD_TS="$(date '+%Y-%m-%d %H:%M:%S WIB')"
-CONFIG_CONTENT="// SobatSerabut v6.0 — Auto-generated config — $BUILD_TS
+CONFIG_CONTENT="// SobatSerabut v6.2.0 — Auto-generated config — $BUILD_TS
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: \"$PUBLIC_URL\",
-  VERSION: \"6.0.0\",
+  VERSION: \"6.2.0\",
   BUILD_DATE: \"$BUILD_TS\",
   APP_NAME: \"SobatSerabut\",
-  VPS_IP: \"$VPS_IP\"
+  VPS_IP: \"$VPS_IP\",
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
 };"
 
 echo "$CONFIG_CONTENT" > "$PROJECT_DIR/driver-app/js/config.js"
@@ -96,7 +100,10 @@ for MOD in client-app mitra-app; do
 done
 mkdir -p "$PROJECT_DIR/android-app/app/src/main/assets/www/js"
 cp "$PROJECT_DIR/driver-app/js/config.js" "$PROJECT_DIR/android-app/app/src/main/assets/www/js/config.js"
-ok "config.js tersinkronisasi ke semua modul → $PUBLIC_URL"
+# Sinkronkan assets client-app ke android-app assets
+cp "$PROJECT_DIR/client-app/index.html" "$PROJECT_DIR/android-app/app/src/main/assets/www/index.html" 2>/dev/null || true
+cp "$PROJECT_DIR/client-app/js/app.js" "$PROJECT_DIR/android-app/app/src/main/assets/www/js/app.js" 2>/dev/null || true
+ok "config.js tersinkronisasi ke semua modul → $PUBLIC_URL (v6.2.0)"
 
 # ── STEP 2b: Update Branding Strings ─────────────────────────────────
 echo -e "${BOLD}${CYAN}🎨 2b. Memperbarui branding SobatSerabut...${RESET}"
@@ -105,10 +112,10 @@ cat > "$PROJECT_DIR/android-app/app/src/main/res/values/strings.xml" << 'STREOF'
 <resources>
     <string name="app_name">SobatSerabut</string>
     <string name="app_tagline">Solusi Cepat Serabutan &amp; Jasa Harian</string>
-    <string name="app_version">v6.0</string>
+    <string name="app_version">v6.2.0</string>
 </resources>
 STREOF
-ok "Branding strings.xml diperbarui → SobatSerabut v6.0"
+ok "Branding strings.xml diperbarui → SobatSerabut v6.2.0"
 
 # ── STEP 2c: Sinkronisasi Logo & Favicon ─────────────────────────────
 echo -e "${BOLD}${CYAN}🖼️  2c. Sinkronisasi logo & favicon premium...${RESET}"
@@ -180,7 +187,7 @@ tar_p   = '/tmp/sobat_v6_deploy.tar.gz'
 # 1. Buat arsip terbaru
 subprocess.run([
   'tar', '-czf', tar_p, '-C', proj,
-  'driver-app', 'client-app', 'admin-dashboard', 'backend', 'mitra-app'
+  'driver-app', 'client-app', 'admin-dashboard', 'backend', 'mitra-app', 'portal'
 ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def ssh_run(host, user, password, cmd, timeout=45):
@@ -212,7 +219,7 @@ try:
         if os.path.exists(p):
             scp_send(p, f'{webroot}/android-app/{apk}', vps_ip, vps_usr, pwd)
 
-    print('   ✅ Seluruh update v6.0 berhasil disinkronkan ke Cloud DomaiNesia!')
+    print('   ✅ Seluruh update v6.2.0 berhasil disinkronkan ke Cloud DomaiNesia!')
 except Exception as e:
     print(f'   ⚠️  Sinkronisasi cloud gagal: {e}')
 PYEOF
@@ -236,7 +243,7 @@ done
 echo ""
 echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║   🎉 SOBATSERABUT v6.0 RESMI AKTIF 24 JAM — DOMAINESIA!    ║"
+echo "║   🎉 SOBATSERABUT v6.2.0 RESMI AKTIF 24 JAM — DOMAINESIA!    ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${RESET}"
 echo -e "${BOLD}🌐 VPS Cloud DomaiNesia : ${GREEN}$VPS_IP${RESET}"
@@ -244,11 +251,11 @@ echo -e "${BOLD}🔗 Domain Aktif         : ${GREEN}$PUBLIC_URL${RESET}"
 echo ""
 echo -e "${BOLD}${CYAN}🔗 LINK AKSES PRODUKSI (Aktif 24 Jam Walau Laptop Mati):${RESET}"
 echo ""
-echo -e "  ${BOLD}1️⃣  DRIVER MITRA${RESET} (Dark Emerald Genesis v6.0)"
+echo -e "  ${BOLD}1️⃣  DRIVER MITRA${RESET} (Dark Emerald Genesis v6.2.0)"
 echo -e "      👉 ${GREEN}$PUBLIC_URL/driver${RESET}"
 echo -e "      👉 Lokal: ${CYAN}http://localhost:4000/driver${RESET}"
 echo ""
-echo -e "  ${BOLD}2️⃣  CLIENT APP${RESET} (Volcanic Ember Phoenix v6.0)"
+echo -e "  ${BOLD}2️⃣  CLIENT APP${RESET} (Volcanic Ember Phoenix v6.2.0)"
 echo -e "      👉 ${GREEN}$PUBLIC_URL${RESET}"
 echo -e "      👉 Lokal: ${CYAN}http://localhost:4000${RESET}"
 echo ""

@@ -10,16 +10,17 @@
     "maintenanceMode": false,
     "maintenanceMessage": "mohon menunggu sedang pemeliharaan sistem",
     "maxRadiusKm": 2,
+    "radarRadiusMeters": 2000,
     "baseFare": 25000,
     "farePerKm": 3500,
     "platformFee": 3000,
     "serviceFeePercentage": 10,
     "premiumSubscriptionPrice": 10000,
-    "escrowAccountInfo": "SeaBank: 901771223812 | GoPay: 087735170386 | QRIS SobatSerabut (a/n SobatSerabut Admin)",
+    "escrowAccountInfo": "SeaBank: 901771223812 (a/n Reza Pahlevi Admin) | QRIS SobatSerabut Resmi",
     "adminSeaBank": {
       "bankName": "SeaBank",
       "accountNumber": "901771223812",
-      "accountHolder": "SobatSerabut Admin"
+      "accountHolder": "Reza Pahlevi"
     },
     "adminGopay": {
       "provider": "GoPay",
@@ -48,7 +49,8 @@
       "baseFare": 75000,
       "description": "Cuci, tambah freon, dan perbaikan AC",
       "active": true,
-      "image": "/uploads/service_ac.png"
+      "image": "/uploads/service_ac.png",
+      "estimatedMinutes": 60
     },
     {
       "id": "cat-2",
@@ -57,7 +59,8 @@
       "baseFare": 50000,
       "description": "Bersih-bersih kamar, toilet, dan dapur",
       "active": true,
-      "image": "/uploads/service_clean.png"
+      "image": "/uploads/service_clean.png",
+      "estimatedMinutes": 90
     },
     {
       "id": "cat-3",
@@ -66,7 +69,8 @@
       "baseFare": 80000,
       "description": "Bantuan angkut mebel, kardus, dan pindahan",
       "active": true,
-      "image": "/uploads/service_lifting.png"
+      "image": "/uploads/service_lifting.png",
+      "estimatedMinutes": 60
     },
     {
       "id": "cat-4",
@@ -75,7 +79,8 @@
       "baseFare": 60000,
       "description": "Perbaikan pipa bocor, wastafel, dan pompa air",
       "active": true,
-      "image": "/uploads/service_plumber.png"
+      "image": "/uploads/service_plumber.png",
+      "estimatedMinutes": 45
     },
     {
       "id": "cat-5",
@@ -84,7 +89,8 @@
       "baseFare": 65000,
       "description": "Perbaikan korsleting, pasang lampu & saklar",
       "active": true,
-      "image": "/uploads/service_electric.png"
+      "image": "/uploads/service_electric.png",
+      "estimatedMinutes": 45
     },
     {
       "id": "cat-6",
@@ -93,7 +99,8 @@
       "baseFare": 25000,
       "description": "Beli gas, galon, belanja pasar & titipan kilat",
       "active": true,
-      "image": "/uploads/service_runner.png"
+      "image": "/uploads/service_runner.png",
+      "estimatedMinutes": 30
     },
     {
       "id": "cat-7",
@@ -102,7 +109,8 @@
       "baseFare": 90000,
       "description": "Cat dinding, perbaikan kusen, dan furnitur",
       "active": true,
-      "image": "/uploads/service_carpentry.png"
+      "image": "/uploads/service_carpentry.png",
+      "estimatedMinutes": 120
     },
     {
       "id": "cat-8",
@@ -111,7 +119,8 @@
       "baseFare": 30000,
       "description": "Tambal ban tubeless, jumper aki di tempat",
       "active": true,
-      "image": "/uploads/service_tire.png"
+      "image": "/uploads/service_tire.png",
+      "estimatedMinutes": 25
     },
     {
       "id": "cat-1792414138374",
@@ -120,16 +129,86 @@
       "baseFare": 60000,
       "description": "Perbaikan & perawatan langsung di rumah",
       "active": true,
-      "image": "/uploads/service_washing.png"
+      "image": "/uploads/service_washing.png",
+      "estimatedMinutes": 60
     }
   ],
-  "mitra": [],
+  "mitra": [
+    {
+      "id": "MTR-0001",
+      "name": "reza pahlevi",
+      "phone": "087735170386",
+      "email": "reza.driver@sobatserabut.id",
+      "password": "Dwieza21@",
+      "role": "mitra",
+      "status": "offline",
+      "accountStatus": "active",
+      "avatar": "/uploads/avatar_mitra.svg",
+      "address": "jakarta selatan",
+      "lat": -6.303348,
+      "lng": 106.830543,
+      "walletBalance": 150000,
+      "earnings": 0,
+      "completedOrders": 5,
+      "rating": 5,
+      "skills": [
+        "Runner / Belanja Kilat",
+        "Servis AC",
+        "Tambal Ban & Darurat"
+      ],
+      "vehicle": "Sepeda Motor",
+      "bankDetails": {
+        "bankName": "SeaBank",
+        "bankAccount": "901771223812",
+        "bankHolder": "Reza Pahlevi"
+      },
+      "bankName": "SeaBank",
+      "bankAccount": "901771223812",
+      "bankHolder": "Reza Pahlevi",
+      "createdAt": "2026-10-13T15:19:10.004Z",
+      "lastActive": "2026-10-30T13:17:12.217Z"
+    }
+  ],
   "orders": [],
   "kycRequests": [],
   "withdrawals": [],
   "routeHistory": {},
   "transactions": [],
   "users": [
+    {
+      "id": "MTR-0001",
+      "name": "reza pahlevi",
+      "phone": "087735170386",
+      "email": "reza.driver@sobatserabut.id",
+      "password": "Dwieza21@",
+      "role": "mitra",
+      "status": "offline",
+      "accountStatus": "active",
+      "avatar": "/uploads/avatar_mitra.svg",
+      "address": "jakarta selatan",
+      "lat": -6.303348,
+      "lng": 106.830543,
+      "walletBalance": 150000,
+      "earnings": 0,
+      "completedOrders": 5,
+      "rating": 5,
+      "skills": [
+        "Runner / Belanja Kilat",
+        "Servis AC",
+        "Tambal Ban & Darurat"
+      ],
+      "vehicle": "Sepeda Motor",
+      "bankDetails": {
+        "bankName": "SeaBank",
+        "bankAccount": "901771223812",
+        "bankHolder": "Reza Pahlevi"
+      },
+      "bankName": "SeaBank",
+      "bankAccount": "901771223812",
+      "bankHolder": "Reza Pahlevi",
+      "createdAt": "2026-10-13T15:19:10.004Z",
+      "lastActive": "2026-10-30T13:17:12.217Z"
+    },
     {
       "id": "KLN-0004",
       "name": "reza pahlevi",
@@ -141,11 +220,12 @@
       "address": "jakarta selatan",
       "lat": -6.303348,
       "lng": 106.830543,
-      "walletBalance": 0,
+      "walletBalance": 100000,
       "createdAt": "2026-10-13T15:19:10.004Z",
       "totalOrdersPosted": 4,
       "paymentAccount": null,
       "lastActive": "2026-10-27T16:10:36.012Z"
     }
-  ]
+  ],
+  "broadcasts": []
 }

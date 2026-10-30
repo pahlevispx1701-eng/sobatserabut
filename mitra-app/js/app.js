@@ -446,6 +446,15 @@ function initSocket() {
       updateServerStatusBadge(false);
     });
 
+    // Auto-reload handler saat menerima sinyal update otomatis dari server
+    socket.on('app:force_reload', (data) => {
+      console.log('[System] Menerima instruksi pembaruan kode otomatis dari server:', data);
+      showToast('Aplikasi diperbarui otomatis...', 'info');
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 600);
+    });
+
     // Dynamic Admin Branding Sync (Logo & Config broadcasted live)
     socket.on('config:update', (newConfig) => {
       systemConfig = newConfig;
@@ -463,7 +472,8 @@ function initSocket() {
     });
 
     socket.on('order:new', (newOrder) => {
-      playNotificationSound();
+      playAudioSound('order_chime');
+      speakVoiceNotification('Ada orderan masuk! Segera cek dan ambil pesanan Anda.');
       if (currentUser?.role === 'mitra') {
         loadNearbyTasksForMitra();
         // Tampilkan modal popup notifikasi jika driver sedang Mulai Bekerja (ready)
@@ -671,6 +681,19 @@ function initSocket() {
       if (!data) return;
       if (data.target === 'all' || data.target === 'driver') {
         showBroadcastModal(data);
+      }
+    });
+
+    socket.on('app_update_available', (data) => {
+      if (!data) return;
+      if (!data.target || data.target === 'all' || data.target === 'driver') {
+        showBroadcastModal({
+          type: 'app_update',
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
+          version: data.latestVersion || '6.2.0',
+          actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
+        });
       }
     });
 
@@ -2393,16 +2416,12 @@ function applyConfigToUI(cfg) {
     document.getElementById('authAppName').innerHTML = `${name.slice(0, splitIndex)}<span class="text-blue-500">${name.slice(splitIndex) || ''}</span>`;
     document.title = `${name} - Solusi Cepat Serabutan & Jasa Harian`;
   }
-  if (cfg.announcement) {
-    const banner = document.getElementById('globalAnnouncementBanner');
-    const textEl = document.getElementById('globalAnnouncementText');
-    if (banner && textEl) {
-      textEl.innerText = cfg.announcement;
-      banner.classList.remove('hidden');
-    }
-  } else {
-    const banner = document.getElementById('globalAnnouncementBanner');
-    if (banner) banner.classList.add('hidden');
+  const defaultWelcome = 'Selamat datang di SobatSerabut! Layanan serabutan & pekerjaan harian terpercaya siap membantu Anda kapan saja.';
+  const banner = document.getElementById('globalAnnouncementBanner');
+  const textEl = document.getElementById('globalAnnouncementText');
+  if (banner && textEl) {
+    textEl.innerText = cfg.announcement || defaultWelcome;
+    banner.classList.remove('hidden');
   }
   if (cfg.otpSenderNumber || cfg.contactPhone) {
     const phone = cfg.otpSenderNumber || cfg.contactPhone || '087791201091';
@@ -3636,32 +3655,80 @@ function initMainAppLiveMap() {
   setTimeout(() => mainAppLiveMap.invalidateSize(), 300);
 }
 
+// ============================================================
+// MOTORCYCLE RIDER WITH HELMET MAP MARKER GENERATOR
+// ============================================================
+function getMotorcycleRiderSvg(color = '#059669', size = 48) {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));">
+      <!-- Lingkaran Luar Badge Driver -->
+      <circle cx="32" cy="32" r="30" fill="${color}" stroke="#ffffff" stroke-width="2.5"/>
+      <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>
+      
+      <!-- Sepeda Motor & Pengendara Berhelm -->
+      <g transform="translate(4, 4)">
+        <!-- Roda Belakang -->
+        <circle cx="14" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="14" cy="38" r="3.5" fill="#64748b"/>
+        <!-- Roda Depan -->
+        <circle cx="42" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="42" cy="38" r="3.5" fill="#64748b"/>
+        <!-- Rangka Motor & Knalpot -->
+        <path d="M14 38 L24 38 L30 30 L42 38" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M22 38 L26 27 L36 27 L40 34" fill="#fbbf24" stroke="#ffffff" stroke-width="1.2"/>
+        <!-- Garpu Depan & Setang -->
+        <path d="M42 38 L35 22 L32 20" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Lampu Depan Menyala -->
+        <path d="M37 25 L45 27 L43 31 Z" fill="#fef08a" opacity="0.9"/>
+        <!-- Kaki & Badan Pengendara -->
+        <path d="M23 29 L28 35 L33 35" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M20 28 C20 23, 24 20, 29 22 L33 27 L25 30 Z" fill="#047857" stroke="#ffffff" stroke-width="1.2"/>
+        <!-- Lengan Pengendara -->
+        <path d="M27 23 L34 22" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- HELM PENGENDARA (ORANG MENGENDARAI MOTOR PAKE HELM) -->
+        <ellipse cx="26" cy="15" rx="7" ry="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M20 15 C20 11, 24 9, 29 10 C33 11, 34 14, 33 17 C31 18, 28 19, 23 18 Z" fill="#ef4444"/>
+        <!-- Visor Helm Kaca Biru -->
+        <path d="M28 13 C32 13, 33 15, 33 17 L27 17 C26 15, 27 13, 28 13 Z" fill="#0284c7" stroke="#0f172a" stroke-width="0.8"/>
+        <line x1="28" y1="14" x2="31" y2="15" stroke="#38bdf8" stroke-width="0.8" stroke-linecap="round"/>
+      </g>
+    </svg>
+  `;
+}
+
+function createMotorcycleRiderIcon(color = '#059669', isMoving = true) {
+  const pulseHtml = isMoving 
+    ? '<span class="animate-ping absolute -inset-1 rounded-full bg-emerald-400 opacity-60 pointer-events-none"></span>'
+    : '<span class="animate-pulse absolute -inset-0.5 rounded-full bg-emerald-500/30 pointer-events-none"></span>';
+  return L.divIcon({
+    className: 'custom-motorcycle-rider-marker',
+    html: `
+      <div class="relative flex items-center justify-center cursor-pointer select-none">
+        ${pulseHtml}
+        <div class="relative z-10 transition-transform duration-300">
+          ${getMotorcycleRiderSvg(color, 46)}
+        </div>
+      </div>
+    `,
+    iconSize: [46, 46],
+    iconAnchor: [23, 23],
+    popupAnchor: [0, -25]
+  });
+}
+
 function updateMainAppMapLocation(lat, lng) {
   if (!mainAppLiveMap) return;
   const isMitra = currentUser?.role === 'mitra';
-  const iconColor = isMitra ? '#2563EB' : '#F59E0B';
-  const roleName = isMitra ? 'Penyedia Layanan (Mitra)' : 'Pemohon (Klien)';
+  const roleName = isMitra ? 'Mitra Driver (Sepeda Motor)' : 'Pemohon (Klien)';
 
-  const markerIcon = L.divIcon({
-    className: 'custom-live-marker',
-    html: `
-      <div class="relative flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-xl border-2 border-white" style="background-color: ${iconColor}">
-          <i class="fa-solid fa-${isMitra ? 'person-digging' : 'user'} text-white text-xs"></i>
-        </div>
-        <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full opacity-50" style="background-color: ${iconColor}"></span>
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -18]
-  });
+  // Gunakan Marker Gambar Orang Mengendarai Motor Memakai Helm
+  const markerIcon = createMotorcycleRiderIcon(isMitra ? '#059669' : '#2563EB', true);
 
   if (mainAppMitraMarker) {
     mainAppMitraMarker.setLatLng([lat, lng]);
   } else {
     mainAppMitraMarker = L.marker([lat, lng], { icon: markerIcon }).addTo(mainAppLiveMap);
-    mainAppMitraMarker.bindPopup(`<b>${currentUser.name}</b><br><span class="text-xs text-slate-600">${roleName}</span><br><span class="text-[10px] text-emerald-600 font-bold">● GPS Nyata Terhubung</span>`);
+    mainAppMitraMarker.bindPopup(`<b>${currentUser.name}</b><br><span class="text-xs text-slate-600">${roleName}</span><br><span class="text-[10px] text-emerald-600 font-bold">● GPS Nyata Pengendara Motor</span>`);
   }
 }
 
@@ -4681,6 +4748,172 @@ function playNotificationSound() {
     osc.start();
     osc.stop(audioCtx.currentTime + 0.35);
   } catch(e) {}
+}
+
+/**
+ * playAudioSound(type)
+ * type: 'order_chime' | 'chat_ping' | 'error' | 'success' | default
+ * Menghasilkan suara berbeda sesuai tipe notifikasi menggunakan Web Audio API.
+ */
+function playAudioSound(type) {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = audioCtx.createGain();
+    gain.connect(audioCtx.destination);
+
+    if (type === 'order_chime') {
+      // Nada ganda naik — tanda order masuk / driver online
+      const notes = [523, 659, 784]; // Do-Mi-Sol
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.connect(gain);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = audioCtx.currentTime + i * 0.13;
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.start(t);
+        osc.stop(t + 0.28);
+      });
+    } else if (type === 'chat_ping') {
+      // Nada pendek tunggal — notifikasi chat / driver offline
+      const osc = audioCtx.createOscillator();
+      osc.connect(gain);
+      osc.type = 'sine';
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.25);
+    } else if (type === 'error') {
+      // Nada turun — tanda error
+      const osc = audioCtx.createOscillator();
+      osc.connect(gain);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.32);
+    } else if (type === 'success') {
+      // Dua nada naik — berhasil
+      [440, 880].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.connect(gain);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = audioCtx.currentTime + i * 0.15;
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.start(t);
+        osc.stop(t + 0.22);
+      });
+    } else {
+      // Default — nada standar
+      const osc = audioCtx.createOscillator();
+      osc.connect(gain);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.32);
+    }
+  } catch(e) { /* silent — Web Audio API tidak tersedia */ }
+}
+
+// ============================================================
+// AUDIO PERMISSION & INDONESIAN SPEECH SYNTHESIS ENGINE
+// ============================================================
+let audioSystemUnlocked = false;
+
+function unlockAudioSystem() {
+  if (audioSystemUnlocked) return;
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+    }
+    audioSystemUnlocked = true;
+    console.log('[Audio] Audio System & Web Speech API telah diizinkan.');
+  } catch(e) {}
+}
+
+['click', 'touchstart', 'keydown'].forEach(evt => {
+  window.addEventListener(evt, unlockAudioSystem, { once: false, passive: true });
+});
+
+function speakVoiceNotification(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'id-ID';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.05;
+    utterance.volume = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+    if (idVoice) utterance.voice = idVoice;
+
+    window.speechSynthesis.speak(utterance);
+  } catch(e) {
+    console.warn('[Speech] Gagal memutar suara ucapan:', e);
+  }
+}
+
+// ============================================================
+// SIARAN NOTIFIKASI & BROADCAST PEMBARUAN ADMIN
+// ============================================================
+function showBroadcastModal(data) {
+  if (!data) return;
+
+  // Jika tipe pembaruan aplikasi, tampilkan langsung modal update berfitur tombol unduh
+  if (data.type === 'app_update') {
+    const updateModal = document.getElementById('updateNotifModal');
+    const versionEl = document.getElementById('updateModalVersion');
+    const notesEl = document.getElementById('updateModalNotes');
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
+    if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
+    if (updateModal) {
+      updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
+      updateModal.classList.remove('hidden');
+    }
+    playAudioSound('order_chime');
+    speakVoiceNotification((data.title ? `Pembaruan aplikasi: ${data.title}` : 'Pembaruan aplikasi baru tersedia!'));
+    return;
+  }
+
+  const modal = document.getElementById('broadcastNotificationModal');
+  const titleEl = document.getElementById('broadcastTitleDisplay');
+  const msgEl = document.getElementById('broadcastMessageDisplay');
+  const iconEl = document.getElementById('broadcastTypeBadgeIcon');
+  const badgeTextEl = document.getElementById('broadcastTypeBadgeText');
+
+  if (titleEl) titleEl.innerText = data.title || 'Pemberitahuan SobatSerabut';
+  if (msgEl) msgEl.innerText = data.message || '';
+
+  if (badgeTextEl) {
+    badgeTextEl.innerText = (data.type === 'promo') ? '🔥 PROMO RESMI SOBATSERABUT' : (data.type === 'urgent') ? '⚠️ PERINGATAN PENTING' : '📢 PENGUMUMAN RESMI ADMIN';
+  }
+  if (iconEl) {
+    iconEl.innerHTML = (data.type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (data.type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
+  }
+
+  if (modal) modal.classList.remove('hidden');
+
+  playAudioSound('order_chime');
+  speakVoiceNotification((data.type === 'urgent' ? 'Peringatan: ' : 'Pemberitahuan: ') + (data.title || 'Ada pengumuman baru'));
+}
+
+function closeBroadcastModal() {
+  const modal = document.getElementById('broadcastNotificationModal');
+  if (modal) modal.classList.add('hidden');
 }
 
 /* ========================================================

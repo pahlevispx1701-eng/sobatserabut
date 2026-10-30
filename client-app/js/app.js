@@ -461,6 +461,15 @@ function initSocket() {
       updateServerStatusBadge(false);
     });
 
+    // Auto-reload handler saat menerima sinyal update otomatis dari server
+    socket.on('app:force_reload', (data) => {
+      console.log('[System] Menerima instruksi pembaruan kode otomatis dari server:', data);
+      showToast('Aplikasi diperbarui otomatis...', 'info');
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 600);
+    });
+
     // Dynamic Admin Branding Sync (Logo & Config broadcasted live)
     socket.on('config:update', (newConfig) => {
       systemConfig = newConfig;
@@ -511,8 +520,17 @@ function initSocket() {
       }
     });
 
+    socket.on('broadcast:notification', (data) => {
+      if (!data) return;
+      if (data.target === 'all' || data.target === 'client') {
+        showBroadcastModal(data);
+      }
+    });
+
     socket.on('order:assigned', (data) => {
       if (currentUser?.id === data.order.clientId) {
+        playNotificationSound();
+        speakVoiceNotification(`Mitra ${data.mitra.name} telah menerima pesanan Anda dan sedang menuju lokasi penjemputan!`);
         showCustomDialog({
           title: 'Mitra Telah Ditugaskan!',
           message: `Mitra ${data.mitra.name} telah menerima tugas "${data.order.title}" dan sedang bersiap menuju lokasi penjemputan!`,
@@ -602,6 +620,26 @@ function initSocket() {
 
     socket.on('call:end', () => {
       endInAppVoiceCall(false);
+    });
+
+    socket.on('broadcast:notification', (data) => {
+      if (!data) return;
+      if (data.target === 'all' || data.target === 'client') {
+        showBroadcastModal(data);
+      }
+    });
+
+    socket.on('app_update_available', (data) => {
+      if (!data) return;
+      if (!data.target || data.target === 'all' || data.target === 'client') {
+        showBroadcastModal({
+          type: 'app_update',
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
+          version: data.latestVersion || '6.2.0',
+          actionUrl: data.clientApkUrl || `${API_BASE}/download/client-apk`
+        });
+      }
     });
 
   } catch (err) {
@@ -3057,16 +3095,12 @@ function applyConfigToUI(cfg) {
     document.getElementById('authAppName').innerHTML = `${name.slice(0, splitIndex)}<span class="text-blue-500">${name.slice(splitIndex) || ''}</span>`;
     document.title = `${name} - Solusi Cepat Serabutan & Jasa Harian`;
   }
-  if (cfg.announcement) {
-    const banner = document.getElementById('globalAnnouncementBanner');
-    const textEl = document.getElementById('globalAnnouncementText');
-    if (banner && textEl) {
-      textEl.innerText = cfg.announcement;
-      banner.classList.remove('hidden');
-    }
-  } else {
-    const banner = document.getElementById('globalAnnouncementBanner');
-    if (banner) banner.classList.add('hidden');
+  const defaultWelcome = 'Selamat datang di SobatSerabut! Layanan serabutan & pekerjaan harian terpercaya siap membantu Anda kapan saja.';
+  const banner = document.getElementById('globalAnnouncementBanner');
+  const textEl = document.getElementById('globalAnnouncementText');
+  if (banner && textEl) {
+    textEl.innerText = cfg.announcement || defaultWelcome;
+    banner.classList.remove('hidden');
   }
   if (cfg.otpSenderNumber || cfg.contactPhone) {
     const phone = cfg.otpSenderNumber || cfg.contactPhone || '087791201091';
@@ -3413,7 +3447,7 @@ async function submitNewTaskPost() {
 /* ========================================================
  * VIRTUAL ACCOUNT APLIKASI SENDIRI (TOP UP LANGSUNG MASUK SALDO)
  * ======================================================== */
-let currentTopupChannel = 'seabank';
+let currentTopupChannel = 'bca_va';
 
 function openTopupModal() {
   const modal = document.getElementById('topupModal');
@@ -3439,40 +3473,47 @@ function onTopupChannelChange(channel) {
 
 function updateGeneratedVAInfo() {
   const sel = document.getElementById('topupChannelSelect');
-  const channel = sel ? sel.value : currentTopupChannel;
+  let channel = (sel ? sel.value : currentTopupChannel) || 'bca_va';
+  if (channel === 'seabank') channel = 'bca_va';
   currentTopupChannel = channel;
 
-  const phoneSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-7) : '3517038';
-  const phoneRetailSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-6) : '881234';
+  const rawPhone = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '') : '087735170386';
+  const phoneSuffix11 = rawPhone.padStart(11, '0').slice(-11);
+  const phoneSuffix9  = rawPhone.padStart(9, '0').slice(-9);
+  const phoneRetailSuffix = rawPhone.slice(-6) || '881234';
 
   const titleEl = document.getElementById('vaChannelTitle');
   const numEl = document.getElementById('vaNumberDisplay');
   const instEl = document.getElementById('vaInstructionShort');
 
-  let vaNum = '901771223812';
-  let title = 'Nomor Rekening SeaBank SobatSerabut:';
-  let inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo langsung masuk otomatis.';
+  let vaNum = '80777' + phoneSuffix11;
+  let title = 'BCA Virtual Account SobatSerabut:';
+  let inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor Virtual Account di atas. Saldo otomatis masuk seketika.';
 
-  if (channel === 'seabank') {
-    vaNum = '901771223812';
-    title = 'Nomor Rekening SeaBank SobatSerabut:';
-    inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo seketika masuk ke dompet Anda.';
-  } else if (channel === 'bca_va') {
-    vaNum = '88077' + phoneSuffix;
+  if (channel === 'bca_va') {
+    vaNum = '80777' + phoneSuffix11;
     title = 'BCA Virtual Account SobatSerabut:';
-    inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor VA di atas. Otomatis masuk seketika.';
+    inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor Virtual Account di atas. Saldo langsung masuk otomatis ke dompet Anda.';
   } else if (channel === 'bri_va') {
-    vaNum = '12877' + phoneSuffix;
-    title = 'BRI BRIVA SobatSerabut:';
+    vaNum = '88888' + phoneSuffix11;
+    title = 'BRI BRIVA (Virtual Account):';
     inst = 'Transfer via BRImo / ATM BRI ke nomor BRIVA di atas. Otomatis masuk seketika.';
   } else if (channel === 'mandiri_va') {
-    vaNum = '89077' + phoneSuffix;
-    title = 'Mandiri Virtual Account SobatSerabut:';
-    inst = 'Transfer via Livin\' by Mandiri / ATM ke nomor Mandiri VA.';
+    vaNum = '89508' + phoneSuffix11;
+    title = 'Mandiri Virtual Account (Livin\'):';
+    inst = 'Pilih Bayar > Multipayment SobatSerabut (89508) ke nomor VA di atas.';
   } else if (channel === 'bni_va') {
-    vaNum = '98077' + phoneSuffix;
+    vaNum = '9880017' + phoneSuffix9;
     title = 'BNI Virtual Account SobatSerabut:';
-    inst = 'Transfer via BNI Mobile Banking / ATM BNI ke nomor BNI VA.';
+    inst = 'Transfer via BNI Mobile Banking / ATM BNI ke nomor Virtual Account Billing.';
+  } else if (channel === 'permata_va') {
+    vaNum = '8528' + rawPhone.padStart(12, '0').slice(-12);
+    title = 'Permata Virtual Account SobatSerabut:';
+    inst = 'Transfer via PermataMobile X / ATM Bank Lain ke nomor Permata VA di atas.';
+  } else if (channel === 'qris') {
+    vaNum = 'NMID: ID1020087791201';
+    title = 'QRIS Dinamis Nasional SobatSerabut:';
+    inst = 'Pindai barcode QRIS resmi menggunakan m-Banking atau E-Wallet mana saja.';
   } else if (['dana', 'gopay', 'ovo', 'shopeepay'].includes(channel)) {
     vaNum = '087735170386';
     title = `E-Wallet (${channel.toUpperCase()}) SobatSerabut:`;
@@ -3496,7 +3537,7 @@ function copyCurrentVANumber() {
   const numEl = document.getElementById('vaNumberDisplay');
   if (numEl && numEl.innerText) {
     navigator.clipboard.writeText(numEl.innerText).then(() => {
-      showToast('Nomor VA / Rekening berhasil disalin ke clipboard!', 'success');
+      showToast('Nomor Virtual Account berhasil disalin!', 'success');
     }).catch(() => {
       showToast('Nomor: ' + numEl.innerText, 'info');
     });
@@ -3513,10 +3554,10 @@ async function confirmAutoTopupPayment() {
   }
 
   const numEl = document.getElementById('vaNumberDisplay');
-  const vaNumber = numEl ? numEl.innerText : '901771223812';
+  const vaNumber = numEl ? numEl.innerText : '8077708773517038';
 
   try {
-    showToast('Memproses top up saldo ke dompet SobatSerabut...', 'info');
+    showToast('Memproses top up saldo via Virtual Account ke dompet...', 'info');
     const res = await fetch(`${API_BASE}/api/wallet/pay-va`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3544,27 +3585,51 @@ async function confirmAutoTopupPayment() {
   }
 }
 
-async function confirmPayTaskOrder(orderId) {
-  if (!confirm('Pastikan Anda telah mentransfer pembayaran ke SeaBank 901771223812 a.n SobatSerabut Admin. Lanjutkan konfirmasi dan kirim otomatis ke mitra tanpa persetujuan admin?')) {
+async function confirmPayTaskOrder(orderId, totalAmount) {
+  const needed = totalAmount || 28000;
+  const currentBal = currentUser?.walletBalance || 0;
+
+  // Verifikasi saldo dompet: Client wajib transfer ke SeaBank Reza Pahlevi Admin melalui dompet yg tersedia dg nominal cukup
+  if (currentBal < needed) {
+    const shortfall = needed - currentBal;
+    alert(`⚠️ Saldo Dompet SobatSerabut Anda (Rp ${currentBal.toLocaleString('id-ID')}) belum mencukupi untuk transfer pembayaran tugas ke SeaBank Reza Pahlevi Admin.\n\nNominal yang wajib ditransfer: Rp ${needed.toLocaleString('id-ID')}\nKekurangan saldo: Rp ${shortfall.toLocaleString('id-ID')}\n\nSilakan isi ulang (top up) saldo dompet Anda melalui Virtual Account terlebih dahulu.`);
+    openTopupModal();
+    setTopupAmount(shortfall > 50000 ? Math.ceil(shortfall / 10000) * 10000 : 50000);
+    return;
+  }
+
+  if (!confirm(`Konfirmasi transfer pembayaran sebesar Rp ${needed.toLocaleString('id-ID')} dari saldo dompet Anda?\n\nDana akan ditransfer ke rekening resmi SeaBank Reza Pahlevi Admin (No: 901771223812) dan saldo bersih driver akan diteruskan seketika.`)) {
     return;
   }
 
   try {
-    showToast('Memvalidasi pembayaran & mentransfer otomatis ke mitra...', 'info');
+    showToast('Memproses transfer pembayaran ke SeaBank Reza Pahlevi Admin...', 'info');
     const res = await fetch(`${API_BASE}/api/orders/${orderId}/confirm-payment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        bankDestination: 'SeaBank 901771223812'
+        clientId: currentUser?.id,
+        bankDestination: 'SeaBank 901771223812 a.n Reza Pahlevi'
       })
     }).then(r => r.json());
 
     if (res.success && res.data) {
-      showToast('🎉 Pembayaran lunas terverifikasi! Saldo bersih driver telah terkirim otomatis tanpa menunggu persetujuan admin.', 'success', 6000);
+      if (currentUser) {
+        currentUser.walletBalance = Math.max(0, currentBal - needed);
+        saveClientSession(currentUser);
+        updateProfileTabUI();
+        if (typeof updateWalletDisplay === 'function') updateWalletDisplay();
+      }
+      showToast('🎉 Pembayaran tugas berhasil ditransfer ke SeaBank Reza Pahlevi Admin via dompet! Saldo bersih mitra telah diteruskan.', 'success', 6000);
       playSuccessChime();
       loadClientOrders();
     } else {
-      showToast(res.message || 'Gagal konfirmasi pembayaran.', 'error');
+      if (res.insufficientBalance) {
+        showToast(res.message, 'warning', 8000);
+        openTopupModal();
+      } else {
+        showToast(res.message || 'Gagal konfirmasi pembayaran.', 'error');
+      }
     }
   } catch (err) {
     showToast('Koneksi gagal: ' + err.message, 'error');
@@ -3854,20 +3919,24 @@ function renderClientOrdersList(isCommunityFeed = false) {
                   </div>
                   
                   <div class="mt-2 p-2.5 rounded-xl bg-blue-950/70 border border-blue-500/40 text-[11px] space-y-1">
-                    <div class="text-blue-300 font-bold">Transfer Sekarang ke Rekening SeaBank:</div>
+                    <div class="text-blue-300 font-bold">Wajib Transfer ke SeaBank Admin via Dompet:</div>
                     <div class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-700 font-mono">
                       <span class="text-emerald-400 font-black text-xs">SeaBank: 901771223812</span>
-                      <span class="text-[10px] text-slate-400 font-sans">a.n SobatSerabut Admin</span>
+                      <span class="text-[10px] text-slate-300 font-sans font-bold">a.n Reza Pahlevi (Admin)</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 leading-tight">
-                      * Setelah transfer, dana bersih dipotong komisi 10% langsung otomatis masuk ke e-wallet / rekening driver tanpa menunggu persetujuan admin.
+                    <div class="flex items-center justify-between text-[10px] pt-1 text-slate-300">
+                      <span>Saldo Dompet Anda:</span>
+                      <span class="font-bold font-mono text-emerald-400">Rp ${(currentUser?.walletBalance || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-tight pt-0.5">
+                      * Pembayaran wajib ditransfer ke SeaBank Reza Pahlevi Admin melalui dompet SobatSerabut dengan nominal yang cukup.
                     </p>
                   </div>
                 </div>
 
-                <button onclick="confirmPayTaskOrder('${ord.id}')" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-98 transition-all">
+                <button onclick="confirmPayTaskOrder('${ord.id}', ${(Number(ord.budget || ord.baseFare || 25000) + 3000)})" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-98 transition-all">
                   <i class="fa-solid fa-circle-check text-sm"></i>
-                  <span>Konfirmasi Sudah Transfer &amp; Otomatis Teruskan ke Driver</span>
+                  <span>Transfer Pembayaran Tugas ke Admin via Dompet</span>
                 </button>
               </div>
             ` : ''}
@@ -4085,23 +4154,25 @@ async function initOrderRadarMap(order) {
       const mLat = Number(assignedMitra.lat) || (orderLat + 0.0035);
       const mLng = Number(assignedMitra.lng) || (orderLng + 0.0030);
 
-      const driverIcon = L.divIcon({
-        className: 'custom-assigned-driver-marker',
-        html: `
-          <div class="relative flex items-center justify-center">
-            <div class="w-10 h-10 rounded-2xl bg-emerald-600 border-2 border-white shadow-2xl flex items-center justify-center text-white text-base z-10">
-              <i class="fa-solid fa-motorcycle"></i>
-            </div>
-            <span class="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-emerald-400 opacity-60"></span>
-          </div>
-        `,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-        popupAnchor: [0, -22]
-      });
+      // Gunakan Marker Gambar Pengendara Motor Memakai Helm
+      const driverIcon = createMotorcycleRiderIcon('#059669', true);
 
       const dMarker = L.marker([mLat, mLng], { icon: driverIcon }).addTo(map);
-      dMarker.bindPopup(`<b>${assignedMitra.name}</b><br><span class="text-xs text-emerald-600 font-bold">● Sedang Menuju Lokasi Anda</span>`).openPopup();
+      dMarker.bindPopup(`<b>${assignedMitra.name}</b><br><span class="text-xs text-emerald-600 font-bold">● Sedang Menuju Lokasi Penjemputan</span>`).openPopup();
+
+      // Animasi pergerakan penjemputan: Pengendara motor berhelm bergerak nyata menuju lokasi klien
+      let animProgress = 0;
+      const sLat = mLat, sLng = mLng, eLat = orderLat, eLng = orderLng;
+      if (!window._clientPickupIntervals) window._clientPickupIntervals = {};
+      if (window._clientPickupIntervals[order.id]) clearInterval(window._clientPickupIntervals[order.id]);
+      
+      window._clientPickupIntervals[order.id] = setInterval(() => {
+        animProgress += 0.007;
+        if (animProgress >= 0.94) animProgress = 0.94;
+        const curLat = sLat + (eLat - sLat) * animProgress;
+        const curLng = sLng + (eLng - sLng) * animProgress;
+        dMarker.setLatLng([curLat, curLng]);
+      }, 500);
 
       L.polyline([[orderLat, orderLng], [mLat, mLng]], {
         color: '#10b981',
@@ -4111,7 +4182,7 @@ async function initOrderRadarMap(order) {
 
       map.fitBounds(L.latLngBounds([[orderLat, orderLng], [mLat, mLng]]), { padding: [40, 40] });
     } else {
-      // Searching mode: hanya tampilkan mitra nyata yang terdaftar dan online
+      // Searching mode: tampilkan mitra terdekat dengan icon pengendara motor berhelm
       const nearbyPoints = Array.isArray(realMitraList) ? realMitraList : [];
 
       nearbyPoints.forEach(p => {
@@ -4119,21 +4190,7 @@ async function initOrderRadarMap(order) {
         const pLng = Number(p.lng);
         if (isNaN(pLat) || isNaN(pLng)) return;
 
-        const iconHtml = L.divIcon({
-          className: 'custom-nearby-driver-marker',
-          html: `
-            <div class="relative flex items-center justify-center cursor-pointer">
-              <div class="w-8 h-8 rounded-full bg-slate-900 border-2 border-emerald-400 shadow-xl flex items-center justify-center text-emerald-400 text-xs">
-                <i class="fa-solid fa-${p.type || 'motorcycle'}"></i>
-              </div>
-              <span class="animate-pulse absolute inline-flex h-9 w-9 rounded-full bg-emerald-500/30"></span>
-            </div>
-          `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
-          popupAnchor: [0, -18]
-        });
-
+        const iconHtml = createMotorcycleRiderIcon('#059669', false);
         const m = L.marker([pLat, pLng], { icon: iconHtml }).addTo(map);
         m.bindPopup(`<b>${p.name || 'Mitra SobatSerabut'}</b><br><span class="text-xs text-blue-600">● Menerima Sinyal Tugas</span>`);
       });
@@ -4403,32 +4460,80 @@ function initMainAppLiveMap() {
   setTimeout(() => mainAppLiveMap.invalidateSize(), 300);
 }
 
+// ============================================================
+// MOTORCYCLE RIDER WITH HELMET MAP MARKER GENERATOR
+// ============================================================
+function getMotorcycleRiderSvg(color = '#059669', size = 48) {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));">
+      <!-- Lingkaran Luar Badge -->
+      <circle cx="32" cy="32" r="30" fill="${color}" stroke="#ffffff" stroke-width="2.5"/>
+      <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>
+      
+      <!-- Sepeda Motor & Pengendara Berhelm -->
+      <g transform="translate(4, 4)">
+        <!-- Roda Belakang -->
+        <circle cx="14" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="14" cy="38" r="3.5" fill="#64748b"/>
+        <!-- Roda Depan -->
+        <circle cx="42" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="42" cy="38" r="3.5" fill="#64748b"/>
+        <!-- Rangka Motor & Knalpot -->
+        <path d="M14 38 L24 38 L30 30 L42 38" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M22 38 L26 27 L36 27 L40 34" fill="#fbbf24" stroke="#ffffff" stroke-width="1.2"/>
+        <!-- Garpu Depan & Setang -->
+        <path d="M42 38 L35 22 L32 20" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Lampu Depan Menyala -->
+        <path d="M37 25 L45 27 L43 31 Z" fill="#fef08a" opacity="0.9"/>
+        <!-- Kaki & Badan Pengendara -->
+        <path d="M23 29 L28 35 L33 35" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M20 28 C20 23, 24 20, 29 22 L33 27 L25 30 Z" fill="#047857" stroke="#ffffff" stroke-width="1.2"/>
+        <!-- Lengan Pengendara -->
+        <path d="M27 23 L34 22" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- HELM PENGENDARA (ORANG MENGENDARAI MOTOR PAKE HELM) -->
+        <ellipse cx="26" cy="15" rx="7" ry="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M20 15 C20 11, 24 9, 29 10 C33 11, 34 14, 33 17 C31 18, 28 19, 23 18 Z" fill="#ef4444"/>
+        <!-- Visor Helm Kaca Biru -->
+        <path d="M28 13 C32 13, 33 15, 33 17 L27 17 C26 15, 27 13, 28 13 Z" fill="#0284c7" stroke="#0f172a" stroke-width="0.8"/>
+        <line x1="28" y1="14" x2="31" y2="15" stroke="#38bdf8" stroke-width="0.8" stroke-linecap="round"/>
+      </g>
+    </svg>
+  `;
+}
+
+function createMotorcycleRiderIcon(color = '#059669', isMoving = true) {
+  const pulseHtml = isMoving 
+    ? '<span class="animate-ping absolute -inset-1 rounded-full bg-emerald-400 opacity-60 pointer-events-none"></span>'
+    : '<span class="animate-pulse absolute -inset-0.5 rounded-full bg-emerald-500/30 pointer-events-none"></span>';
+  return L.divIcon({
+    className: 'custom-motorcycle-rider-marker',
+    html: `
+      <div class="relative flex items-center justify-center cursor-pointer select-none">
+        ${pulseHtml}
+        <div class="relative z-10 transition-transform duration-300">
+          ${getMotorcycleRiderSvg(color, 46)}
+        </div>
+      </div>
+    `,
+    iconSize: [46, 46],
+    iconAnchor: [23, 23],
+    popupAnchor: [0, -25]
+  });
+}
+
 function updateMainAppMapLocation(lat, lng) {
   if (!mainAppLiveMap) return;
   const isMitra = currentUser?.role === 'mitra';
-  const iconColor = isMitra ? '#2563EB' : '#F59E0B';
-  const roleName = isMitra ? 'Penyedia Layanan (Mitra)' : 'Pemohon (Klien)';
+  const roleName = isMitra ? 'Mitra Driver (Sepeda Motor)' : 'Pemohon (Klien)';
 
-  const markerIcon = L.divIcon({
-    className: 'custom-live-marker',
-    html: `
-      <div class="relative flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-xl border-2 border-white" style="background-color: ${iconColor}">
-          <i class="fa-solid fa-${isMitra ? 'person-digging' : 'user'} text-white text-xs"></i>
-        </div>
-        <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full opacity-50" style="background-color: ${iconColor}"></span>
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -18]
-  });
+  // Gunakan Marker Gambar Pengendara Motor Memakai Helm
+  const markerIcon = createMotorcycleRiderIcon(isMitra ? '#059669' : '#2563EB', true);
 
   if (mainAppMitraMarker) {
     mainAppMitraMarker.setLatLng([lat, lng]);
   } else {
     mainAppMitraMarker = L.marker([lat, lng], { icon: markerIcon }).addTo(mainAppLiveMap);
-    mainAppMitraMarker.bindPopup(`<b>${currentUser.name}</b><br><span class="text-xs text-slate-600">${roleName}</span><br><span class="text-[10px] text-emerald-600 font-bold">● GPS Nyata Terhubung</span>`);
+    mainAppMitraMarker.bindPopup(`<b>${currentUser.name}</b><br><span class="text-xs text-slate-600">${roleName}</span><br><span class="text-[10px] text-emerald-600 font-bold">● GPS Nyata Pengendara Motor</span>`);
   }
 }
 
@@ -5413,6 +5518,95 @@ function playNotificationSound() {
   } catch(e) {}
 }
 
+/**
+ * playAudioSound(type)
+ * type: 'order_chime' | 'chat_ping' | 'error' | 'success' | default
+ */
+function playAudioSound(type) {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = audioCtx.createGain();
+    gain.connect(audioCtx.destination);
+
+    if (type === 'order_chime') {
+      const notes = [523, 659, 784];
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.connect(gain);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = audioCtx.currentTime + i * 0.13;
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.start(t);
+        osc.stop(t + 0.28);
+      });
+    } else if (type === 'chat_ping') {
+      const osc = audioCtx.createOscillator();
+      osc.connect(gain);
+      osc.type = 'sine';
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.25);
+    } else {
+      const osc = audioCtx.createOscillator();
+      osc.connect(gain);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.32);
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// AUDIO PERMISSION & INDONESIAN SPEECH SYNTHESIS ENGINE
+// ============================================================
+let audioSystemUnlocked = false;
+
+function unlockAudioSystem() {
+  if (audioSystemUnlocked) return;
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+    }
+    audioSystemUnlocked = true;
+    console.log('[Audio] Audio System & Web Speech API telah diizinkan.');
+  } catch(e) {}
+}
+
+['click', 'touchstart', 'keydown'].forEach(evt => {
+  window.addEventListener(evt, unlockAudioSystem, { once: false, passive: true });
+});
+
+function speakVoiceNotification(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'id-ID';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.05;
+    utterance.volume = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+    if (idVoice) utterance.voice = idVoice;
+
+    window.speechSynthesis.speak(utterance);
+  } catch(e) {
+    console.warn('[Speech] Gagal memutar suara ucapan:', e);
+  }
+}
+
 /* ========================================================
  * 12. GOOGLE MAPS PIN PICKER & GPS NAVIGATION
  * ======================================================== */
@@ -5738,4 +5932,266 @@ function updateServerStatusBadge(isConnected, url) {
       dot.className = isConnected ? 'w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse' : 'w-2 h-2 rounded-full bg-rose-500 inline-block';
     }
   }
+}
+
+
+// ============================================================
+// PUSAT BANTUAN — CLIENT APP
+// ============================================================
+async function loadClientHelp() {
+  const container = document.getElementById('clientHelpAccordion');
+  if (!container) return;
+  container.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-2">Memuat bantuan...</div>';
+  try {
+    const res = await fetch(`${API_BASE}/api/help-center`).then(r => r.json());
+    if (res.success && res.data && res.data.length > 0) {
+      container.innerHTML = res.data.map((faq, i) => `
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <button onclick="toggleClientFaq(${i})" class="w-full flex items-center justify-between px-3 py-2.5 bg-slate-50 hover:bg-slate-100 text-left transition-all">
+            <span class="text-[11px] font-bold text-slate-700 flex-1 pr-2">${faq.question}</span>
+            <span id="clientFaqIcon${i}" class="material-symbols-outlined text-slate-400 text-sm flex-shrink-0">expand_more</span>
+          </button>
+          <div id="clientFaqAnswer${i}" class="hidden px-3 py-2.5 bg-white text-[11px] text-slate-500 leading-relaxed border-t border-slate-100">
+            ${faq.answer}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-2">Tidak ada FAQ tersedia.</div>';
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="text-[11px] text-rose-500 text-center py-2">Gagal memuat bantuan.</div>';
+  }
+}
+
+function toggleClientFaq(i) {
+  const answer = document.getElementById(`clientFaqAnswer${i}`);
+  const icon = document.getElementById(`clientFaqIcon${i}`);
+  if (!answer) return;
+  answer.classList.toggle('hidden');
+  if (icon) icon.textContent = answer.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+}
+
+// ============================================================
+// AI ASISTEN — CLIENT APP
+// ============================================================
+async function sendClientAiMessage() {
+  const input = document.getElementById('clientAiInput');
+  const chatHistory = document.getElementById('clientAiChatHistory');
+  if (!input || !chatHistory) return;
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const userBubble = document.createElement('div');
+  userBubble.className = 'flex items-start justify-end space-x-2';
+  userBubble.innerHTML = `
+    <div class="bg-blue-600 rounded-xl px-3 py-2 text-[11px] text-white max-w-[85%]">${msg}</div>
+    <span class="material-symbols-outlined text-slate-400 text-sm mt-0.5">person</span>
+  `;
+  chatHistory.appendChild(userBubble);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+
+  const loadingBubble = document.createElement('div');
+  loadingBubble.id = 'clientAiLoading';
+  loadingBubble.className = 'flex items-start space-x-2';
+  loadingBubble.innerHTML = `
+    <span class="material-symbols-outlined text-blue-500 text-sm mt-0.5">smart_toy</span>
+    <div class="bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-[11px] text-slate-500 max-w-[85%]">
+      <span class="animate-pulse">AI sedang memproses...</span>
+    </div>
+  `;
+  chatHistory.appendChild(loadingBubble);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/ai-assistant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, context: 'client' })
+    }).then(r => r.json());
+
+    const loading = document.getElementById('clientAiLoading');
+    if (loading) loading.remove();
+
+    const aiBubble = document.createElement('div');
+    aiBubble.className = 'flex items-start space-x-2';
+    aiBubble.innerHTML = `
+      <span class="material-symbols-outlined text-blue-500 text-sm mt-0.5">smart_toy</span>
+      <div class="bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-[11px] text-slate-700 max-w-[85%] whitespace-pre-line">${res.reply || 'Maaf, tidak ada jawaban.'}</div>
+    `;
+    chatHistory.appendChild(aiBubble);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  } catch(e) {
+    const loading = document.getElementById('clientAiLoading');
+    if (loading) loading.remove();
+    const errBubble = document.createElement('div');
+    errBubble.className = 'flex items-start space-x-2';
+    errBubble.innerHTML = `
+      <span class="material-symbols-outlined text-rose-500 text-sm mt-0.5">error</span>
+      <div class="bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-[11px] text-rose-600 max-w-[85%]">Gagal terhubung ke AI.</div>
+    `;
+    chatHistory.appendChild(errBubble);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
+}
+
+// ============================================================
+// UPDATE NOTIFIKASI — CLIENT APP
+// ============================================================
+const CLIENT_APP_VERSION = (window.SOBATSERABUT_CONFIG && window.SOBATSERABUT_CONFIG.VERSION) || '6.0.0';
+
+function _compareVersions(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] || 0, vb = pb[i] || 0;
+    if (va < vb) return -1;
+    if (va > vb) return 1;
+  }
+  return 0;
+}
+
+async function checkClientAppUpdate() {
+  try {
+    const res = await fetch(`${API_BASE}/api/app-version`).then(r => r.json());
+    if (!res.success || !res.data) return;
+    const { latestVersion, clientApkUrl, releaseNotes, forceUpdate } = res.data;
+    if (!latestVersion) return;
+    const isOutdated = _compareVersions(CLIENT_APP_VERSION, latestVersion) < 0;
+    if (!isOutdated) return;
+
+    const modal = document.getElementById('clientUpdateNotifModal');
+    const versionEl = document.getElementById('clientUpdateModalVersion');
+    const notesEl = document.getElementById('clientUpdateModalNotes');
+    const dismissBtn = document.getElementById('clientUpdateDismissBtn');
+
+    if (versionEl) versionEl.textContent = `Versi ${latestVersion} siap diunduh`;
+    if (notesEl) notesEl.textContent = releaseNotes || 'Update terbaru tersedia dengan fitur dan perbaikan baru.';
+    if (dismissBtn && forceUpdate) dismissBtn.classList.add('hidden');
+    if (modal) {
+      modal.dataset.apkUrl = clientApkUrl || '';
+      modal.classList.remove('hidden');
+    }
+  } catch(e) { /* silent */ }
+}
+
+function dismissClientUpdateModal() {
+  const modal = document.getElementById('clientUpdateNotifModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function downloadUpdateNow(type) {
+  const modal = type === 'client'
+    ? document.getElementById('clientUpdateNotifModal')
+    : document.getElementById('updateNotifModal');
+  let url = modal ? modal.dataset.apkUrl : null;
+  if (!url || !url.trim()) {
+    url = type === 'client' ? `${API_BASE}/download/client-apk` : `${API_BASE}/download/driver-apk`;
+  }
+  // PASTIKAN SELALU MENGGUNAKAN URL LENGKAP HTTP/HTTPS (BUKAN file://)
+  if (url.startsWith('/')) {
+    url = `${API_BASE}${url}`;
+  }
+
+  if (typeof showToast === 'function') showToast('⬇️ Memulai unduhan APK terbaru...', 'info');
+
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = type === 'client' ? 'SobatSerabut.apk' : 'Driver-SobatSerabut.apk';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 1000);
+  } catch(e) {}
+
+  window.location.href = url;
+}
+
+// ============================================================
+// SIARAN NOTIFIKASI & BROADCAST PEMBARUAN ADMIN
+// ============================================================
+function showBroadcastModal(data) {
+  if (!data) return;
+
+  // Jika tipe pembaruan aplikasi, tampilkan langsung modal update berfitur tombol unduh
+  if (data.type === 'app_update') {
+    const updateModal = document.getElementById('clientUpdateNotifModal');
+    const versionEl = document.getElementById('clientUpdateModalVersion');
+    const notesEl = document.getElementById('clientUpdateModalNotes');
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
+    if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
+    if (updateModal) {
+      updateModal.dataset.apkUrl = data.actionUrl || data.clientApkUrl || `${API_BASE}/download/client-apk`;
+      updateModal.classList.remove('hidden');
+    }
+    playNotificationSound();
+    speakVoiceNotification((data.title ? `Pembaruan aplikasi: ${data.title}` : 'Pembaruan aplikasi baru tersedia!'));
+    return;
+  }
+
+  const modal = document.getElementById('broadcastNotificationModal');
+  const titleEl = document.getElementById('broadcastTitleDisplay');
+  const msgEl = document.getElementById('broadcastMessageDisplay');
+  const iconEl = document.getElementById('broadcastTypeBadgeIcon');
+  const badgeTextEl = document.getElementById('broadcastTypeBadgeText');
+
+  if (titleEl) titleEl.innerText = data.title || 'Pemberitahuan SobatSerabut';
+  if (msgEl) msgEl.innerText = data.message || '';
+
+  if (badgeTextEl) {
+    badgeTextEl.innerText = (data.type === 'promo') ? '🔥 PROMO RESMI SOBATSERABUT' : (data.type === 'urgent') ? '⚠️ PERINGATAN PENTING' : '📢 PENGUMUMAN RESMI ADMIN';
+  }
+  if (iconEl) {
+    iconEl.innerHTML = (data.type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (data.type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
+  }
+
+  if (modal) modal.classList.remove('hidden');
+
+  playNotificationSound();
+  speakVoiceNotification((data.type === 'urgent' ? 'Peringatan: ' : 'Pemberitahuan admin: ') + (data.title || 'Ada pengumuman baru'));
+}
+
+function closeBroadcastModal() {
+  const modal = document.getElementById('broadcastNotificationModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // CATATAN: Update otomatis saat startup dinonaktifkan sesuai permintaan pengguna.
+  // Notifikasi update HANYA akan muncul ketika admin melakukan broadcast ke Driver/Client.
+
+  const profileView = document.getElementById('profileViewContainer');
+  if (profileView) {
+    const obs = new MutationObserver(() => {
+      if (!profileView.classList.contains('hidden')) loadClientHelp();
+    });
+    obs.observe(profileView, { attributes: true, attributeFilter: ['class'] });
+  }
+});
+
+// Socket listener
+if (typeof io !== 'undefined') {
+  try {
+    const _cSock = io(typeof API_BASE !== 'undefined' ? API_BASE : window.location.origin);
+    _cSock.on('app_update_available', (data) => {
+      if (data && (!data.target || data.target === 'all' || data.target === 'client')) {
+        showBroadcastModal({
+          type: 'app_update',
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
+          version: data.latestVersion || '6.2.0',
+          actionUrl: data.clientApkUrl || `${API_BASE}/download/client-apk`
+        });
+      }
+    });
+
+    _cSock.on('broadcast:notification', (data) => {
+      if (!data) return;
+      if (data.target === 'all' || data.target === 'client') {
+        showBroadcastModal(data);
+      }
+    });
+  } catch(e) { /* silent */ }
 }

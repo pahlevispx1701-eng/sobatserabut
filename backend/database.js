@@ -27,11 +27,11 @@ const defaultState = {
     platformFee: 3000,
     serviceFeePercentage: 10, // 10% komisi platform
     premiumSubscriptionPrice: 50000,
-    escrowAccountInfo: "SeaBank: 901771223812 | GoPay: 087735170386 | QRIS SobatSerabut (a/n SobatSerabut Admin)",
+    escrowAccountInfo: "SeaBank: 901771223812 (a/n Reza Pahlevi Admin) | QRIS SobatSerabut Resmi",
     adminSeaBank: {
       bankName: "SeaBank",
       accountNumber: "901771223812",
-      accountHolder: "SobatSerabut Admin"
+      accountHolder: "Reza Pahlevi"
     },
     adminGopay: {
       provider: "GoPay",
@@ -63,6 +63,16 @@ const defaultState = {
     { id: "cat-8", name: "Tambal Ban & Darurat", icon: "tool", image: "/uploads/service_tire.png", baseFare: 30000, description: "Tambal ban tubeless, jumper aki di tempat", estimatedMinutes: 25, active: true },
     { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", estimatedMinutes: 60, active: true }
   ],
+  appVersion: {
+    latestVersion: '6.1.0',
+    minRequiredVersion: '6.0.0',
+    driverApkUrl: '/download/driver-apk',
+    clientApkUrl: '/download/client-apk',
+    releaseNotes: 'SobatSerabut v6.1.0 — Fitur baru: AI Asisten 🤖, Pusat Bantuan 📖, Notifikasi Update Otomatis 🔔, dan berbagai peningkatan performa.',
+    forceUpdate: false,
+    updatedAt: new Date().toISOString()
+  },
+  helpCenter: null, // null = gunakan default FAQ dari server
   users: [],
   mitra: [], // synced automatically from users with role == 'mitra'
   orders: [],
