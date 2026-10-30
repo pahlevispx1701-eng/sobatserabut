@@ -1,5 +1,5 @@
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: "https://sobatserabut.160.19.166.231.sslip.io",
   VERSION: "1.0.2",
-  BUILD_DATE: "2026-10-31 00:11:30"
+  BUILD_DATE: "2026-10-31 01:51:17"
 };

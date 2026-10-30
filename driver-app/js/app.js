@@ -276,16 +276,24 @@ async function requestAllDevicePermissions() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Bersihkan data palsu/simulasi — hanya data nyata dari pendaftaran yang valid
-  const DATA_VERSION = 'sobatserabut_driver_v3_real';
+  const DATA_VERSION = 'sobatserabut_v7_pure_real_saldo';
   if (localStorage.getItem('_data_version') !== DATA_VERSION) {
     const savedUser = localStorage.getItem('sobatserabut_driver_user');
     localStorage.clear();
     sessionStorage.clear();
-    if (savedUser) localStorage.setItem('sobatserabut_driver_user', savedUser);
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        u.walletBalance = 0; // Hapus saldo palsu simulasi, murni 0
+        u.completedOrders = 0;
+        u.earnings = 0;
+        localStorage.setItem('sobatserabut_driver_user', JSON.stringify(u));
+      } catch(e) {}
+    }
     localStorage.setItem('_data_version', DATA_VERSION);
     localStorage.setItem('sobatserabut_driver_installed_v2', 'true');
     driverOrders = [];
-    console.log('[Mitra] Cache lama & data simulasi dihapus.');
+    console.log('[Mitra] Cache lama & data saldo simulasi dihapus murni.');
   } else if (!localStorage.getItem('sobatserabut_driver_installed_v2')) {
     // First install check: Bersihkan riwayat tugas lama agar bersih saat pertama kali install
     localStorage.removeItem('sobatserabut_driver_cached_orders');
@@ -295,6 +303,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Inisialisasi sesi auth driver langsung frame 0 (Anti-stuck)
   checkAuthSession();
+
+  // Inisialisasi Kontroler ShopeeFood Driver (Slide to Online & 2 Muka Swipe)
+  initSlideToOnline();
+  initDriverFacesSwipe();
+  initDriverOnlineTimer();
 
   // Sinkronisasi jaringan di latar belakang (Non-blocking)
   initNetworkConnectivityEngine();
@@ -728,7 +741,11 @@ function checkAuthSession() {
       // Validasi ketat: role HARUS 'mitra', id tidak boleh kosong, dan bukan data simulasi
       if (parsed && parsed.role === 'mitra' && parsed.id && !String(parsed.id).startsWith('KLN-')) {
         currentUser = parsed;
+        if (!currentUser.walletBalance || typeof currentUser.walletBalance !== 'number') {
+          currentUser.walletBalance = 0;
+        }
         onUserAuthenticated(currentUser);
+        refreshUserProfile(); // Sinkronisasi saldo & data riil langsung dari server
         return;
       } else {
         // Data rusak atau bukan mitra — bersihkan sesi
@@ -2240,6 +2257,9 @@ function onUserAuthenticated(user) {
   const mitraView = document.getElementById('mitraViewContainer');
   if (mitraView) mitraView.classList.remove('hidden');
 
+  const welcomeDriverName = document.getElementById('welcomeCardDriverName');
+  if (welcomeDriverName) welcomeDriverName.innerText = `Selamat Datang, ${user.name || 'Mitra Driver'}! 👋`;
+
   updateMitraStatusUI(user.status || 'ready');
 
   const driverIdEl = document.getElementById('driverAppIdDisplay');
@@ -2294,18 +2314,24 @@ async function refreshUserProfile() {
   if (!currentUser) return;
   try {
     const res = await fetch(`${API_BASE}/api/auth/profile/${currentUser.id}`).then(r => r.json());
-    if (res.success) {
+    if (res.success && res.data) {
       currentUser = res.data;
+      currentUser.walletBalance = Number(currentUser.walletBalance || 0);
       saveDriverSession(currentUser);
       updateWalletDisplay();
+      updateDriverPerformanceFace();
     }
   } catch(e) {}
 }
 
 function updateWalletDisplay() {
-  const bal = currentUser?.walletBalance || 0;
-  document.getElementById('headerWalletDisplay').innerText = `Rp ${bal.toLocaleString('id-ID')}`;
-  document.getElementById('walletMainBalance').innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const bal = Number(currentUser?.walletBalance || 0);
+  const headEl = document.getElementById('headerWalletDisplay');
+  if (headEl) headEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const mainEl = document.getElementById('walletMainBalance');
+  if (mainEl) mainEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const faceEl = document.getElementById('shopeeFaceWalletBalance');
+  if (faceEl) faceEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
   loadWalletTransactions();
 }
 
@@ -3057,72 +3083,46 @@ function isFaceVerifiedToday() {
   return localStorage.getItem(`driver_face_verified_${today}`) === 'true';
 }
 
+/* ========================================================
+ * SHOPEEFOOD DRIVER SLIDER & 2 MUKA BERANDA CONTROLLER
+ * ======================================================== */
+let isStatusUpdating = false;
+let currentDriverHomeFace = 1;
+let driverOnlineMinutes = 0;
+let driverOnlineTimerInterval = null;
+let currentRadarRadiusKm = 2;
+
 function updateMitraStatusUI(status) {
   const dot = document.getElementById('statusPulseDot');
   const ping = document.getElementById('statusPulsePing');
   const label = document.getElementById('statusTextLabel');
   const subtext = document.getElementById('gpsStatusSubtext');
-  const btnReady = document.getElementById('btnStatusReady');
-  const btnBusy = document.getElementById('btnStatusBusy');
-  const btnOffline = document.getElementById('btnStatusOffline');
-
-  // Master Big Toggle Elements
-  const masterBtn = document.getElementById('btnMasterWorkToggle');
-  const masterIcon = document.getElementById('masterToggleIcon');
-  const masterIconCircle = document.getElementById('masterToggleIconCircle');
-  const masterTitle = document.getElementById('masterToggleTitle');
-  const masterSubtext = document.getElementById('masterToggleSubtext');
-  const masterPill = document.getElementById('masterTogglePill');
-
-  // Header Status Pill (tambahan indikator di atas layar)
+  const slideContainer = document.getElementById('shopeeSlideContainer');
+  const onlineCard = document.getElementById('shopeeOnlineCard');
+  const radarBadge = document.getElementById('mitraRadarBadge');
   const headerPill = document.getElementById('headerDriverStatusPill');
+
   if (headerPill) headerPill.classList.remove('hidden');
 
-  // Reset tombol kecil ON/OFF ke style default dulu
-  if (btnReady) {
-    btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 14px rgba(22,163,74,0.4); border: 2px solid rgba(74,222,128,0.35); opacity:0.55; filter:brightness(0.85);';
-    btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95';
-  }
-  if (btnBusy) {
-    btnBusy.className = 'py-2 rounded-xl text-slate-400 hover:text-white flex items-center justify-center space-x-1 transition-all hidden';
-  }
-  if (btnOffline) {
-    btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 14px rgba(220,38,38,0.4); border: 2px solid rgba(252,165,165,0.25); opacity:0.55; filter:brightness(0.85);';
-    btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95';
-  }
-
   if (status === 'ready') {
-    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 relative flex items-center justify-center';
-    if (ping) ping.classList.remove('hidden');
-    if (label) {
-      label.innerText = 'SEDANG BEKERJA (SIAP TERIMA PESANAN)';
-      label.className = 'text-xs font-black text-emerald-400 block tracking-wide';
-    }
-    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-satellite text-emerald-400 mr-1"></i> GPS Live Driver Aktif (Siap Terima Pesanan)';
-    // Tombol ON aktif (hijau terang penuh), OFF tetap merah tapi sedikit redup
-    if (btnReady) {
-      btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 18px rgba(22,163,74,0.6); border: 2px solid rgba(74,222,128,0.5); opacity:1; filter:brightness(1.1);';
-      btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
-    if (btnOffline) {
-      btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 14px rgba(220,38,38,0.35); border: 2px solid rgba(252,165,165,0.2); opacity:0.7; filter:brightness(0.9);';
-      btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
+    // TAMPILKAN KARTU STATUS ONLINE (SHOPEEFOOD ACTIVE) & SEMBUNYIKAN SLIDER
+    if (slideContainer) slideContainer.classList.add('hidden');
+    if (onlineCard) onlineCard.classList.remove('hidden');
 
-    // Master Toggle UI — Bright GREEN for ONLINE
-    if (masterBtn) {
-      masterBtn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
-      masterBtn.style.boxShadow = '0 6px 24px rgba(239,68,68,0.45)';
+    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 relative flex items-center justify-center';
+    if (ping) ping.classList.remove('hidden');
+
+    if (label) {
+      label.innerText = 'STATUS: ONLINE (ON)';
+      label.className = 'font-black text-xs text-emerald-300 tracking-wide';
     }
-    if (masterIcon) masterIcon.className = 'fa-solid fa-power-off text-base';
-    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow animate-pulse';
-    if (masterTitle) masterTitle.innerText = '⏹ BERHENTI BEKERJA (OFF)';
-    if (masterSubtext) masterSubtext.innerText = 'Anda ONLINE — Ketuk untuk Berhenti & Off';
-    if (masterPill) {
-      masterPill.innerText = 'ONLINE';
-      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider';
+    if (subtext) {
+      subtext.innerHTML = '<i class="fa-solid fa-satellite text-emerald-400 text-[9px]"></i><span>GPS Nyata Aktif</span>';
     }
-    // Header pill
+    if (radarBadge) {
+      radarBadge.innerText = '🟢 Radar Aktif';
+      radarBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse';
+    }
     if (headerPill) {
       headerPill.innerText = '● ONLINE';
       headerPill.style.background = 'rgba(16,185,129,0.2)';
@@ -3130,29 +3130,23 @@ function updateMitraStatusUI(status) {
       headerPill.style.borderColor = 'rgba(16,185,129,0.4)';
     }
   } else if (status === 'working' || status === 'busy') {
-    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 relative flex items-center justify-center';
-    if (ping) ping.classList.add('hidden');
-    if (label) {
-      label.innerText = status === 'working' ? 'SEDANG MENJALANKAN TUGAS' : 'STATUS: SEDANG BEKERJA';
-      label.className = 'text-xs font-black text-amber-400 block tracking-wide';
-    }
-    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-1"></i> Sedang Mengerjakan Tugas (Standby)';
-    if (btnBusy) btnBusy.className = 'py-2 rounded-xl bg-amber-600 text-white flex items-center justify-center space-x-1 shadow transition-all';
+    if (slideContainer) slideContainer.classList.add('hidden');
+    if (onlineCard) onlineCard.classList.remove('hidden');
 
-    // Master Toggle UI — Amber DISABLED for working
-    if (masterBtn) {
-      masterBtn.style.background = 'linear-gradient(135deg, #d97706, #f59e0b)';
-      masterBtn.style.boxShadow = '0 6px 24px rgba(245,158,11,0.45)';
+    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 relative flex items-center justify-center';
+    if (ping) ping.classList.add('hidden');
+
+    if (label) {
+      label.innerText = '⚙️ MENGERJAKAN TUGAS';
+      label.className = 'font-black text-xs text-amber-300 tracking-wide';
     }
-    if (masterIcon) masterIcon.className = 'fa-solid fa-pause text-base';
-    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow';
-    if (masterTitle) masterTitle.innerText = '⚙️ SEDANG MENGERJAKAN TUGAS';
-    if (masterSubtext) masterSubtext.innerText = 'Sedang aktif mengerjakan pesanan';
-    if (masterPill) {
-      masterPill.innerText = 'STANDBY';
-      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider';
+    if (subtext) {
+      subtext.innerHTML = '<i class="fa-solid fa-route text-amber-400 text-[9px]"></i><span>Menjalankan Tugas</span>';
     }
-    // Header pill
+    if (radarBadge) {
+      radarBadge.innerText = '⚙️ Bertugas';
+      radarBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+    }
     if (headerPill) {
       headerPill.innerText = '⚙ KERJA';
       headerPill.style.background = 'rgba(245,158,11,0.15)';
@@ -3160,39 +3154,32 @@ function updateMitraStatusUI(status) {
       headerPill.style.borderColor = 'rgba(245,158,11,0.35)';
     }
   } else {
-    // Offline
-    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-slate-600 relative flex items-center justify-center';
-    if (ping) ping.classList.add('hidden');
-    if (label) {
-      label.innerText = 'STATUS: OFF (TIDAK AKTIF)';
-      label.className = 'text-xs font-black text-slate-400 block tracking-wide';
-    }
-    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-power-off text-slate-500 mr-1"></i> Driver OFF (Tidak menerima pesanan)';
-    // Tombol OFF aktif (merah terang penuh), ON tetap hijau tapi sedikit redup
-    if (btnReady) {
-      btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 14px rgba(22,163,74,0.35); border: 2px solid rgba(74,222,128,0.2); opacity:0.7; filter:brightness(0.9);';
-      btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
-    if (btnOffline) {
-      btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 18px rgba(220,38,38,0.6); border: 2px solid rgba(252,165,165,0.4); opacity:1; filter:brightness(1.1);';
-      btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
+    // OFFLINE: TAMPILKAN SLIDER GESER KE KANAN & SEMBUNYIKAN KARTU ONLINE
+    if (slideContainer) slideContainer.classList.remove('hidden');
+    if (onlineCard) onlineCard.classList.add('hidden');
 
-    // Master Toggle UI — Bright GREEN for START WORKING
-    if (masterBtn) {
-      masterBtn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
-      masterBtn.style.boxShadow = '0 6px 24px rgba(16,185,129,0.45)';
-      masterBtn.style.border = 'none';
+    // Reset posisi tombol slider ke titik awal
+    const thumb = document.getElementById('shopeeSlideThumb');
+    const trackText = document.getElementById('shopeeSlideTrackText');
+    const wrapper = document.getElementById('shopeeSlideToWorkWrapper');
+    if (thumb) thumb.style.transform = 'translateX(0px)';
+    if (trackText) trackText.style.opacity = '1';
+    if (wrapper) wrapper.style.borderColor = '';
+
+    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500 relative flex items-center justify-center';
+    if (ping) ping.classList.add('hidden');
+
+    if (label) {
+      label.innerText = 'STATUS: OFF (ISTIRAHAT)';
+      label.className = 'font-black text-xs text-slate-400 tracking-wide';
     }
-    if (masterIcon) masterIcon.className = 'fa-solid fa-play text-base text-white';
-    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow';
-    if (masterTitle) masterTitle.innerText = '▶ MULAI BEKERJA SEKARANG';
-    if (masterSubtext) masterSubtext.innerText = 'Anda OFF — Ketuk untuk Mulai Bekerja & Online';
-    if (masterPill) {
-      masterPill.innerText = 'OFF';
-      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/20 text-[11px] font-black uppercase tracking-wider border border-white/30';
+    if (subtext) {
+      subtext.innerHTML = '<i class="fa-solid fa-power-off text-slate-500 text-[9px]"></i><span>Driver OFF</span>';
     }
-    // Header pill
+    if (radarBadge) {
+      radarBadge.innerText = 'Standby';
+      radarBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-slate-800 text-slate-400 border border-slate-700';
+    }
     if (headerPill) {
       headerPill.innerText = '○ OFF';
       headerPill.style.background = 'rgba(71,85,105,0.3)';
@@ -3200,6 +3187,9 @@ function updateMitraStatusUI(status) {
       headerPill.style.borderColor = 'rgba(71,85,105,0.4)';
     }
   }
+
+  // Update Face 2 jika sedang dibuka
+  updateDriverPerformanceFace();
 }
 
 function toggleDriverWorkStatus() {
@@ -3216,7 +3206,6 @@ function toggleDriverWorkStatus() {
     return;
   }
 
-  // Taptic feedback
   if (navigator.vibrate) {
     try { navigator.vibrate(40); } catch(e) {}
   }
@@ -3229,6 +3218,10 @@ function toggleDriverWorkStatus() {
 }
 
 async function setDriverStatus(targetStatus) {
+  if (isStatusUpdating) return;
+  isStatusUpdating = true;
+  setTimeout(() => { isStatusUpdating = false; }, 800);
+
   if (!currentUser) {
     const saved = localStorage.getItem('sobatserabut_driver_user');
     if (saved) {
@@ -3254,13 +3247,12 @@ async function setDriverStatus(targetStatus) {
     return;
   }
 
-  // Wajib verifikasi wajah harian jika ingin Mulai Bekerja (ready)
-  if (targetStatus === 'ready' && !isFaceVerifiedToday()) {
-    openDailyFaceVerifyModal();
+  // Jika status sudah sama, cukup perbarui UI tanpa notifikasi berulang
+  if (currentUser.status === targetStatus) {
+    updateMitraStatusUI(targetStatus);
     return;
   }
 
-  // Gunakan id, phone, atau name untuk identifikasi driver
   const driverIdentifier = currentUser.id || currentUser.phone || currentUser.name || 'unknown';
 
   try {
@@ -3277,21 +3269,296 @@ async function setDriverStatus(targetStatus) {
       }
       saveDriverSession(currentUser);
       updateMitraStatusUI(targetStatus);
+
       if (socket && socket.connected) {
         socket.emit('driver:status', { driverId: currentUser.id, status: targetStatus, name: currentUser.name });
       }
+
       playAudioSound(targetStatus === 'ready' ? 'order_chime' : 'chat_ping');
-      showToast(targetStatus === 'ready' ? '🟢 Anda Sedang Bekerja (Online)! Radar aktif mencari order di sekitar.' : '🔴 Driver OFF. Tidak menerima pesanan.', 'success');
+
+      // Notifikasi tunggal, tegas & tidak berulang terus-menerus
       if (targetStatus === 'ready') {
+        showToast('🟢 Anda Sedang Bekerja (Online)! Radar aktif mencari pesanan.', 'success', 3000);
         sendGpsLocationPing();
         loadNearbyTasksForMitra();
+      } else {
+        showToast('⚪ Driver OFF (Istirahat). Anda tidak menerima pesanan.', 'info', 2500);
       }
     } else {
       showToast(res.message || 'Gagal mengubah status', 'error');
     }
   } catch(e) {
-    showToast('Koneksi gagal: ' + e.message, 'error');
+    showToast('Koneksi server gagal: ' + e.message, 'error');
   }
+}
+
+/* ========================================================
+ * KONTROLER GESER KE KANAN UNTUK ONLINE (SLIDE TO WORK)
+ * ======================================================== */
+function initSlideToOnline() {
+  const container = document.getElementById('shopeeSlideToWorkWrapper');
+  const thumb = document.getElementById('shopeeSlideThumb');
+  const trackText = document.getElementById('shopeeSlideTrackText');
+  if (!container || !thumb) return;
+
+  let isDragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let maxDrag = 0;
+
+  function updateMaxDrag() {
+    maxDrag = Math.max(0, container.clientWidth - thumb.clientWidth - 8);
+  }
+  updateMaxDrag();
+  window.addEventListener('resize', updateMaxDrag);
+
+  function triggerSlideActivation() {
+    if (currentUser?.status === 'ready' || currentUser?.status === 'working') return;
+    updateMaxDrag();
+    thumb.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1)';
+    thumb.style.transform = `translateX(${maxDrag}px)`;
+    if (trackText) trackText.style.opacity = '0';
+    container.style.borderColor = '#10b981';
+    if (navigator.vibrate) try { navigator.vibrate(50); } catch(e) {}
+    setTimeout(() => {
+      setDriverStatus('ready');
+      setTimeout(() => {
+        thumb.style.transform = 'translateX(0px)';
+        if (trackText) trackText.style.opacity = '1';
+        container.style.borderColor = '';
+      }, 500);
+    }, 250);
+  }
+
+  function startDrag(clientX) {
+    if (currentUser?.status === 'ready' || currentUser?.status === 'working') return;
+    updateMaxDrag();
+    if (maxDrag <= 0) return;
+    isDragging = true;
+    startX = clientX;
+    thumb.style.transition = 'none';
+  }
+
+  function moveDrag(clientX) {
+    if (!isDragging) return;
+    const delta = clientX - startX;
+    currentX = Math.max(0, Math.min(delta, maxDrag));
+    thumb.style.transform = `translateX(${currentX}px)`;
+
+    if (trackText && maxDrag > 0) {
+      const progress = currentX / maxDrag;
+      trackText.style.opacity = Math.max(0, 1 - progress * 1.3).toString();
+      if (progress > 0.5) {
+        container.style.borderColor = '#10b981';
+      } else {
+        container.style.borderColor = '#f97316';
+      }
+    }
+  }
+
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (currentX > maxDrag * 0.5) {
+      triggerSlideActivation();
+    } else {
+      thumb.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1)';
+      thumb.style.transform = 'translateX(0px)';
+      if (trackText) trackText.style.opacity = '1';
+      container.style.borderColor = '';
+    }
+    currentX = 0;
+  }
+
+  // Event sentuh HP (Touch)
+  thumb.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches[0]) startDrag(e.touches[0].clientX);
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches && e.touches[0]) {
+      moveDrag(e.touches[0].clientX);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', endDrag);
+
+  // Event Mouse (Desktop)
+  thumb.addEventListener('mousedown', (e) => {
+    startDrag(e.clientX);
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) moveDrag(e.clientX);
+  });
+
+  window.addEventListener('mouseup', endDrag);
+
+  // Klik langsung untuk menggeser ke kanan dan aktif
+  container.addEventListener('click', (e) => {
+    if (!isDragging && currentX === 0 && currentUser?.status !== 'ready' && currentUser?.status !== 'working') {
+      triggerSlideActivation();
+    }
+  });
+}
+
+/* ========================================================
+ * KONTROLER 2 MUKA BERANDA DRIVER (RADAR & KINERJA)
+ * ======================================================== */
+function switchDriverHomeFace(faceNum) {
+  currentDriverHomeFace = faceNum;
+  const wrapper = document.getElementById('driverFacesWrapper');
+  const btn1 = document.getElementById('tabFace1Btn');
+  const btn2 = document.getElementById('tabFace2Btn');
+
+  if (faceNum === 1) {
+    if (wrapper) wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+    if (btn1) {
+      btn1.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+    }
+    if (btn2) {
+      btn2.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+    }
+  } else {
+    const scrollTarget = wrapper ? (wrapper.clientWidth || wrapper.scrollWidth / 2) : 360;
+    if (wrapper) wrapper.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+    if (btn2) {
+      btn2.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+    }
+    if (btn1) {
+      btn1.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+    }
+    updateDriverPerformanceFace();
+  }
+}
+
+function initDriverFacesSwipe() {
+  const wrapper = document.getElementById('driverFacesWrapper');
+  if (!wrapper) return;
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  wrapper.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  wrapper.addEventListener('touchend', (e) => {
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 35) {
+      if (deltaX < 0) {
+        // Geser ke kiri -> Muka 2 (Kinerja & Saldo)
+        switchDriverHomeFace(2);
+      } else {
+        // Geser ke kanan -> Muka 1 (Radar & Peta)
+        switchDriverHomeFace(1);
+      }
+    }
+  }, { passive: true });
+
+  wrapper.addEventListener('scroll', () => {
+    const scrollPos = wrapper.scrollLeft;
+    const threshold = wrapper.clientWidth * 0.45;
+    const btn1 = document.getElementById('tabFace1Btn');
+    const btn2 = document.getElementById('tabFace2Btn');
+
+    if (scrollPos > threshold && currentDriverHomeFace !== 2) {
+      currentDriverHomeFace = 2;
+      if (btn2) btn2.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+      if (btn1) btn1.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+      updateDriverPerformanceFace();
+    } else if (scrollPos <= threshold && currentDriverHomeFace !== 1) {
+      currentDriverHomeFace = 1;
+      if (btn1) btn1.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+      if (btn2) btn2.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+    }
+  }, { passive: true });
+}
+
+function updateDriverPerformanceFace() {
+  const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+  const dateEl = document.getElementById('shopeeTodayDate');
+  if (dateEl) dateEl.innerText = todayStr;
+
+  // Hitung data murni nyata hari ini dari riwayat pesanan driver
+  const todayYMD = new Date().toISOString().slice(0, 10);
+  const completedToday = driverOrders.filter(o => {
+    const dStr = (o.completedAt || o.createdAt || '').slice(0, 10);
+    return o.status === 'completed' && dStr === todayYMD;
+  });
+
+  const dailyNetIncome = completedToday.reduce((acc, o) => {
+    const base = o.baseFare || o.budget || 0;
+    return acc + (o.mitraNetEarnings || Math.round(base * 0.9));
+  }, 0);
+
+  const netIncEl = document.getElementById('shopeeDailyNetIncome');
+  if (netIncEl) netIncEl.innerText = `Rp ${dailyNetIncome.toLocaleString('id-ID')}`;
+
+  const compCountEl = document.getElementById('shopeeDailyCompletedOrders');
+  if (compCountEl) compCountEl.innerText = `${completedToday.length} Order`;
+
+  // Saldo dompet nyata driver
+  const bal = Number(currentUser?.walletBalance || 0);
+  const faceWalEl = document.getElementById('shopeeFaceWalletBalance');
+  if (faceWalEl) faceWalEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+
+  // Rating & Poin
+  const ratEl = document.getElementById('shopeeFaceRating');
+  if (ratEl) ratEl.innerHTML = `<i class="fa-solid fa-star text-xs mr-0.5"></i>${currentUser?.rating || 5.0}`;
+
+  const ptsEl = document.getElementById('shopeeFacePoints');
+  if (ptsEl) ptsEl.innerText = `${currentUser?.points || 100} Pts`;
+}
+
+function toggleWelcomeCardDetail() {
+  const detail = document.getElementById('welcomeCardDetailRow');
+  const icon = document.getElementById('welcomeCardToggleIcon');
+  if (!detail) return;
+  if (detail.classList.contains('hidden')) {
+    detail.classList.remove('hidden');
+    if (icon) icon.className = 'fa-solid fa-chevron-up text-xs';
+  } else {
+    detail.classList.add('hidden');
+    if (icon) icon.className = 'fa-solid fa-chevron-down text-xs';
+  }
+}
+
+function initDriverOnlineTimer() {
+  if (driverOnlineTimerInterval) clearInterval(driverOnlineTimerInterval);
+  driverOnlineTimerInterval = setInterval(() => {
+    if (currentUser?.status === 'ready' || currentUser?.status === 'working') {
+      driverOnlineMinutes += 1;
+      const hours = Math.floor(driverOnlineMinutes / 60);
+      const mins = driverOnlineMinutes % 60;
+      const el = document.getElementById('shopeeOnlineDuration');
+      if (el) el.innerText = `${hours}j ${mins}m`;
+    }
+  }, 60000);
+}
+
+function setDriverSearchRadius(km) {
+  currentRadarRadiusKm = Number(km) || 2;
+  const label = document.getElementById('mitraRadiusLabel');
+  if (label) label.innerText = `${currentRadarRadiusKm} km`;
+  loadNearbyTasksForMitra();
+}
+
+function openWelcomeInfoModal() {
+  const m = document.getElementById('welcomeInfoModal');
+  if (m) m.classList.remove('hidden');
+}
+
+function closeWelcomeInfoModal() {
+  const m = document.getElementById('welcomeInfoModal');
+  if (m) m.classList.add('hidden');
 }
 
 async function toggleOnlineStatus() {
@@ -4751,15 +5018,18 @@ function switchMainTab(tabId) {
   [homeKlien, homeMitra, ordersView, mapView, walletView, profileView].filter(Boolean).forEach(el => el.classList.add('hidden'));
 
   document.querySelectorAll('[id^="navBtn-"]').forEach(btn => {
-    btn.className = 'flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200 transition-all';
+    btn.className = 'flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-200 transition-all';
   });
 
   const activeBtn = document.getElementById(`navBtn-${tabId}`);
-  if (activeBtn) activeBtn.className = 'flex flex-col items-center space-y-1 text-emerald-400 font-bold transition-all';
+  if (activeBtn) activeBtn.className = 'flex flex-col items-center space-y-0.5 text-orange-400 font-bold transition-all';
 
   if (tabId === 'home') {
     if (currentUser?.role === 'klien') homeKlien?.classList.remove('hidden');
-    else homeMitra?.classList.remove('hidden');
+    else {
+      homeMitra?.classList.remove('hidden');
+      updateDriverPerformanceFace();
+    }
   } else if (tabId === 'map') {
     if (mapView) {
       mapView.classList.remove('hidden');
@@ -4771,9 +5041,15 @@ function switchMainTab(tabId) {
       loadDriverOrders();
     }
   } else if (tabId === 'wallet') {
-    if (walletView) walletView.classList.remove('hidden');
+    if (walletView) {
+      walletView.classList.remove('hidden');
+      updateWalletDisplay();
+    }
   } else if (tabId === 'profile') {
-    if (profileView) profileView.classList.remove('hidden');
+    if (profileView) {
+      profileView.classList.remove('hidden');
+      updateProfileTabUI();
+    }
   }
 }
 

@@ -109,13 +109,46 @@ class Database {
           return true;
         });
 
-        // Bersihkan foto profil palsu dan reset saldo demo ke 0
+        // Bersihkan foto profil palsu dan hitung ulang saldo murni nyata (0 jika belum ada transaksi riil)
+        const realTransactions = Array.isArray(this.data.transactions) ? this.data.transactions : [];
+        const realOrders = Array.isArray(this.data.orders) ? this.data.orders : [];
+        const realWithdrawals = Array.isArray(this.data.withdrawals) ? this.data.withdrawals : [];
+
         this.data.users.forEach(u => {
           if (u.avatar && (u.avatar.includes('unsplash.com') || u.avatar.includes('photo-'))) {
             u.avatar = null; // Foto hanya akan muncul jika pengguna mengunggah foto asli
           }
-          if (u.walletBalance === 250000 || typeof u.walletBalance !== 'number') {
-            u.walletBalance = 0; // Dompet default 0
+          
+          // Audit saldo & riwayat tugas murni nyata dari database transaksi
+          let calculatedRealBalance = 0;
+          let calculatedEarnings = 0;
+
+          realTransactions.forEach(t => {
+            if ((t.userId === u.id || t.clientId === u.id || t.mitraId === u.id) && (t.status === 'success' || t.status === 'completed')) {
+              if (t.type === 'topup') calculatedRealBalance += Number(t.amount || 0);
+              else if (t.type === 'earning') {
+                calculatedRealBalance += Number(t.amount || 0);
+                calculatedEarnings += Number(t.amount || 0);
+              } else if (t.type === 'payment' || t.type === 'platform_fee') {
+                calculatedRealBalance -= Number(t.amount || 0);
+              }
+            }
+          });
+
+          realWithdrawals.forEach(w => {
+            if ((w.userId === u.id || w.driverId === u.id || w.clientId === u.id) && w.status === 'completed') {
+              calculatedRealBalance -= Number(w.amount || 0);
+            }
+          });
+
+          // Hapus semua data saldo & pesanan palsu / simulasi
+          u.walletBalance = Math.max(0, calculatedRealBalance);
+          u.earnings = Math.max(0, calculatedEarnings);
+
+          if (u.role === 'mitra') {
+            u.completedOrders = realOrders.filter(o => o.assignedMitraId === u.id && o.status === 'completed').length;
+          } else if (u.role === 'klien') {
+            u.totalOrdersPosted = realOrders.filter(o => o.clientId === u.id).length;
           }
         });
 

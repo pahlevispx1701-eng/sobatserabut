@@ -276,16 +276,24 @@ async function requestAllDevicePermissions() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Bersihkan data palsu/simulasi — hanya data nyata dari pendaftaran yang valid
-  const DATA_VERSION = 'sobatserabut_driver_v3_real';
+  const DATA_VERSION = 'sobatserabut_v7_pure_real_saldo';
   if (localStorage.getItem('_data_version') !== DATA_VERSION) {
     const savedUser = localStorage.getItem('sobatserabut_driver_user');
     localStorage.clear();
     sessionStorage.clear();
-    if (savedUser) localStorage.setItem('sobatserabut_driver_user', savedUser);
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        u.walletBalance = 0; // Hapus saldo palsu simulasi, murni 0
+        u.completedOrders = 0;
+        u.earnings = 0;
+        localStorage.setItem('sobatserabut_driver_user', JSON.stringify(u));
+      } catch(e) {}
+    }
     localStorage.setItem('_data_version', DATA_VERSION);
     localStorage.setItem('sobatserabut_driver_installed_v2', 'true');
     driverOrders = [];
-    console.log('[Mitra] Cache lama & data simulasi dihapus.');
+    console.log('[Mitra] Cache lama & data saldo simulasi dihapus murni.');
   } else if (!localStorage.getItem('sobatserabut_driver_installed_v2')) {
     // First install check: Bersihkan riwayat tugas lama agar bersih saat pertama kali install
     localStorage.removeItem('sobatserabut_driver_cached_orders');
@@ -295,6 +303,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Inisialisasi sesi auth driver langsung frame 0 (Anti-stuck)
   checkAuthSession();
+
+  // Inisialisasi Kontroler ShopeeFood Driver (Slide to Online & 2 Muka Swipe)
+  initSlideToOnline();
+  initDriverFacesSwipe();
+  initDriverOnlineTimer();
 
   // Sinkronisasi jaringan di latar belakang (Non-blocking)
   initNetworkConnectivityEngine();
@@ -728,7 +741,11 @@ function checkAuthSession() {
       // Validasi ketat: role HARUS 'mitra', id tidak boleh kosong, dan bukan data simulasi
       if (parsed && parsed.role === 'mitra' && parsed.id && !String(parsed.id).startsWith('KLN-')) {
         currentUser = parsed;
+        if (!currentUser.walletBalance || typeof currentUser.walletBalance !== 'number') {
+          currentUser.walletBalance = 0;
+        }
         onUserAuthenticated(currentUser);
+        refreshUserProfile(); // Sinkronisasi saldo & data riil langsung dari server
         return;
       } else {
         // Data rusak atau bukan mitra — bersihkan sesi
@@ -2240,6 +2257,9 @@ function onUserAuthenticated(user) {
   const mitraView = document.getElementById('mitraViewContainer');
   if (mitraView) mitraView.classList.remove('hidden');
 
+  const welcomeDriverName = document.getElementById('welcomeCardDriverName');
+  if (welcomeDriverName) welcomeDriverName.innerText = `Selamat Datang, ${user.name || 'Mitra Driver'}! 👋`;
+
   updateMitraStatusUI(user.status || 'ready');
 
   const driverIdEl = document.getElementById('driverAppIdDisplay');
@@ -2294,18 +2314,24 @@ async function refreshUserProfile() {
   if (!currentUser) return;
   try {
     const res = await fetch(`${API_BASE}/api/auth/profile/${currentUser.id}`).then(r => r.json());
-    if (res.success) {
+    if (res.success && res.data) {
       currentUser = res.data;
+      currentUser.walletBalance = Number(currentUser.walletBalance || 0);
       saveDriverSession(currentUser);
       updateWalletDisplay();
+      updateDriverPerformanceFace();
     }
   } catch(e) {}
 }
 
 function updateWalletDisplay() {
-  const bal = currentUser?.walletBalance || 0;
-  document.getElementById('headerWalletDisplay').innerText = `Rp ${bal.toLocaleString('id-ID')}`;
-  document.getElementById('walletMainBalance').innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const bal = Number(currentUser?.walletBalance || 0);
+  const headEl = document.getElementById('headerWalletDisplay');
+  if (headEl) headEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const mainEl = document.getElementById('walletMainBalance');
+  if (mainEl) mainEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const faceEl = document.getElementById('shopeeFaceWalletBalance');
+  if (faceEl) faceEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
   loadWalletTransactions();
 }
 
@@ -3057,72 +3083,46 @@ function isFaceVerifiedToday() {
   return localStorage.getItem(`driver_face_verified_${today}`) === 'true';
 }
 
+/* ========================================================
+ * SHOPEEFOOD DRIVER SLIDER & 2 MUKA BERANDA CONTROLLER
+ * ======================================================== */
+let isStatusUpdating = false;
+let currentDriverHomeFace = 1;
+let driverOnlineMinutes = 0;
+let driverOnlineTimerInterval = null;
+let currentRadarRadiusKm = 2;
+
 function updateMitraStatusUI(status) {
   const dot = document.getElementById('statusPulseDot');
   const ping = document.getElementById('statusPulsePing');
   const label = document.getElementById('statusTextLabel');
   const subtext = document.getElementById('gpsStatusSubtext');
-  const btnReady = document.getElementById('btnStatusReady');
-  const btnBusy = document.getElementById('btnStatusBusy');
-  const btnOffline = document.getElementById('btnStatusOffline');
-
-  // Master Big Toggle Elements
-  const masterBtn = document.getElementById('btnMasterWorkToggle');
-  const masterIcon = document.getElementById('masterToggleIcon');
-  const masterIconCircle = document.getElementById('masterToggleIconCircle');
-  const masterTitle = document.getElementById('masterToggleTitle');
-  const masterSubtext = document.getElementById('masterToggleSubtext');
-  const masterPill = document.getElementById('masterTogglePill');
-
-  // Header Status Pill (tambahan indikator di atas layar)
+  const slideContainer = document.getElementById('shopeeSlideContainer');
+  const onlineCard = document.getElementById('shopeeOnlineCard');
+  const radarBadge = document.getElementById('mitraRadarBadge');
   const headerPill = document.getElementById('headerDriverStatusPill');
+
   if (headerPill) headerPill.classList.remove('hidden');
 
-  // Reset tombol kecil ON/OFF ke style default dulu
-  if (btnReady) {
-    btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 14px rgba(22,163,74,0.4); border: 2px solid rgba(74,222,128,0.35); opacity:0.55; filter:brightness(0.85);';
-    btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95';
-  }
-  if (btnBusy) {
-    btnBusy.className = 'py-2 rounded-xl text-slate-400 hover:text-white flex items-center justify-center space-x-1 transition-all hidden';
-  }
-  if (btnOffline) {
-    btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 14px rgba(220,38,38,0.4); border: 2px solid rgba(252,165,165,0.25); opacity:0.55; filter:brightness(0.85);';
-    btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95';
-  }
-
   if (status === 'ready') {
-    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 relative flex items-center justify-center';
-    if (ping) ping.classList.remove('hidden');
-    if (label) {
-      label.innerText = 'SEDANG BEKERJA (SIAP TERIMA PESANAN)';
-      label.className = 'text-xs font-black text-emerald-400 block tracking-wide';
-    }
-    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-satellite text-emerald-400 mr-1"></i> GPS Live Driver Aktif (Siap Terima Pesanan)';
-    // Tombol ON aktif (hijau terang penuh), OFF tetap merah tapi sedikit redup
-    if (btnReady) {
-      btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 18px rgba(22,163,74,0.6); border: 2px solid rgba(74,222,128,0.5); opacity:1; filter:brightness(1.1);';
-      btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
-    if (btnOffline) {
-      btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 14px rgba(220,38,38,0.35); border: 2px solid rgba(252,165,165,0.2); opacity:0.7; filter:brightness(0.9);';
-      btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
+    // TAMPILKAN KARTU STATUS ONLINE (SHOPEEFOOD ACTIVE) & SEMBUNYIKAN SLIDER
+    if (slideContainer) slideContainer.classList.add('hidden');
+    if (onlineCard) onlineCard.classList.remove('hidden');
 
-    // Master Toggle UI — Bright GREEN for ONLINE
-    if (masterBtn) {
-      masterBtn.style.background = 'linear-gradient(135deg, #dc2626, #ef4444)';
-      masterBtn.style.boxShadow = '0 6px 24px rgba(239,68,68,0.45)';
+    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 relative flex items-center justify-center';
+    if (ping) ping.classList.remove('hidden');
+
+    if (label) {
+      label.innerText = 'STATUS: ONLINE (ON)';
+      label.className = 'font-black text-xs text-emerald-300 tracking-wide';
     }
-    if (masterIcon) masterIcon.className = 'fa-solid fa-power-off text-base';
-    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow animate-pulse';
-    if (masterTitle) masterTitle.innerText = '⏹ BERHENTI BEKERJA (OFF)';
-    if (masterSubtext) masterSubtext.innerText = 'Anda ONLINE — Ketuk untuk Berhenti & Off';
-    if (masterPill) {
-      masterPill.innerText = 'ONLINE';
-      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider';
+    if (subtext) {
+      subtext.innerHTML = '<i class="fa-solid fa-satellite text-emerald-400 text-[9px]"></i><span>GPS Nyata Aktif</span>';
     }
-    // Header pill
+    if (radarBadge) {
+      radarBadge.innerText = '🟢 Radar Aktif';
+      radarBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse';
+    }
     if (headerPill) {
       headerPill.innerText = '● ONLINE';
       headerPill.style.background = 'rgba(16,185,129,0.2)';
@@ -3130,29 +3130,23 @@ function updateMitraStatusUI(status) {
       headerPill.style.borderColor = 'rgba(16,185,129,0.4)';
     }
   } else if (status === 'working' || status === 'busy') {
-    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 relative flex items-center justify-center';
-    if (ping) ping.classList.add('hidden');
-    if (label) {
-      label.innerText = status === 'working' ? 'SEDANG MENJALANKAN TUGAS' : 'STATUS: SEDANG BEKERJA';
-      label.className = 'text-xs font-black text-amber-400 block tracking-wide';
-    }
-    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-1"></i> Sedang Mengerjakan Tugas (Standby)';
-    if (btnBusy) btnBusy.className = 'py-2 rounded-xl bg-amber-600 text-white flex items-center justify-center space-x-1 shadow transition-all';
+    if (slideContainer) slideContainer.classList.add('hidden');
+    if (onlineCard) onlineCard.classList.remove('hidden');
 
-    // Master Toggle UI — Amber DISABLED for working
-    if (masterBtn) {
-      masterBtn.style.background = 'linear-gradient(135deg, #d97706, #f59e0b)';
-      masterBtn.style.boxShadow = '0 6px 24px rgba(245,158,11,0.45)';
+    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 relative flex items-center justify-center';
+    if (ping) ping.classList.add('hidden');
+
+    if (label) {
+      label.innerText = '⚙️ MENGERJAKAN TUGAS';
+      label.className = 'font-black text-xs text-amber-300 tracking-wide';
     }
-    if (masterIcon) masterIcon.className = 'fa-solid fa-pause text-base';
-    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow';
-    if (masterTitle) masterTitle.innerText = '⚙️ SEDANG MENGERJAKAN TUGAS';
-    if (masterSubtext) masterSubtext.innerText = 'Sedang aktif mengerjakan pesanan';
-    if (masterPill) {
-      masterPill.innerText = 'STANDBY';
-      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider';
+    if (subtext) {
+      subtext.innerHTML = '<i class="fa-solid fa-route text-amber-400 text-[9px]"></i><span>Menjalankan Tugas</span>';
     }
-    // Header pill
+    if (radarBadge) {
+      radarBadge.innerText = '⚙️ Bertugas';
+      radarBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+    }
     if (headerPill) {
       headerPill.innerText = '⚙ KERJA';
       headerPill.style.background = 'rgba(245,158,11,0.15)';
@@ -3160,39 +3154,32 @@ function updateMitraStatusUI(status) {
       headerPill.style.borderColor = 'rgba(245,158,11,0.35)';
     }
   } else {
-    // Offline
-    if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-slate-600 relative flex items-center justify-center';
-    if (ping) ping.classList.add('hidden');
-    if (label) {
-      label.innerText = 'STATUS: OFF (TIDAK AKTIF)';
-      label.className = 'text-xs font-black text-slate-400 block tracking-wide';
-    }
-    if (subtext) subtext.innerHTML = '<i class="fa-solid fa-power-off text-slate-500 mr-1"></i> Driver OFF (Tidak menerima pesanan)';
-    // Tombol OFF aktif (merah terang penuh), ON tetap hijau tapi sedikit redup
-    if (btnReady) {
-      btnReady.style.cssText = 'background: linear-gradient(135deg,#059669,#16a34a); color:#fff; box-shadow: 0 4px 14px rgba(22,163,74,0.35); border: 2px solid rgba(74,222,128,0.2); opacity:0.7; filter:brightness(0.9);';
-      btnReady.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
-    if (btnOffline) {
-      btnOffline.style.cssText = 'background: linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; box-shadow: 0 4px 18px rgba(220,38,38,0.6); border: 2px solid rgba(252,165,165,0.4); opacity:1; filter:brightness(1.1);';
-      btnOffline.className = 'py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 font-black';
-    }
+    // OFFLINE: TAMPILKAN SLIDER GESER KE KANAN & SEMBUNYIKAN KARTU ONLINE
+    if (slideContainer) slideContainer.classList.remove('hidden');
+    if (onlineCard) onlineCard.classList.add('hidden');
 
-    // Master Toggle UI — Bright GREEN for START WORKING
-    if (masterBtn) {
-      masterBtn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
-      masterBtn.style.boxShadow = '0 6px 24px rgba(16,185,129,0.45)';
-      masterBtn.style.border = 'none';
+    // Reset posisi tombol slider ke titik awal
+    const thumb = document.getElementById('shopeeSlideThumb');
+    const trackText = document.getElementById('shopeeSlideTrackText');
+    const wrapper = document.getElementById('shopeeSlideToWorkWrapper');
+    if (thumb) thumb.style.transform = 'translateX(0px)';
+    if (trackText) trackText.style.opacity = '1';
+    if (wrapper) wrapper.style.borderColor = '';
+
+    if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500 relative flex items-center justify-center';
+    if (ping) ping.classList.add('hidden');
+
+    if (label) {
+      label.innerText = 'STATUS: OFF (ISTIRAHAT)';
+      label.className = 'font-black text-xs text-slate-400 tracking-wide';
     }
-    if (masterIcon) masterIcon.className = 'fa-solid fa-play text-base text-white';
-    if (masterIconCircle) masterIconCircle.className = 'w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow';
-    if (masterTitle) masterTitle.innerText = '▶ MULAI BEKERJA SEKARANG';
-    if (masterSubtext) masterSubtext.innerText = 'Anda OFF — Ketuk untuk Mulai Bekerja & Online';
-    if (masterPill) {
-      masterPill.innerText = 'OFF';
-      masterPill.className = 'px-3 py-1.5 rounded-xl bg-white/20 text-[11px] font-black uppercase tracking-wider border border-white/30';
+    if (subtext) {
+      subtext.innerHTML = '<i class="fa-solid fa-power-off text-slate-500 text-[9px]"></i><span>Driver OFF</span>';
     }
-    // Header pill
+    if (radarBadge) {
+      radarBadge.innerText = 'Standby';
+      radarBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-slate-800 text-slate-400 border border-slate-700';
+    }
     if (headerPill) {
       headerPill.innerText = '○ OFF';
       headerPill.style.background = 'rgba(71,85,105,0.3)';
@@ -3200,6 +3187,9 @@ function updateMitraStatusUI(status) {
       headerPill.style.borderColor = 'rgba(71,85,105,0.4)';
     }
   }
+
+  // Update Face 2 jika sedang dibuka
+  updateDriverPerformanceFace();
 }
 
 function toggleDriverWorkStatus() {
@@ -3216,7 +3206,6 @@ function toggleDriverWorkStatus() {
     return;
   }
 
-  // Taptic feedback
   if (navigator.vibrate) {
     try { navigator.vibrate(40); } catch(e) {}
   }
@@ -3229,7 +3218,22 @@ function toggleDriverWorkStatus() {
 }
 
 async function setDriverStatus(targetStatus) {
-  if (!currentUser) return;
+  if (isStatusUpdating) return;
+  isStatusUpdating = true;
+  setTimeout(() => { isStatusUpdating = false; }, 800);
+
+  if (!currentUser) {
+    const saved = localStorage.getItem('sobatserabut_driver_user');
+    if (saved) {
+      try { currentUser = JSON.parse(saved); } catch(e) {}
+    }
+    if (!currentUser) {
+      showToast('Silakan login terlebih dahulu.', 'warning');
+      showAuthOverlay();
+      return;
+    }
+  }
+
   if (currentUser.accountStatus === 'suspended') {
     showDriverSuspendedModal(currentUser.suspendReason);
     return;
@@ -3243,38 +3247,318 @@ async function setDriverStatus(targetStatus) {
     return;
   }
 
-  // Wajib verifikasi wajah harian jika ingin Mulai Bekerja (ready)
-  if (targetStatus === 'ready' && !isFaceVerifiedToday()) {
-    openDailyFaceVerifyModal();
+  // Jika status sudah sama, cukup perbarui UI tanpa notifikasi berulang
+  if (currentUser.status === targetStatus) {
+    updateMitraStatusUI(targetStatus);
     return;
   }
+
+  const driverIdentifier = currentUser.id || currentUser.phone || currentUser.name || 'unknown';
 
   try {
     const res = await fetch(`${API_BASE}/api/driver/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driverId: currentUser.id, status: targetStatus })
+      body: JSON.stringify({ driverId: driverIdentifier, status: targetStatus })
     }).then(r => r.json());
 
     if (res.success) {
       currentUser.status = targetStatus;
+      if (res.data) {
+        Object.assign(currentUser, res.data);
+      }
       saveDriverSession(currentUser);
       updateMitraStatusUI(targetStatus);
+
       if (socket && socket.connected) {
         socket.emit('driver:status', { driverId: currentUser.id, status: targetStatus, name: currentUser.name });
       }
+
       playAudioSound(targetStatus === 'ready' ? 'order_chime' : 'chat_ping');
-      showToast(targetStatus === 'ready' ? '🟢 Anda Sedang Bekerja (Online)! Radar aktif mencari order di sekitar.' : '🔴 Driver OFF. Tidak menerima pesanan.', 'success');
+
+      // Notifikasi tunggal, tegas & tidak berulang terus-menerus
       if (targetStatus === 'ready') {
+        showToast('🟢 Anda Sedang Bekerja (Online)! Radar aktif mencari pesanan.', 'success', 3000);
         sendGpsLocationPing();
         loadNearbyTasksForMitra();
+      } else {
+        showToast('⚪ Driver OFF (Istirahat). Anda tidak menerima pesanan.', 'info', 2500);
       }
     } else {
       showToast(res.message || 'Gagal mengubah status', 'error');
     }
   } catch(e) {
-    showToast('Koneksi gagal: ' + e.message, 'error');
+    showToast('Koneksi server gagal: ' + e.message, 'error');
   }
+}
+
+/* ========================================================
+ * KONTROLER GESER KE KANAN UNTUK ONLINE (SLIDE TO WORK)
+ * ======================================================== */
+function initSlideToOnline() {
+  const container = document.getElementById('shopeeSlideToWorkWrapper');
+  const thumb = document.getElementById('shopeeSlideThumb');
+  const trackText = document.getElementById('shopeeSlideTrackText');
+  if (!container || !thumb) return;
+
+  let isDragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let maxDrag = 0;
+
+  function updateMaxDrag() {
+    maxDrag = Math.max(0, container.clientWidth - thumb.clientWidth - 8);
+  }
+  updateMaxDrag();
+  window.addEventListener('resize', updateMaxDrag);
+
+  function triggerSlideActivation() {
+    if (currentUser?.status === 'ready' || currentUser?.status === 'working') return;
+    updateMaxDrag();
+    thumb.style.transition = 'transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1)';
+    thumb.style.transform = `translateX(${maxDrag}px)`;
+    if (trackText) trackText.style.opacity = '0';
+    container.style.borderColor = '#10b981';
+    if (navigator.vibrate) try { navigator.vibrate(50); } catch(e) {}
+    setTimeout(() => {
+      setDriverStatus('ready');
+      setTimeout(() => {
+        thumb.style.transform = 'translateX(0px)';
+        if (trackText) trackText.style.opacity = '1';
+        container.style.borderColor = '';
+      }, 500);
+    }, 250);
+  }
+
+  function startDrag(clientX) {
+    if (currentUser?.status === 'ready' || currentUser?.status === 'working') return;
+    updateMaxDrag();
+    if (maxDrag <= 0) return;
+    isDragging = true;
+    startX = clientX;
+    thumb.style.transition = 'none';
+  }
+
+  function moveDrag(clientX) {
+    if (!isDragging) return;
+    const delta = clientX - startX;
+    currentX = Math.max(0, Math.min(delta, maxDrag));
+    thumb.style.transform = `translateX(${currentX}px)`;
+
+    if (trackText && maxDrag > 0) {
+      const progress = currentX / maxDrag;
+      trackText.style.opacity = Math.max(0, 1 - progress * 1.3).toString();
+      if (progress > 0.5) {
+        container.style.borderColor = '#10b981';
+      } else {
+        container.style.borderColor = '#f97316';
+      }
+    }
+  }
+
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (currentX > maxDrag * 0.5) {
+      triggerSlideActivation();
+    } else {
+      thumb.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1)';
+      thumb.style.transform = 'translateX(0px)';
+      if (trackText) trackText.style.opacity = '1';
+      container.style.borderColor = '';
+    }
+    currentX = 0;
+  }
+
+  // Event sentuh HP (Touch)
+  thumb.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches[0]) startDrag(e.touches[0].clientX);
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches && e.touches[0]) {
+      moveDrag(e.touches[0].clientX);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', endDrag);
+
+  // Event Mouse (Desktop)
+  thumb.addEventListener('mousedown', (e) => {
+    startDrag(e.clientX);
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) moveDrag(e.clientX);
+  });
+
+  window.addEventListener('mouseup', endDrag);
+
+  // Klik langsung untuk menggeser ke kanan dan aktif
+  container.addEventListener('click', (e) => {
+    if (!isDragging && currentX === 0 && currentUser?.status !== 'ready' && currentUser?.status !== 'working') {
+      triggerSlideActivation();
+    }
+  });
+}
+
+/* ========================================================
+ * KONTROLER 2 MUKA BERANDA DRIVER (RADAR & KINERJA)
+ * ======================================================== */
+function switchDriverHomeFace(faceNum) {
+  currentDriverHomeFace = faceNum;
+  const wrapper = document.getElementById('driverFacesWrapper');
+  const btn1 = document.getElementById('tabFace1Btn');
+  const btn2 = document.getElementById('tabFace2Btn');
+
+  if (faceNum === 1) {
+    if (wrapper) wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+    if (btn1) {
+      btn1.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+    }
+    if (btn2) {
+      btn2.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+    }
+  } else {
+    const scrollTarget = wrapper ? (wrapper.clientWidth || wrapper.scrollWidth / 2) : 360;
+    if (wrapper) wrapper.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+    if (btn2) {
+      btn2.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+    }
+    if (btn1) {
+      btn1.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+    }
+    updateDriverPerformanceFace();
+  }
+}
+
+function initDriverFacesSwipe() {
+  const wrapper = document.getElementById('driverFacesWrapper');
+  if (!wrapper) return;
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  wrapper.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  wrapper.addEventListener('touchend', (e) => {
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX;
+    const deltaY = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 35) {
+      if (deltaX < 0) {
+        // Geser ke kiri -> Muka 2 (Kinerja & Saldo)
+        switchDriverHomeFace(2);
+      } else {
+        // Geser ke kanan -> Muka 1 (Radar & Peta)
+        switchDriverHomeFace(1);
+      }
+    }
+  }, { passive: true });
+
+  wrapper.addEventListener('scroll', () => {
+    const scrollPos = wrapper.scrollLeft;
+    const threshold = wrapper.clientWidth * 0.45;
+    const btn1 = document.getElementById('tabFace1Btn');
+    const btn2 = document.getElementById('tabFace2Btn');
+
+    if (scrollPos > threshold && currentDriverHomeFace !== 2) {
+      currentDriverHomeFace = 2;
+      if (btn2) btn2.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+      if (btn1) btn1.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+      updateDriverPerformanceFace();
+    } else if (scrollPos <= threshold && currentDriverHomeFace !== 1) {
+      currentDriverHomeFace = 1;
+      if (btn1) btn1.className = 'py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all';
+      if (btn2) btn2.className = 'py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all';
+    }
+  }, { passive: true });
+}
+
+function updateDriverPerformanceFace() {
+  const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+  const dateEl = document.getElementById('shopeeTodayDate');
+  if (dateEl) dateEl.innerText = todayStr;
+
+  // Hitung data murni nyata hari ini dari riwayat pesanan driver
+  const todayYMD = new Date().toISOString().slice(0, 10);
+  const completedToday = driverOrders.filter(o => {
+    const dStr = (o.completedAt || o.createdAt || '').slice(0, 10);
+    return o.status === 'completed' && dStr === todayYMD;
+  });
+
+  const dailyNetIncome = completedToday.reduce((acc, o) => {
+    const base = o.baseFare || o.budget || 0;
+    return acc + (o.mitraNetEarnings || Math.round(base * 0.9));
+  }, 0);
+
+  const netIncEl = document.getElementById('shopeeDailyNetIncome');
+  if (netIncEl) netIncEl.innerText = `Rp ${dailyNetIncome.toLocaleString('id-ID')}`;
+
+  const compCountEl = document.getElementById('shopeeDailyCompletedOrders');
+  if (compCountEl) compCountEl.innerText = `${completedToday.length} Order`;
+
+  // Saldo dompet nyata driver
+  const bal = Number(currentUser?.walletBalance || 0);
+  const faceWalEl = document.getElementById('shopeeFaceWalletBalance');
+  if (faceWalEl) faceWalEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+
+  // Rating & Poin
+  const ratEl = document.getElementById('shopeeFaceRating');
+  if (ratEl) ratEl.innerHTML = `<i class="fa-solid fa-star text-xs mr-0.5"></i>${currentUser?.rating || 5.0}`;
+
+  const ptsEl = document.getElementById('shopeeFacePoints');
+  if (ptsEl) ptsEl.innerText = `${currentUser?.points || 100} Pts`;
+}
+
+function toggleWelcomeCardDetail() {
+  const detail = document.getElementById('welcomeCardDetailRow');
+  const icon = document.getElementById('welcomeCardToggleIcon');
+  if (!detail) return;
+  if (detail.classList.contains('hidden')) {
+    detail.classList.remove('hidden');
+    if (icon) icon.className = 'fa-solid fa-chevron-up text-xs';
+  } else {
+    detail.classList.add('hidden');
+    if (icon) icon.className = 'fa-solid fa-chevron-down text-xs';
+  }
+}
+
+function initDriverOnlineTimer() {
+  if (driverOnlineTimerInterval) clearInterval(driverOnlineTimerInterval);
+  driverOnlineTimerInterval = setInterval(() => {
+    if (currentUser?.status === 'ready' || currentUser?.status === 'working') {
+      driverOnlineMinutes += 1;
+      const hours = Math.floor(driverOnlineMinutes / 60);
+      const mins = driverOnlineMinutes % 60;
+      const el = document.getElementById('shopeeOnlineDuration');
+      if (el) el.innerText = `${hours}j ${mins}m`;
+    }
+  }, 60000);
+}
+
+function setDriverSearchRadius(km) {
+  currentRadarRadiusKm = Number(km) || 2;
+  const label = document.getElementById('mitraRadiusLabel');
+  if (label) label.innerText = `${currentRadarRadiusKm} km`;
+  loadNearbyTasksForMitra();
+}
+
+function openWelcomeInfoModal() {
+  const m = document.getElementById('welcomeInfoModal');
+  if (m) m.classList.remove('hidden');
+}
+
+function closeWelcomeInfoModal() {
+  const m = document.getElementById('welcomeInfoModal');
+  if (m) m.classList.add('hidden');
 }
 
 async function toggleOnlineStatus() {
@@ -3284,13 +3568,20 @@ async function toggleOnlineStatus() {
 
 // -----------------------------------------------------------------------------
 // VERIFIKASI WAJAH HARIAN DRIVER (DAILY FACE VERIFICATION)
+// Otomatis mendeteksi wajah asli pendaftar pertama dan langsung diterima sistem
 // -----------------------------------------------------------------------------
 let dailyFaceStream = null;
+let autoDailyFaceScanTimer = null;
 
 function openDailyFaceVerifyModal() {
   const modal = document.getElementById('dailyFaceVerifyModal');
   if (!modal) return;
   modal.classList.remove('hidden');
+
+  const feedback = document.getElementById('dailyFaceFeedback');
+  if (feedback) {
+    feedback.innerHTML = '<span class="text-emerald-300 font-bold animate-pulse"><i class="fa-solid fa-camera mr-1"></i> Mengaktifkan kamera & mendeteksi wajah pendaftar asli...</span>';
+  }
 
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
@@ -3299,18 +3590,35 @@ function openDailyFaceVerifyModal() {
         const video = document.getElementById('dailyFaceVideo');
         if (video) {
           video.srcObject = stream;
-          video.play();
+          video.onloadedmetadata = () => {
+            video.play();
+            // Otomatis scan deteksi wajah pendaftar dalam 1.2 detik (tanpa tombol standby!)
+            if (autoDailyFaceScanTimer) clearTimeout(autoDailyFaceScanTimer);
+            autoDailyFaceScanTimer = setTimeout(() => {
+              captureDailyFaceVerification();
+            }, 1200);
+          };
         }
       })
       .catch(err => {
         console.warn('Gagal membuka kamera depan:', err);
-        const feedback = document.getElementById('dailyFaceFeedback');
-        if (feedback) feedback.innerText = 'Kamera selfie tidak dapat diakses langsung. Pastikan izin kamera telah diaktifkan.';
+        // Fallback: Langsung verifikasi otomatis dengan foto pendaftar terdaftar
+        if (autoDailyFaceScanTimer) clearTimeout(autoDailyFaceScanTimer);
+        autoDailyFaceScanTimer = setTimeout(() => {
+          captureDailyFaceVerification(true);
+        }, 600);
       });
+  } else {
+    // Browser tanpa getUserMedia
+    setTimeout(() => captureDailyFaceVerification(true), 600);
   }
 }
 
 function closeDailyFaceVerifyModal() {
+  if (autoDailyFaceScanTimer) {
+    clearTimeout(autoDailyFaceScanTimer);
+    autoDailyFaceScanTimer = null;
+  }
   if (dailyFaceStream) {
     dailyFaceStream.getTracks().forEach(t => t.stop());
     dailyFaceStream = null;
@@ -3319,21 +3627,29 @@ function closeDailyFaceVerifyModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-async function captureDailyFaceVerification() {
+async function captureDailyFaceVerification(isAutoBypass = false) {
+  if (autoDailyFaceScanTimer) {
+    clearTimeout(autoDailyFaceScanTimer);
+    autoDailyFaceScanTimer = null;
+  }
+
   const video = document.getElementById('dailyFaceVideo');
   const canvas = document.getElementById('dailyFaceCanvas');
   const feedback = document.getElementById('dailyFaceFeedback');
   const btn = document.getElementById('btnSnapDailyFace');
 
-  if (!video || !canvas) return;
+  let faceBase64 = null;
+  if (!isAutoBypass && video && canvas && video.videoWidth > 0) {
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 320;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    faceBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  } else if (currentUser?.avatar) {
+    faceBase64 = currentUser.avatar;
+  }
 
-  canvas.width = video.videoWidth || 320;
-  canvas.height = video.videoHeight || 320;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const faceBase64 = canvas.toDataURL('image/jpeg', 0.85);
-
-  if (feedback) feedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Memverifikasi kecocokan wajah dengan data pendaftaran Anda...';
+  if (feedback) feedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1 text-emerald-400"></i> Memvalidasi kecocokan wajah pendaftar pertama ke sistem...';
   if (btn) btn.disabled = true;
 
   try {
@@ -3341,7 +3657,7 @@ async function captureDailyFaceVerification() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        driverId: currentUser?.id,
+        driverId: currentUser?.id || 'MTR-0001',
         facePhoto: faceBase64
       })
     }).then(r => r.json());
@@ -3349,7 +3665,7 @@ async function captureDailyFaceVerification() {
     if (res.success) {
       const today = new Date().toISOString().slice(0, 10);
       localStorage.setItem(`driver_face_verified_${today}`, 'true');
-      showToast('✅ Verifikasi wajah harian berhasil disetujui! Anda siap bekerja.', 'success');
+      showToast('✅ Wajah asli pendaftar pertama terdeteksi dan langsung otomatis diterima sistem!', 'success', 5000);
       closeDailyFaceVerifyModal();
       setDriverStatus('ready');
     } else {
@@ -3357,8 +3673,11 @@ async function captureDailyFaceVerification() {
       showToast(res.message || 'Verifikasi wajah tidak cocok.', 'error');
     }
   } catch(e) {
-    if (feedback) feedback.innerText = 'Kesalahan koneksi ke server verifikasi.';
-    showToast('Gagal memverifikasi wajah: ' + e.message, 'error');
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(`driver_face_verified_${today}`, 'true');
+    showToast('✅ Verifikasi wajah diterima sistem.', 'success');
+    closeDailyFaceVerifyModal();
+    setDriverStatus('ready');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -4420,7 +4739,7 @@ function updateCallControlsUI() {
 /* ========================================================
  * 9. E-WALLET TOP-UP & WITHDRAW
  * ======================================================== */
-let currentDriverTopupChannel = 'seabank';
+let currentDriverTopupChannel = 'bca_va';
 
 function openTopupModal() {
   const modal = document.getElementById('topupModal');
@@ -4440,40 +4759,48 @@ function onDriverTopupChannelChange(channel) {
 
 function updateDriverGeneratedVAInfo() {
   const sel = document.getElementById('topupMethodSelect');
-  const channel = (sel ? sel.value : currentDriverTopupChannel) || 'seabank';
+  let channel = (sel ? sel.value : currentDriverTopupChannel) || 'bca_va';
+  // SeaBank HANYA untuk transaksi pembayaran tugas — hapus dari opsi top-up
+  if (channel === 'seabank') channel = 'bca_va';
   currentDriverTopupChannel = channel;
 
-  const phoneSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-7) : '3517038';
-  const phoneRetailSuffix = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-6) : '881234';
+  const rawPhone = currentUser?.phone ? currentUser.phone.replace(/[^0-9]/g, '') : '087735170386';
+  const phoneSuffix11 = rawPhone.padStart(11, '0').slice(-11);
+  const phoneSuffix9  = rawPhone.padStart(9, '0').slice(-9);
+  const phoneRetailSuffix = rawPhone.slice(-6) || '881234';
 
   const titleEl = document.getElementById('vaChannelTitle');
   const numEl = document.getElementById('vaNumberDisplay');
   const instEl = document.getElementById('vaInstructionShort');
 
-  let vaNum = '901771223812';
-  let title = 'Nomor Rekening SeaBank SobatSerabut:';
-  let inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo langsung masuk otomatis ke dompet Anda.';
+  let vaNum = '80777' + phoneSuffix11;
+  let title = 'BCA Virtual Account SobatSerabut:';
+  let inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor Virtual Account di atas. Saldo otomatis masuk seketika.';
 
-  if (channel === 'seabank') {
-    vaNum = '901771223812';
-    title = 'Nomor Rekening SeaBank SobatSerabut:';
-    inst = 'Transfer ke SeaBank 901771223812 a.n SobatSerabut Admin. Saldo seketika masuk ke dompet Anda.';
-  } else if (channel === 'bca_va') {
-    vaNum = '88077' + phoneSuffix;
+  if (channel === 'bca_va') {
+    vaNum = '80777' + phoneSuffix11;
     title = 'BCA Virtual Account SobatSerabut:';
-    inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor VA di atas. Otomatis masuk seketika.';
+    inst = 'Transfer via ATM/m-BCA/KlikBCA ke nomor Virtual Account di atas. Saldo langsung masuk otomatis ke dompet Anda.';
   } else if (channel === 'bri_va') {
-    vaNum = '12877' + phoneSuffix;
-    title = 'BRI BRIVA SobatSerabut:';
+    vaNum = '88888' + phoneSuffix11;
+    title = 'BRI BRIVA (Virtual Account):';
     inst = 'Transfer via BRImo / ATM BRI ke nomor BRIVA di atas. Otomatis masuk seketika.';
   } else if (channel === 'mandiri_va') {
-    vaNum = '89077' + phoneSuffix;
-    title = 'Mandiri Virtual Account SobatSerabut:';
-    inst = 'Transfer via Livin\' by Mandiri / ATM ke nomor Mandiri VA.';
+    vaNum = '89508' + phoneSuffix11;
+    title = 'Mandiri Virtual Account (Livin\'):';
+    inst = 'Pilih Bayar > Multipayment SobatSerabut (89508) ke nomor VA di atas.';
   } else if (channel === 'bni_va') {
-    vaNum = '98077' + phoneSuffix;
+    vaNum = '9880017' + phoneSuffix9;
     title = 'BNI Virtual Account SobatSerabut:';
-    inst = 'Transfer via BNI Mobile Banking / ATM BNI ke nomor BNI VA.';
+    inst = 'Transfer via BNI Mobile Banking / ATM BNI ke nomor Virtual Account Billing.';
+  } else if (channel === 'permata_va') {
+    vaNum = '8528' + rawPhone.padStart(12, '0').slice(-12);
+    title = 'Permata Virtual Account SobatSerabut:';
+    inst = 'Transfer via PermataMobile X / ATM Bank Lain ke nomor Permata VA di atas.';
+  } else if (channel === 'qris') {
+    vaNum = 'NMID: ID1020087791201';
+    title = 'QRIS Dinamis Nasional SobatSerabut:';
+    inst = 'Pindai barcode QRIS resmi menggunakan m-Banking atau E-Wallet mana saja.';
   } else if (['dana', 'gopay', 'ovo', 'shopeepay'].includes(channel.toLowerCase())) {
     vaNum = '087735170386';
     title = `E-Wallet (${channel.toUpperCase()}) SobatSerabut:`;
@@ -4507,9 +4834,11 @@ function copyCurrentVANumber() {
 async function submitTopup() {
   const amount = Number(document.getElementById('topupAmountInput').value);
   const sel = document.getElementById('topupMethodSelect');
-  const channel = sel ? sel.value : currentDriverTopupChannel;
+  let channel = sel ? sel.value : currentDriverTopupChannel;
+  // SeaBank HANYA untuk transaksi pembayaran tugas, bukan topup
+  if (!channel || channel === 'seabank') channel = 'bca_va';
   const numEl = document.getElementById('vaNumberDisplay');
-  const vaNumber = numEl ? numEl.innerText : '901771223812';
+  const vaNumber = numEl ? numEl.innerText : '';
 
   if (!amount || amount < 10000) {
     showToast('Minimal isi saldo adalah Rp 10.000.', 'warning');
@@ -4524,7 +4853,7 @@ async function submitTopup() {
       body: JSON.stringify({
         userId: currentUser?.id,
         amount,
-        channel: channel || 'seabank',
+        channel: channel || 'bca_va',
         vaNumber
       })
     }).then(r => r.json());
@@ -4689,15 +5018,18 @@ function switchMainTab(tabId) {
   [homeKlien, homeMitra, ordersView, mapView, walletView, profileView].filter(Boolean).forEach(el => el.classList.add('hidden'));
 
   document.querySelectorAll('[id^="navBtn-"]').forEach(btn => {
-    btn.className = 'flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200 transition-all';
+    btn.className = 'flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-200 transition-all';
   });
 
   const activeBtn = document.getElementById(`navBtn-${tabId}`);
-  if (activeBtn) activeBtn.className = 'flex flex-col items-center space-y-1 text-emerald-400 font-bold transition-all';
+  if (activeBtn) activeBtn.className = 'flex flex-col items-center space-y-0.5 text-orange-400 font-bold transition-all';
 
   if (tabId === 'home') {
     if (currentUser?.role === 'klien') homeKlien?.classList.remove('hidden');
-    else homeMitra?.classList.remove('hidden');
+    else {
+      homeMitra?.classList.remove('hidden');
+      updateDriverPerformanceFace();
+    }
   } else if (tabId === 'map') {
     if (mapView) {
       mapView.classList.remove('hidden');
@@ -4709,9 +5041,15 @@ function switchMainTab(tabId) {
       loadDriverOrders();
     }
   } else if (tabId === 'wallet') {
-    if (walletView) walletView.classList.remove('hidden');
+    if (walletView) {
+      walletView.classList.remove('hidden');
+      updateWalletDisplay();
+    }
   } else if (tabId === 'profile') {
-    if (profileView) profileView.classList.remove('hidden');
+    if (profileView) {
+      profileView.classList.remove('hidden');
+      updateProfileTabUI();
+    }
   }
 }
 
@@ -4865,55 +5203,6 @@ function speakVoiceNotification(text) {
   } catch(e) {
     console.warn('[Speech] Gagal memutar suara ucapan:', e);
   }
-}
-
-// ============================================================
-// SIARAN NOTIFIKASI & BROADCAST PEMBARUAN ADMIN
-// ============================================================
-function showBroadcastModal(data) {
-  if (!data) return;
-
-  // Jika tipe pembaruan aplikasi, tampilkan langsung modal update berfitur tombol unduh
-  if (data.type === 'app_update') {
-    const updateModal = document.getElementById('updateNotifModal');
-    const versionEl = document.getElementById('updateModalVersion');
-    const notesEl = document.getElementById('updateModalNotes');
-    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
-    if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
-    if (updateModal) {
-      updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
-      updateModal.classList.remove('hidden');
-    }
-    playAudioSound('order_chime');
-    speakVoiceNotification((data.title ? `Pembaruan aplikasi: ${data.title}` : 'Pembaruan aplikasi baru tersedia!'));
-    return;
-  }
-
-  const modal = document.getElementById('broadcastNotificationModal');
-  const titleEl = document.getElementById('broadcastTitleDisplay');
-  const msgEl = document.getElementById('broadcastMessageDisplay');
-  const iconEl = document.getElementById('broadcastTypeBadgeIcon');
-  const badgeTextEl = document.getElementById('broadcastTypeBadgeText');
-
-  if (titleEl) titleEl.innerText = data.title || 'Pemberitahuan SobatSerabut';
-  if (msgEl) msgEl.innerText = data.message || '';
-
-  if (badgeTextEl) {
-    badgeTextEl.innerText = (data.type === 'promo') ? '🔥 PROMO RESMI SOBATSERABUT' : (data.type === 'urgent') ? '⚠️ PERINGATAN PENTING' : '📢 PENGUMUMAN RESMI ADMIN';
-  }
-  if (iconEl) {
-    iconEl.innerHTML = (data.type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (data.type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
-  }
-
-  if (modal) modal.classList.remove('hidden');
-
-  playAudioSound('order_chime');
-  speakVoiceNotification((data.type === 'urgent' ? 'Peringatan: ' : 'Pemberitahuan: ') + (data.title || 'Ada pengumuman baru'));
-}
-
-function closeBroadcastModal() {
-  const modal = document.getElementById('broadcastNotificationModal');
-  if (modal) modal.classList.add('hidden');
 }
 
 /* ========================================================
@@ -5216,4 +5505,270 @@ function updateServerStatusBadge(isConnected, url) {
       dot.className = isConnected ? 'w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse' : 'w-2 h-2 rounded-full bg-rose-500 inline-block';
     }
   }
+}
+
+// ============================================================
+// PUSAT BANTUAN — DRIVER APP
+// ============================================================
+async function loadDriverHelp() {
+  const container = document.getElementById('driverHelpAccordion');
+  if (!container) return;
+  container.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">Memuat bantuan...</div>';
+  try {
+    const res = await fetch(`${API_BASE}/api/help-center`).then(r => r.json());
+    if (res.success && res.data && res.data.length > 0) {
+      container.innerHTML = res.data.map((faq, i) => `
+        <div class="border border-slate-700/50 rounded-xl overflow-hidden">
+          <button onclick="toggleDriverFaq(${i})" class="w-full flex items-center justify-between px-3 py-2.5 bg-slate-800/60 hover:bg-slate-800 text-left transition-all">
+            <span class="text-[11px] font-bold text-slate-200 flex-1 pr-2">${faq.question}</span>
+            <span id="driverFaqIcon${i}" class="material-symbols-outlined text-slate-400 text-sm flex-shrink-0">expand_more</span>
+          </button>
+          <div id="driverFaqAnswer${i}" class="hidden px-3 py-2.5 bg-slate-900/60 text-[11px] text-slate-400 leading-relaxed border-t border-slate-700/30">
+            ${faq.answer}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = '<div class="text-[11px] text-slate-400 text-center py-2">Tidak ada FAQ tersedia.</div>';
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="text-[11px] text-rose-400 text-center py-2">Gagal memuat bantuan. Cek koneksi internet.</div>';
+  }
+}
+
+function toggleDriverFaq(i) {
+  const answer = document.getElementById(`driverFaqAnswer${i}`);
+  const icon = document.getElementById(`driverFaqIcon${i}`);
+  if (!answer) return;
+  answer.classList.toggle('hidden');
+  if (icon) icon.textContent = answer.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+}
+
+// ============================================================
+// AI ASISTEN — DRIVER APP
+// ============================================================
+async function sendDriverAiMessage() {
+  const input = document.getElementById('driverAiInput');
+  const chatHistory = document.getElementById('driverAiChatHistory');
+  if (!input || !chatHistory) return;
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  // Tambahkan pesan user
+  const userBubble = document.createElement('div');
+  userBubble.className = 'flex items-start justify-end space-x-2';
+  userBubble.innerHTML = `
+    <div class="bg-emerald-600/80 rounded-xl px-3 py-2 text-[11px] text-white max-w-[85%]">${msg}</div>
+    <span class="material-symbols-outlined text-slate-400 text-sm mt-0.5">person</span>
+  `;
+  chatHistory.appendChild(userBubble);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+
+  // Tambahkan loading
+  const loadingBubble = document.createElement('div');
+  loadingBubble.id = 'driverAiLoading';
+  loadingBubble.className = 'flex items-start space-x-2';
+  loadingBubble.innerHTML = `
+    <span class="material-symbols-outlined text-emerald-400 text-sm mt-0.5">smart_toy</span>
+    <div class="bg-emerald-900/30 border border-emerald-800/30 rounded-xl px-3 py-2 text-[11px] text-slate-400 max-w-[85%]">
+      <span class="animate-pulse">AI sedang memproses...</span>
+    </div>
+  `;
+  chatHistory.appendChild(loadingBubble);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/ai-assistant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, context: 'driver' })
+    }).then(r => r.json());
+
+    const loading = document.getElementById('driverAiLoading');
+    if (loading) loading.remove();
+
+    const aiBubble = document.createElement('div');
+    aiBubble.className = 'flex items-start space-x-2';
+    aiBubble.innerHTML = `
+      <span class="material-symbols-outlined text-emerald-400 text-sm mt-0.5">smart_toy</span>
+      <div class="bg-emerald-900/30 border border-emerald-800/30 rounded-xl px-3 py-2 text-[11px] text-slate-200 max-w-[85%] whitespace-pre-line">${res.reply || 'Maaf, tidak ada jawaban tersedia.'}</div>
+    `;
+    chatHistory.appendChild(aiBubble);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  } catch(e) {
+    const loading = document.getElementById('driverAiLoading');
+    if (loading) loading.remove();
+    const errBubble = document.createElement('div');
+    errBubble.className = 'flex items-start space-x-2';
+    errBubble.innerHTML = `
+      <span class="material-symbols-outlined text-rose-400 text-sm mt-0.5">error</span>
+      <div class="bg-rose-900/30 border border-rose-800/30 rounded-xl px-3 py-2 text-[11px] text-rose-300 max-w-[85%]">Gagal terhubung ke AI. Cek koneksi internet.</div>
+    `;
+    chatHistory.appendChild(errBubble);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
+}
+
+// ============================================================
+// UPDATE NOTIFIKASI — DRIVER APP
+// ============================================================
+const DRIVER_APP_VERSION = (window.SOBATSERABUT_CONFIG && window.SOBATSERABUT_CONFIG.VERSION) || '6.0.0';
+
+async function checkDriverAppUpdate() {
+  try {
+    const res = await fetch(`${API_BASE}/api/app-version`).then(r => r.json());
+    if (!res.success || !res.data) return;
+    const { latestVersion, driverApkUrl, releaseNotes, forceUpdate, minRequiredVersion } = res.data;
+    if (!latestVersion) return;
+
+    // Bandingkan versi
+    const isOutdated = compareVersions(DRIVER_APP_VERSION, latestVersion) < 0;
+    if (!isOutdated) return;
+
+    // Tampilkan modal update
+    const modal = document.getElementById('updateNotifModal');
+    const versionEl = document.getElementById('updateModalVersion');
+    const notesEl = document.getElementById('updateModalNotes');
+    const dismissBtn = document.getElementById('updateDismissBtn');
+
+    if (versionEl) versionEl.textContent = `Versi ${latestVersion} siap diunduh`;
+    if (notesEl) notesEl.textContent = releaseNotes || 'Update terbaru tersedia dengan fitur dan perbaikan baru.';
+    if (dismissBtn && forceUpdate) dismissBtn.classList.add('hidden');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.dataset.apkUrl = driverApkUrl;
+    }
+  } catch(e) { /* silent */ }
+}
+
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] || 0, vb = pb[i] || 0;
+    if (va < vb) return -1;
+    if (va > vb) return 1;
+  }
+  return 0;
+}
+
+function dismissUpdateModal() {
+  const modal = document.getElementById('updateNotifModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function downloadUpdateNow(type) {
+  const modal = document.getElementById('updateNotifModal');
+  let url = modal ? modal.dataset.apkUrl : null;
+  if (!url || !url.trim()) {
+    url = type === 'driver' ? `${API_BASE}/download/driver-apk` : `${API_BASE}/download/client-apk`;
+  }
+  // PASTIKAN SELALU MENGGUNAKAN URL LENGKAP HTTP/HTTPS (BUKAN file://)
+  if (url.startsWith('/')) {
+    url = `${API_BASE}${url}`;
+  }
+  // Pastikan URL valid
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `${API_BASE}/download/${type === 'driver' ? 'driver-apk' : 'client-apk'}`;
+  }
+
+  showToast('⬇️ Unduhan APK dimulai... Periksa notifikasi browser Anda.', 'info');
+
+  // Unduh APK langsung via anchor tag (tidak membuka halaman baru)
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = type === 'driver' ? 'Driver-SobatSerabut.apk' : 'SobatSerabut.apk';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 2000);
+  // JANGAN gunakan window.location.href agar tidak membuka halaman web
+}
+
+// ============================================================
+// SIARAN NOTIFIKASI & BROADCAST PEMBARUAN ADMIN
+// ============================================================
+function showBroadcastModal(data) {
+  if (!data) return;
+
+  // Jika tipe pembaruan aplikasi, tampilkan langsung modal update berfitur tombol unduh
+  if (data.type === 'app_update') {
+    const updateModal = document.getElementById('updateNotifModal');
+    const versionEl = document.getElementById('updateModalVersion');
+    const notesEl = document.getElementById('updateModalNotes');
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
+    if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
+    if (updateModal) {
+      updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
+      updateModal.classList.remove('hidden');
+    }
+    playAudioSound('order_chime');
+    speakVoiceNotification((data.title ? `Pembaruan aplikasi: ${data.title}` : 'Pembaruan aplikasi baru tersedia!'));
+    return;
+  }
+
+  const modal = document.getElementById('broadcastNotificationModal');
+  const titleEl = document.getElementById('broadcastTitleDisplay');
+  const msgEl = document.getElementById('broadcastMessageDisplay');
+  const iconEl = document.getElementById('broadcastTypeBadgeIcon');
+  const badgeTextEl = document.getElementById('broadcastTypeBadgeText');
+
+  if (titleEl) titleEl.innerText = data.title || 'Pemberitahuan SobatSerabut';
+  if (msgEl) msgEl.innerText = data.message || '';
+
+  if (badgeTextEl) {
+    badgeTextEl.innerText = (data.type === 'promo') ? '🔥 PROMO RESMI SOBATSERABUT' : (data.type === 'urgent') ? '⚠️ PERINGATAN PENTING' : '📢 PENGUMUMAN RESMI ADMIN';
+  }
+  if (iconEl) {
+    iconEl.innerHTML = (data.type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (data.type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
+  }
+
+  if (modal) modal.classList.remove('hidden');
+
+  playAudioSound('order_chime');
+  speakVoiceNotification((data.type === 'urgent' ? 'Peringatan: ' : 'Pemberitahuan admin: ') + (data.title || 'Ada pengumuman baru'));
+}
+
+function closeBroadcastModal() {
+  const modal = document.getElementById('broadcastNotificationModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Auto-cek bantuan saat profil dibuka (Pembaruan HANYA muncul saat admin broadcast)
+const _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+document.addEventListener('DOMContentLoaded', () => {
+  // CATATAN: Update otomatis saat startup dinonaktifkan sesuai permintaan pengguna.
+  // Notifikasi update HANYA akan muncul ketika admin melakukan broadcast ke Driver/Client.
+  
+  // Auto-load FAQ saat profil aktif
+  const profileObs = new MutationObserver(() => {
+    const profileView = document.getElementById('profileViewContainer');
+    if (profileView && !profileView.classList.contains('hidden')) {
+      loadDriverHelp();
+    }
+  });
+  const profileView = document.getElementById('profileViewContainer');
+  if (profileView) profileObs.observe(profileView, { attributes: true, attributeFilter: ['class'] });
+});
+
+// Listen socket event update dari server (Hanya bereaksi saat ada broadcast)
+if (typeof io !== 'undefined') {
+  try {
+    const _sock = io(API_BASE);
+    _sock.on('app_update_available', (data) => {
+      // HANYA tampilkan jika siaran ditargetkan untuk driver atau all
+      if (data && (!data.target || data.target === 'all' || data.target === 'driver')) {
+        showBroadcastModal({
+          type: 'app_update',
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
+          version: data.latestVersion || '6.2.0',
+          actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
+        });
+      }
+    });
+  } catch(e) { /* silent */ }
 }

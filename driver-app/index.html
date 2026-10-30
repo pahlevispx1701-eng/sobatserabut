@@ -1176,78 +1176,64 @@ input:focus, textarea:focus, select:focus {
         </div>
       </div>
 
-    <!-- GLOBAL ANNOUNCEMENT / WELCOME BANNER FOR PEMOHON & MITRA -->
-    <div id="globalAnnouncementBanner" class="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/40 text-xs text-emerald-200 flex items-center justify-between shadow-lg">
-      <div class="flex items-center space-x-2.5 truncate">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0 shadow-sm shadow-emerald-400"></span>
-        <span id="globalAnnouncementText" class="truncate font-semibold text-[11px] leading-tight text-emerald-100">Selamat datang di SobatSerabut! Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.</span>
-      </div>
-      <a id="globalAnnouncementWaLink" href="https://wa.me/6287791201091" target="_blank" class="ml-2 flex-shrink-0 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-xl flex items-center space-x-1 shadow transition-all active:scale-95">
-        <i class="fa-brands fa-whatsapp"></i>
-        <span>CS</span>
-      </a>
-    </div>
-
-    <!-- MITRA STATUS BAR MODERN: FITUR MULAI BEKERJA / OFF -->
-    <div id="mitraStatusBarContainer" class="mt-3 rounded-2xl space-y-2.5" style="background: rgba(2,6,23,0.85); border: 1px solid rgba(16,185,129,0.15); padding: 12px;">
-      <div class="flex items-center justify-between">
+    <!-- ========================================================
+         SHOPEEFOOD DRIVER MASTER STATUS & SLIDE-TO-ONLINE
+         ======================================================== -->
+    <div id="mitraStatusBarContainer" class="mt-2.5 space-y-2">
+      <!-- Top Driver Info Strip -->
+      <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
-          <div id="statusPulseDot" class="w-3 h-3 rounded-full bg-emerald-500 relative flex items-center justify-center flex-shrink-0">
-            <span id="statusPulsePing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span id="statusPulseDot" class="w-2.5 h-2.5 rounded-full bg-slate-500 relative flex items-center justify-center">
+            <span id="statusPulsePing" class="hidden animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          </span>
+          <span id="driverAppIdDisplay" class="font-mono font-black text-xs text-orange-400">MTR-0001</span>
+          <span class="text-slate-600">•</span>
+          <span id="gpsStatusSubtext" class="text-[10px] text-slate-400 flex items-center space-x-1">
+            <i class="fa-solid fa-satellite text-amber-400 text-[9px]"></i>
+            <span>GPS Nyata</span>
+          </span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span id="driverAppTotalCountDisplay" class="text-[10px] text-slate-400 font-mono">1 Driver</span>
+          <button type="button" onclick="toggleWelcomeCardDetail()" class="text-[10px] px-2.5 py-0.5 rounded-full bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold flex items-center space-x-1 transition-all" title="Menu Selamat Datang">
+            <i class="fa-solid fa-hand-sparkles text-[9px]"></i>
+            <span>Selamat Datang</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAMPILAN 1: SAAT DRIVER OFF -> GESER KE KANAN UNTUK ONLINE (SHOPEEFOOD DRIVER SLIDER) -->
+      <div id="shopeeSlideContainer" class="w-full">
+        <div id="shopeeSlideToWorkWrapper" class="relative w-full h-14 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border-2 border-orange-500/40 p-1 flex items-center select-none overflow-hidden shadow-xl shadow-orange-950/20">
+          <div id="shopeeSlideTrackText" class="absolute inset-0 flex items-center justify-center pointer-events-none text-xs font-black tracking-wider text-orange-400/90 pl-10 pr-3 transition-opacity">
+            <span class="uppercase">Geser ke kanan untuk Mulai Bekerja</span>
+            <i class="fa-solid fa-angles-right ml-1.5 text-sm animate-pulse text-orange-400"></i>
+          </div>
+          <div id="shopeeSlideThumb" class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 via-orange-600 to-amber-500 text-white flex items-center justify-center text-lg font-black shadow-lg shadow-orange-500/50 cursor-grab active:cursor-grabbing z-10 transition-transform touch-none border border-orange-300/40">
+            <i id="shopeeSlideIcon" class="fa-solid fa-motorcycle text-base"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAMPILAN 2: SAAT DRIVER ONLINE -> KARTU STATUS AKTIF SHOPEEFOOD (HIJAU GLOWING) -->
+      <div id="shopeeOnlineCard" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/90 via-slate-900 to-slate-900 border border-emerald-500/40 shadow-xl flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="relative w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center flex-shrink-0">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-2xl bg-emerald-400 opacity-30"></span>
+            <i class="fa-solid fa-motorcycle text-lg"></i>
           </div>
           <div>
-            <span id="statusTextLabel" class="text-xs font-black block tracking-wider" style="color: #34d399;">SIAP MENERIMA PESANAN</span>
-            <span id="gpsStatusSubtext" class="text-[10px] flex items-center space-x-1" style="color: #64748b;">
-              <i class="fa-solid fa-satellite text-amber-400 text-[9px]"></i>
-              <span>GPS Live Aktif</span>
-            </span>
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400"></span>
+              <span id="statusTextLabel" class="font-black text-xs text-emerald-300 tracking-wide">STATUS: ONLINE (ON)</span>
+            </div>
+            <p id="shopeeOnlineSubtitle" class="text-[10px] text-slate-300 font-medium mt-0.5">Siap menerima pesanan serabutan di sekitar</p>
           </div>
         </div>
-        <button onclick="openDailyFaceVerifyModal()" title="Verifikasi Wajah Harian" class="flex items-center space-x-1 text-[10px] font-bold px-2.5 py-1.5 rounded-xl transition-all" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #fbbf24;">
-          <i class="fa-solid fa-camera text-[9px]"></i>
-          <span>Verifikasi</span>
+        <button type="button" onclick="setDriverStatus('offline')" class="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-extrabold text-xs border border-rose-500/30 transition-all active:scale-95 flex items-center space-x-1.5 shadow">
+          <i class="fa-solid fa-power-off text-xs text-rose-400"></i>
+          <span>Istirahat (OFF)</span>
         </button>
-      </div>
-
-      <!-- MASTER MULAI BEKERJA / OFF BIG TOGGLE BUTTON -->
-      <button type="button" id="btnMasterWorkToggle" onclick="toggleDriverWorkStatus()" class="w-full py-4 px-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-between transition-all active:scale-95 select-none" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; box-shadow: 0 6px 24px rgba(16,185,129,0.45);">
-        <div class="flex items-center space-x-3">
-          <span id="masterToggleIconCircle" class="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center text-base shadow animate-pulse">
-            <i id="masterToggleIcon" class="fa-solid fa-power-off"></i>
-          </span>
-          <div class="text-left">
-            <span id="masterToggleTitle" class="block text-sm font-black tracking-wide">SEDANG BEKERJA (ONLINE)</span>
-            <span id="masterToggleSubtext" class="block text-[11px] font-medium opacity-90">Ketuk untuk Berhenti / Off</span>
-          </div>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span id="masterTogglePill" class="px-3 py-1.5 rounded-xl bg-white/25 text-[11px] font-black uppercase tracking-wider">ONLINE</span>
-          <i class="fa-solid fa-repeat text-sm opacity-75"></i>
-        </div>
-      </button>
-
-      <!-- Status Toggle: Hanya ON (Hijau) dan OFF (Merah) -->
-      <div class="grid grid-cols-2 gap-2 text-xs font-bold">
-        <button type="button" id="btnStatusReady" onclick="setDriverStatus('ready')" class="py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95" style="background: linear-gradient(135deg, #059669, #16a34a); color: #fff; box-shadow: 0 4px 14px rgba(22,163,74,0.5); border: 2px solid rgba(74,222,128,0.4);">
-          <span class="w-2.5 h-2.5 rounded-full bg-white shadow" style="box-shadow: 0 0 6px #fff;"></span>
-          <span class="font-black tracking-wider">ON</span>
-        </button>
-        <button type="button" id="btnStatusOffline" onclick="setDriverStatus('offline')" class="py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all active:scale-95" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; box-shadow: 0 4px 14px rgba(220,38,38,0.5); border: 2px solid rgba(252,165,165,0.3);">
-          <span class="w-2.5 h-2.5 rounded-full bg-white shadow" style="box-shadow: 0 0 6px #fff;"></span>
-          <span class="font-black tracking-wider">OFF</span>
-        </button>
-      </div>
-
-      <!-- ID DRIVER & TOTAL DRIVER TERDAFTAR UNTUK PENGECEKAN -->
-      <div class="grid grid-cols-2 gap-2 text-xs font-mono p-2.5 rounded-xl bg-slate-950/90 border border-slate-800">
-        <div class="space-y-0.5">
-          <span class="text-[9px] text-slate-400 uppercase tracking-wider block font-sans">ID Driver Anda</span>
-          <span id="driverAppIdDisplay" class="font-black text-emerald-400 text-xs">MTR-...</span>
-        </div>
-        <div class="space-y-0.5 text-right">
-          <span class="text-[9px] text-slate-400 uppercase tracking-wider block font-sans">Total Driver Terdaftar</span>
-          <span id="driverAppTotalCountDisplay" class="font-black text-blue-400 text-xs">... Driver</span>
-        </div>
       </div>
     </div>
 
@@ -1261,29 +1247,9 @@ input:focus, textarea:focus, select:focus {
     <!-- ========================================================
          VIEW: PENYEDIA JASA (DRIVER MITRA)
          ======================================================== -->
-    <div id="mitraViewContainer" class="space-y-4">
+    <div id="mitraViewContainer" class="space-y-3.5">
 
-      <!-- WELCOME HERO BANNER SOBATSERABUT -->
-      <div class="relative overflow-hidden rounded-3xl p-4 shadow-2xl transition-all" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 45%, #047857 100%); border: 1px solid rgba(52, 211, 153, 0.35);">
-        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-20 bg-emerald-300 blur-xl pointer-events-none"></div>
-        <div class="relative z-10 flex items-center space-x-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center flex-shrink-0 text-2xl border border-white/25 shadow-lg">
-            👋
-          </div>
-          <div class="flex-1 pr-1">
-            <div class="flex items-center justify-between">
-              <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 font-extrabold tracking-wider uppercase border border-emerald-400/30">Mitra Driver</span>
-              <span onclick="unlockAudioSystem(); speakVoiceNotification('Suara notifikasi aktif'); showToast('🔊 Suara notifikasi orderan telah aktif!', 'success');" class="text-[9px] px-2 py-0.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-amber-300 font-bold cursor-pointer border border-amber-500/30 flex items-center space-x-1">
-                <span>🔊</span><span>Uji Suara</span>
-              </span>
-            </div>
-            <h2 class="text-sm font-black text-white leading-tight mt-1">Selamat datang di SobatSerabut!</h2>
-            <p class="text-[11px] text-emerald-100 font-medium leading-snug mt-0.5">Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- KYC STATUS BANNER KHUSUS MITRA -->
+      <!-- KYC STATUS BANNER KHUSUS MITRA (HANYA AKTIF JIKA PENDING) -->
       <div id="mitraKycNoticeBanner" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/40 space-y-1.5 shadow-xl">
         <div class="flex items-center space-x-2 text-amber-300 font-bold text-xs">
           <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
@@ -1294,156 +1260,311 @@ input:focus, textarea:focus, select:focus {
         </p>
       </div>
 
-
-      <!-- Radar Header Card - Modern Redesign -->
-      <div class="relative overflow-hidden rounded-3xl shadow-2xl" style="background: linear-gradient(135deg, #060d1f 0%, #0f1e3d 50%, #0a1829 100%); border: 1px solid rgba(59,130,246,0.2); padding: 16px;">
-        <!-- Decorative gradient blobs -->
-        <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20" style="background: radial-gradient(circle, #3b82f6 0%, transparent 70%);"></div>
-        <div class="absolute -bottom-6 -left-6 w-24 h-24 rounded-full opacity-10" style="background: radial-gradient(circle, #10b981 0%, transparent 70%);"></div>
-
-        <div class="relative z-10">
-          <div class="flex items-center justify-between">
+      <!-- CARD SELAMAT DATANG DI BAGIAN DEPAN BERANDA (TERPISAH & MUDAH DIAKSES TANPA MENUTUP TAMPILAN) -->
+      <div id="driverWelcomeCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-950/70 via-slate-900 to-slate-950 border border-orange-500/40 p-3.5 shadow-xl space-y-2.5">
+        <div class="flex items-start justify-between">
+          <div class="flex items-start space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/40 flex items-center justify-center text-lg shadow flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-hand-sparkles"></i>
+            </div>
             <div>
-              <div class="flex items-center space-x-2 mb-1">
-                <div class="w-7 h-7 rounded-xl flex items-center justify-center" style="background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3);">
-                  <i class="fa-solid fa-radar text-blue-400 text-xs"></i>
-                </div>
-                <h2 class="text-sm font-black text-white">Radar Tugas Terdekat</h2>
-                <span id="mitraRadarBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold" style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25);">Memindai...</span>
+              <div class="flex items-center space-x-1.5">
+                <h3 id="welcomeCardDriverName" class="font-black text-white text-xs">Selamat Datang di SobatSerabut! 👋</h3>
+                <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold border border-emerald-500/30">DRIVER RESMI</span>
               </div>
-              <p class="text-[11px]" style="color: #64748b;">Klien terdekat dalam radius <strong id="mitraRadiusLabel" class="font-bold" style="color: #60a5fa;">10 km</strong></p>
-            </div>
-
-            <div class="w-14 h-14 relative flex items-center justify-center flex-shrink-0">
-              <div class="radar-wave"></div>
-              <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm shadow-lg" style="background: rgba(59,130,246,0.2); border: 1.5px solid rgba(59,130,246,0.5);">
-                <i class="fa-solid fa-location-crosshairs text-blue-400 animate-spin"></i>
-              </div>
+              <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                Layanan Kemitraan Driver Nyata SobatSerabut. Geser tombol status di atas ke kanan untuk mulai bekerja (Online) dan memantau tugas sekitar pada 2 muka beranda di bawah.
+              </p>
             </div>
           </div>
-
-          <!-- VIP Banner modernized -->
-          <div id="vipPromoBanner" class="mt-3 p-2.5 rounded-2xl flex items-center justify-between" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);">
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-crown text-amber-400 text-xs"></i>
-              <span class="text-[11px]" style="color: #fde68a;">Upgrade <strong style="color: #fbbf24;">Mitra VIP</strong> — terima tugas 2 menit lebih awal!</span>
-            </div>
-            <button onclick="switchMainTab('profile')" class="px-3 py-1 rounded-xl font-black text-[10px] transition-all" style="background: linear-gradient(135deg, #d97706, #f59e0b); color: #1c1917; box-shadow: 0 2px 6px rgba(245,158,11,0.3);">VIP</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nearby Tasks List Container -->
-      <div id="nearbyTasksContainer" class="space-y-3">
-        <!-- populated via JS -->
-      </div>
-
-      <!-- Active Job Card (Tugas Aktif Sedang Dikerjakan Mitra) -->
-      <div id="mitraActiveJobCard" class="hidden p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-blue-500/40 shadow-2xl space-y-3.5 relative overflow-hidden">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-          <div class="flex items-center space-x-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block"></span>
-            <span class="px-2.5 py-0.5 rounded-full bg-blue-600/30 text-blue-300 text-[11px] font-extrabold border border-blue-500/40">TUGAS AKTIF BERJALAN</span>
-          </div>
-          <span id="mitraJobStepBadge" class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Menuju Lokasi</span>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 id="mitraActiveJobTitle" class="text-sm font-extrabold text-white">Judul Tugas Sedang Berjalan</h3>
-              <span id="mitraActiveJobCategory" class="text-[10px] text-blue-400 font-semibold">Kategori: Servis AC</span>
-            </div>
-            <div class="text-right">
-              <span class="text-[10px] text-slate-400 block">Pendapatan Bersih:</span>
-              <span id="mitraActiveJobNetIncome" class="text-sm font-extrabold text-emerald-400 font-mono">Rp 0</span>
-            </div>
-          </div>
-          <p id="mitraActiveJobAddress" class="text-xs text-slate-300 mt-1 flex items-start space-x-1">
-            <i class="fa-solid fa-location-dot text-rose-500 mt-0.5 mr-1 text-xs"></i>
-            <span id="mitraActiveJobAddressText">Alamat Penjemputan / Tugas</span>
-          </p>
-        </div>
-
-        <!-- LIVE GEOFENCING & AUDIT DURASI PENGERJAAN -->
-        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="text-slate-400 flex items-center space-x-1">
-              <i class="fa-solid fa-satellite-dish text-blue-400"></i>
-              <span>Status Geofencing:</span>
-            </span>
-            <span id="mitraJobGeofenceStatus" class="font-bold text-blue-400 flex items-center space-x-1">
-              <span class="w-2 h-2 rounded-full bg-blue-400 inline-block"></span>
-              <span>Menuju Lokasi</span>
-            </span>
-          </div>
-
-          <div id="mitraOffRouteBanner" class="hidden p-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-[10px] text-rose-300 flex items-center space-x-1.5 animate-pulse">
-            <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
-            <span id="mitraOffRouteText">Peringatan: Rute melenceng dari arah penjemputan!</span>
-          </div>
-
-          <div class="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-900">
-            <span class="text-slate-400 flex items-center space-x-1">
-              <i class="fa-solid fa-stopwatch text-amber-400"></i>
-              <span>Audit Durasi Tugas:</span>
-            </span>
-            <span id="mitraJobDurationTimer" class="font-mono font-bold text-amber-300 text-xs">00:00:00</span>
-          </div>
-        </div>
-
-        <!-- ACTION BUTTONS: GOOGLE MAPS NAVIGASI, LOG GEOFENCING, CHAT, CALL, START WORK, COMPLETE -->
-        <div class="space-y-2 text-xs">
-          <!-- Tombol Navigasi Live Google Maps -->
-          <button onclick="openGoogleMapsTurnByTurn()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all">
-            <i class="fa-solid fa-diamond-turn-right text-base"></i>
-            <span>Arahkan ke Lokasi Pemohon (Live Maps)</span>
+          <button type="button" onclick="toggleWelcomeCardDetail()" class="text-slate-400 hover:text-white p-1 text-xs" title="Tampilkan / Sembunyikan Detail">
+            <i id="welcomeCardToggleIcon" class="fa-solid fa-chevron-up"></i>
           </button>
-
-          <!-- TAHAP 1: SUDAH TIBA DI ALAMAT TUJUAN - WAJIB FOTO MULAI KERJA -->
-          <div id="mitraActionArriveSection">
-            <button onclick="openStartWorkPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-black text-xs shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
-              <i class="fa-solid fa-camera text-sm"></i>
-              <span>📸 Tiba di Tujuan - Wajib Foto Pekerjaan Dimulai</span>
-            </button>
-          </div>
-
-          <!-- TAHAP 2: SEDANG DIKERJAKAN - WAJIB FOTO SELESAI TUGAS -->
-          <div id="mitraActionFinishSection" class="hidden">
-            <button onclick="openProofPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
-              <i class="fa-solid fa-circle-check text-sm"></i>
-              <span>📸 Selesai Mengerjakan - Wajib Foto Tugas Selesai</span>
-            </button>
-          </div>
-
-          <!-- TAHAP 3: MENUNGGU TRANSFER PEMBAYARAN KLIEN -->
-          <div id="mitraActionWaitingPaymentSection" class="hidden p-3 rounded-xl bg-blue-950/70 border border-blue-500/50 space-y-1 text-center">
-            <div class="text-amber-300 font-black text-xs flex items-center justify-center space-x-1.5">
-              <i class="fa-solid fa-clock-rotate-left animate-spin text-sm"></i>
-              <span>Menunggu Transfer Klien ke SeaBank</span>
-            </div>
-            <p class="text-[10px] text-slate-300 leading-tight">
-              Klien sedang mentransfer ke SeaBank 901771223812. Begitu terverifikasi, pendapatan bersih (potongan 3rb layanan &amp; 10% komisi) akan otomatis masuk ke dompet Anda tanpa menunggu admin!
-            </p>
-          </div>
-
-          <!-- Komunikasi & Log -->
-          <div class="grid grid-cols-3 gap-1.5 pt-1">
-            <button onclick="openGeofencingLogModal()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold border border-slate-700 flex items-center justify-center space-x-1">
-              <i class="fa-solid fa-route text-[11px]"></i>
-              <span class="text-[10px]">Log Rute</span>
-            </button>
-            <button onclick="openChatForActiveJob()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold border border-slate-700 flex items-center justify-center space-x-1">
-              <i class="fa-brands fa-whatsapp text-xs"></i>
-              <span class="text-[10px]">Chat WA</span>
-            </button>
-            <button onclick="callClientForActiveJob()" class="py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold border border-blue-500/30 flex items-center justify-center space-x-1">
-              <i class="fa-solid fa-phone text-[10px]"></i>
-              <span class="text-[10px]">Telepon</span>
-            </button>
+        </div>
+        <div id="welcomeCardDetailRow" class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+          <a href="https://wa.me/6287791201091" target="_blank" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center space-x-1.5 shadow transition-all active:scale-95">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>Bantuan CS WhatsApp</span>
+          </a>
+          <div class="flex items-center space-x-2 text-[10px] text-slate-400">
+            <span class="font-mono text-emerald-400 font-bold">100% Saldo Nyata</span>
+            <span>•</span>
+            <span class="font-mono text-orange-400 font-bold">2 Muka Beranda</span>
           </div>
         </div>
       </div>
+
+      <!-- 2 MUKA SWITCHER (SHOPEEFOOD DRIVER STYLE: 1. RADAR & PETA | 2. KINERJA & SALDO) -->
+      <div class="grid grid-cols-2 p-1 rounded-2xl bg-slate-900/95 border border-slate-800 text-xs font-bold gap-1 shadow-lg">
+        <button type="button" id="tabFace1Btn" onclick="switchDriverHomeFace(1)" class="py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black flex items-center justify-center space-x-1.5 shadow transition-all">
+          <i class="fa-solid fa-radar text-xs"></i>
+          <span>1. Radar &amp; Peta</span>
+        </button>
+        <button type="button" id="tabFace2Btn" onclick="switchDriverHomeFace(2)" class="py-2.5 rounded-xl bg-transparent text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1.5 transition-all">
+          <i class="fa-solid fa-chart-line text-xs"></i>
+          <span>2. Kinerja &amp; Saldo</span>
+        </button>
+      </div>
+
+      <!-- HORIZONTAL SWIPEABLE 2-MUKA CONTAINER (BISA DIGESER KE KANAN & KIRI TANPA MENUTUP TAMPILAN) -->
+      <div id="driverFacesWrapper" class="flex w-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar space-x-3 pb-1" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+
+        <!-- ==============================================
+             MUKA 1: RADAR OPERASIONAL & TUGAS TERDEKAT
+             ============================================== -->
+        <div id="driverFaceRadar" class="w-full flex-shrink-0 snap-center space-y-3.5" style="min-width: 100%; max-width: 100%; flex: 0 0 100%;">
+          <!-- Radar Header Card - ShopeeFood Modern Driver Aesthetic -->
+          <div class="relative overflow-hidden rounded-3xl shadow-2xl p-4" style="background: linear-gradient(135deg, #0b1120 0%, #171f33 50%, #0d1526 100%); border: 1.5px solid rgba(249, 115, 22, 0.35);">
+            <!-- Decorative Orange Glow -->
+            <div class="absolute -top-10 -right-10 w-36 h-36 rounded-full opacity-20 pointer-events-none" style="background: radial-gradient(circle, #f97316 0%, transparent 70%);"></div>
+            <div class="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-15 pointer-events-none" style="background: radial-gradient(circle, #10b981 0%, transparent 70%);"></div>
+
+            <div class="relative z-10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="flex items-center space-x-2 mb-1">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center bg-orange-500/20 border border-orange-500/40 text-orange-400 shadow-sm">
+                      <i class="fa-solid fa-radar text-sm"></i>
+                    </div>
+                    <h2 class="text-sm font-black text-white">Radar Tugas Terdekat</h2>
+                    <span id="mitraRadarBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-orange-500/20 text-orange-400 border border-orange-500/40">Memindai...</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400">Jangkauan radar orderan: <strong id="mitraRadiusLabel" class="font-bold text-orange-400">2 km</strong></p>
+                </div>
+
+                <!-- Radar Wave Pulse -->
+                <div class="w-14 h-14 relative flex items-center justify-center flex-shrink-0 cursor-pointer" onclick="switchMainTab('map')" title="Buka Peta Operasional">
+                  <div class="radar-wave" style="border-color: rgba(249, 115, 22, 0.6);"></div>
+                  <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm shadow-xl bg-gradient-to-br from-orange-500/30 to-amber-500/20 border-2 border-orange-500/60">
+                    <i class="fa-solid fa-location-crosshairs text-orange-400 animate-spin text-base"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Radius Selector Bar -->
+              <div class="mt-3.5 pt-2.5 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-[10px] text-slate-400 font-semibold flex items-center space-x-1">
+                  <i class="fa-solid fa-bullseye text-orange-400 text-[10px]"></i>
+                  <span>Filter Jarak:</span>
+                </span>
+                <div class="flex items-center space-x-1.5 text-[10px] font-bold">
+                  <button type="button" onclick="setDriverSearchRadius(1)" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-all">1 km</button>
+                  <button type="button" onclick="setDriverSearchRadius(2)" class="px-2.5 py-1 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 text-white font-black shadow transition-all">2 km</button>
+                  <button type="button" onclick="setDriverSearchRadius(5)" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-all">5 km</button>
+                  <button type="button" onclick="switchMainTab('map')" class="px-2.5 py-1 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold border border-blue-500/30 flex items-center space-x-1 transition-all">
+                    <i class="fa-solid fa-map text-[9px]"></i>
+                    <span>Peta</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nearby Tasks List Container -->
+          <div id="nearbyTasksContainer" class="space-y-3">
+            <!-- populated via JS -->
+          </div>
+
+          <!-- Active Job Card (Tugas Aktif Sedang Dikerjakan Mitra) -->
+          <div id="mitraActiveJobCard" class="hidden p-4 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-orange-500/40 shadow-2xl space-y-3.5 relative overflow-hidden">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div class="flex items-center space-x-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+                <span class="px-2.5 py-0.5 rounded-full bg-orange-600/30 text-orange-300 text-[11px] font-extrabold border border-orange-500/40">TUGAS AKTIF BERJALAN</span>
+              </div>
+              <span id="mitraJobStepBadge" class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Menuju Lokasi</span>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 id="mitraActiveJobTitle" class="text-sm font-extrabold text-white">Judul Tugas Sedang Berjalan</h3>
+                  <span id="mitraActiveJobCategory" class="text-[10px] text-orange-400 font-semibold">Kategori: Jasa Harian</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] text-slate-400 block">Pendapatan Bersih:</span>
+                  <span id="mitraActiveJobNetIncome" class="text-sm font-extrabold text-emerald-400 font-mono">Rp 0</span>
+                </div>
+              </div>
+              <p id="mitraActiveJobAddress" class="text-xs text-slate-300 mt-1 flex items-start space-x-1">
+                <i class="fa-solid fa-location-dot text-rose-500 mt-0.5 mr-1 text-xs"></i>
+                <span id="mitraActiveJobAddressText">Alamat Penjemputan / Tugas</span>
+              </p>
+            </div>
+
+            <!-- LIVE GEOFENCING & AUDIT DURASI PENGERJAAN -->
+            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-400 flex items-center space-x-1">
+                  <i class="fa-solid fa-satellite-dish text-blue-400"></i>
+                  <span>Status Geofencing:</span>
+                </span>
+                <span id="mitraJobGeofenceStatus" class="font-bold text-blue-400 flex items-center space-x-1">
+                  <span class="w-2 h-2 rounded-full bg-blue-400 inline-block"></span>
+                  <span>Menuju Lokasi</span>
+                </span>
+              </div>
+
+              <div id="mitraOffRouteBanner" class="hidden p-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-[10px] text-rose-300 flex items-center space-x-1.5 animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+                <span id="mitraOffRouteText">Peringatan: Rute melenceng dari arah penjemputan!</span>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-900">
+                <span class="text-slate-400 flex items-center space-x-1">
+                  <i class="fa-solid fa-stopwatch text-amber-400"></i>
+                  <span>Audit Durasi Tugas:</span>
+                </span>
+                <span id="mitraJobDurationTimer" class="font-mono font-bold text-amber-300 text-xs">00:00:00</span>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS: GOOGLE MAPS NAVIGASI, LOG GEOFENCING, CHAT, CALL, START WORK, COMPLETE -->
+            <div class="space-y-2 text-xs">
+              <!-- Tombol Navigasi Live Google Maps -->
+              <button onclick="openGoogleMapsTurnByTurn()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all">
+                <i class="fa-solid fa-diamond-turn-right text-base"></i>
+                <span>Arahkan ke Lokasi Pemohon (Live Maps)</span>
+              </button>
+
+              <!-- TAHAP 1: SUDAH TIBA DI ALAMAT TUJUAN - WAJIB FOTO MULAI KERJA -->
+              <div id="mitraActionArriveSection">
+                <button onclick="openStartWorkPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-black text-xs shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+                  <i class="fa-solid fa-camera text-sm"></i>
+                  <span>📸 Tiba di Tujuan - Wajib Foto Pekerjaan Dimulai</span>
+                </button>
+              </div>
+
+              <!-- TAHAP 2: SEDANG DIKERJAKAN - WAJIB FOTO SELESAI TUGAS -->
+              <div id="mitraActionFinishSection" class="hidden">
+                <button onclick="openProofPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+                  <i class="fa-solid fa-circle-check text-sm"></i>
+                  <span>📸 Selesai Mengerjakan - Wajib Foto Tugas Selesai</span>
+                </button>
+              </div>
+
+              <!-- TAHAP 3: MENUNGGU TRANSFER PEMBAYARAN KLIEN -->
+              <div id="mitraActionWaitingPaymentSection" class="hidden p-3 rounded-xl bg-blue-950/70 border border-blue-500/50 space-y-1 text-center">
+                <div class="text-amber-300 font-black text-xs flex items-center justify-center space-x-1.5">
+                  <i class="fa-solid fa-clock-rotate-left animate-spin text-sm"></i>
+                  <span>Menunggu Transfer Klien ke SeaBank</span>
+                </div>
+                <p class="text-[10px] text-slate-300 leading-tight">
+                  Klien sedang mentransfer ke SeaBank 901771223812. Begitu terverifikasi, pendapatan bersih otomatis masuk ke dompet Anda!
+                </p>
+              </div>
+
+              <!-- Komunikasi & Log -->
+              <div class="grid grid-cols-3 gap-1.5 pt-1">
+                <button onclick="openGeofencingLogModal()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold border border-slate-700 flex items-center justify-center space-x-1">
+                  <i class="fa-solid fa-route text-[11px]"></i>
+                  <span class="text-[10px]">Log Rute</span>
+                </button>
+                <button onclick="openChatForActiveJob()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold border border-slate-700 flex items-center justify-center space-x-1">
+                  <i class="fa-brands fa-whatsapp text-xs"></i>
+                  <span class="text-[10px]">Chat WA</span>
+                </button>
+                <button onclick="callClientForActiveJob()" class="py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-bold border border-blue-500/30 flex items-center justify-center space-x-1">
+                  <i class="fa-solid fa-phone text-[10px]"></i>
+                  <span class="text-[10px]">Telepon</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==============================================
+             MUKA 2: KINERJA & RINGKASAN SALDO SHOPEEFOOD STYLE
+             ============================================== -->
+        <div id="driverFacePerformance" class="w-full flex-shrink-0 snap-center space-y-3.5" style="min-width: 100%; max-width: 100%; flex: 0 0 100%;">
+          <!-- Card 1: Ringkasan Hari Ini -->
+          <div class="p-4 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 shadow-2xl space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-sm border border-orange-500/30">
+                  <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                  <h3 class="font-black text-white text-xs uppercase tracking-wider">Ringkasan Hari Ini</h3>
+                  <span id="shopeeTodayDate" class="text-[10px] text-slate-400 font-medium">Hari Ini</span>
+                </div>
+              </div>
+              <span class="text-[9px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-extrabold tracking-wider">100% NYATA</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+              <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+                <span class="text-[10px] text-slate-400 block font-semibold">Pendapatan Bersih</span>
+                <span id="shopeeDailyNetIncome" class="font-mono font-black text-lg text-emerald-400">Rp 0</span>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+                <span class="text-[10px] text-slate-400 block font-semibold">Order Selesai</span>
+                <span id="shopeeDailyCompletedOrders" class="font-mono font-black text-lg text-orange-400">0 Order</span>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+                <span class="text-[10px] text-slate-400 block font-semibold">Waktu Online</span>
+                <span id="shopeeOnlineDuration" class="font-mono font-bold text-sm text-slate-200">0j 0m</span>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+                <span class="text-[10px] text-slate-400 block font-semibold">Tingkat Selesai</span>
+                <span id="shopeeCompletionRate" class="font-mono font-bold text-sm text-blue-400">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Saldo Dompet Driver Real & Quick Actions -->
+          <div class="p-4 rounded-3xl bg-gradient-to-r from-orange-950/40 via-slate-900 to-slate-900 border border-orange-500/35 shadow-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase font-black tracking-wider block">Saldo Dompet Nyata (Real)</span>
+                <div id="shopeeFaceWalletBalance" class="text-2xl font-black font-mono text-emerald-400 mt-0.5">Rp 0</div>
+                <span class="text-[9px] text-slate-400 font-sans">Bebas biaya admin ke SeaBank &amp; Rekening Bank Resmi</span>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center text-xl shadow">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 text-xs font-bold">
+              <button onclick="switchMainTab('wallet')" class="py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 text-white font-extrabold flex items-center justify-center space-x-1.5 shadow transition-all active:scale-95">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+                <span>Tarik Saldo</span>
+              </button>
+              <button onclick="openTopupModal()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold border border-slate-700 flex items-center justify-center space-x-1.5 transition-all active:scale-95">
+                <i class="fa-solid fa-plus-circle text-orange-400"></i>
+                <span>Isi Saldo</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 3: Performa & Kedisiplinan Kemitraan -->
+          <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-award text-amber-400 text-base"></i>
+                <h4 class="font-black text-white text-xs uppercase">Performa Kemitraan</h4>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">Status: Aktif</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">Rating Driver</span>
+                <span id="shopeeFaceRating" class="font-black text-amber-400 text-sm mt-0.5 block"><i class="fa-solid fa-star text-xs mr-0.5"></i>5.0</span>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">Poin Disiplin</span>
+                <span id="shopeeFacePoints" class="font-black text-blue-400 text-sm mt-0.5 block">100 Pts</span>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">Pembatalan</span>
+                <span class="font-black text-emerald-400 text-sm mt-0.5 block">0%</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
 
 
     </div>
@@ -2198,12 +2319,12 @@ input:focus, textarea:focus, select:focus {
       <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
         <div class="flex items-start justify-between">
           <div>
-            <h4 id="incomingOrderTitle" class="font-extrabold text-white text-sm">Layanan Runner / Belanja</h4>
-            <span id="incomingOrderCategory" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">Runner</span>
+            <h4 id="incomingOrderTitle" class="font-extrabold text-white text-sm">Pesanan Masuk</h4>
+            <span id="incomingOrderCategory" class="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 font-semibold border border-orange-500/30">Layanan Jasa</span>
           </div>
           <div class="text-right">
             <span class="text-[10px] text-slate-400 block">Pendapatan Bersih:</span>
-            <span id="incomingOrderFare" class="font-mono font-black text-emerald-400 text-sm">Rp 35.000</span>
+            <span id="incomingOrderFare" class="font-mono font-black text-emerald-400 text-sm">Rp 0</span>
           </div>
         </div>
 
@@ -2836,8 +2957,72 @@ input:focus, textarea:focus, select:focus {
     </div>
   </div>
 
+  <!-- ===== MODAL PANDUAN & SELAMAT DATANG (TERPISAH DARI BERANDA) ===== -->
+  <div id="welcomeInfoModal" class="hidden fixed inset-0 z-[9990] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeWelcomeInfoModal()"></div>
+    <div class="relative w-full max-w-sm bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-orange-500/40 rounded-3xl shadow-2xl p-5 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/40 flex items-center justify-center text-lg shadow">
+            <i class="fa-solid fa-circle-info"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-white text-sm">Panduan &amp; Info Driver</h3>
+            <span class="text-[10px] text-orange-400 font-semibold">SobatSerabut Driver Resmi</span>
+          </div>
+        </div>
+        <button onclick="closeWelcomeInfoModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2.5 text-xs text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+          <h4 class="font-bold text-white text-xs flex items-center space-x-1.5 text-orange-400">
+            <i class="fa-solid fa-handshake"></i>
+            <span>Selamat Datang di SobatSerabut!</span>
+          </h4>
+          <p class="text-[11px] text-slate-300">
+            Layanan serabutan &amp; pekerjaan harian terpercaya siap membantu Anda kapan saja.
+          </p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-1.5">
+          <div class="flex items-center space-x-1.5 text-emerald-400 font-bold text-xs">
+            <i class="fa-solid fa-shield-check"></i>
+            <span>100% Saldo &amp; Penghasilan Nyata</span>
+          </div>
+          <p class="text-[11px] text-slate-300">
+            Semua saldo dompet dan riwayat pendapatan dihitung murni secara nyata dari hasil tugas terselesaikan &amp; top-up riil tanpa simulasi atau saldo palsu.
+          </p>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+          <div class="flex items-center space-x-1.5 text-orange-400 font-bold text-xs">
+            <i class="fa-solid fa-motorcycle"></i>
+            <span>2 Muka Beranda Driver:</span>
+          </div>
+          <ul class="text-[11px] text-slate-300 space-y-1 list-disc list-inside">
+            <li><strong>Muka 1:</strong> Radar pencarian tugas terdekat, peta interaktif, &amp; monitoring tugas aktif.</li>
+            <li><strong>Muka 2:</strong> Ringkasan harian gaya ShopeeFood Driver, saldo dompet, &amp; kinerja.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center space-x-2">
+        <a id="welcomeWaCsLink" href="https://wa.me/6287791201091" target="_blank" class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all">
+          <i class="fa-brands fa-whatsapp text-sm"></i>
+          <span>Hubungi CS WhatsApp</span>
+        </a>
+        <button onclick="closeWelcomeInfoModal()" class="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs active:scale-95 transition-all">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPT -->
-  <script src="js/app.js?v=6.1.1"></script>
+  <script src="js/app.js?v=7.0.0"></script>
 </body>
 </html>
 

@@ -3225,8 +3225,8 @@ function handleBroadcastTypeChange(type) {
   } else {
     if (vContainer) vContainer.classList.add('hidden');
     if (type === 'promo') {
-      if (titleInput) titleInput.value = '🔥 PROMO KOMISI 0% HARI INI!';
-      if (messageInput) messageInput.value = 'Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!';
+      if (titleInput) titleInput.value = '🔥 PROMO PRIORITAS ORDER HARI INI!';
+      if (messageInput) messageInput.value = 'Tingkatkan performa kerja dan raih poin maksimal hari ini langsung di akun mitra Anda!';
     } else if (type === 'announcement') {
       if (titleInput) titleInput.value = '📢 Pengumuman Resmi SobatSerabut';
       if (messageInput) messageInput.value = 'Harap periksa kembali nomor rekening dan detail alamat profil Anda demi kelancaran pencairan saldo dan tugas harian.';
@@ -3236,8 +3236,8 @@ function handleBroadcastTypeChange(type) {
 }
 
 function updateBroadcastPreview() {
-  const title = document.getElementById('broadcastTitleInput')?.value || 'PROMO KOMISI 0% HARI INI!';
-  const message = document.getElementById('broadcastMessageInput')?.value || 'Selesaikan minimal 5 tugas hari ini dan dapatkan bonus saldo tambahan Rp 50.000 langsung cair ke dompet Anda!';
+  const title = document.getElementById('broadcastTitleInput')?.value || 'Pemberitahuan Resmi SobatSerabut';
+  const message = document.getElementById('broadcastMessageInput')?.value || 'Tetap aktifkan GPS dan pantau radar untuk menerima tugas serabutan terdekat.';
   const type = document.getElementById('broadcastTypeSelect')?.value || 'promo';
 
   const previewTitle = document.getElementById('previewTitle');

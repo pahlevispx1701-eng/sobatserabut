@@ -295,16 +295,23 @@ async function requestAllDevicePermissions() {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Bersihkan data palsu/simulasi — hanya data nyata dari pendaftaran yang valid
-  const DATA_VERSION = 'sobatserabut_client_v3_real';
+  const DATA_VERSION = 'sobatserabut_client_v7_pure_real_saldo';
   if (localStorage.getItem('_data_version') !== DATA_VERSION) {
     const savedUser = localStorage.getItem('sobatserabut_client_user');
     localStorage.clear();
     sessionStorage.clear();
-    if (savedUser) localStorage.setItem('sobatserabut_client_user', savedUser);
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        u.walletBalance = 0;
+        u.balance = 0;
+        localStorage.setItem('sobatserabut_client_user', JSON.stringify(u));
+      } catch(e) {}
+    }
     localStorage.setItem('_data_version', DATA_VERSION);
     localStorage.setItem('sobatserabut_client_installed_v2', 'true');
     clientOrders = [];
-    console.log('[Klien] Cache lama & data simulasi dihapus.');
+    console.log('[Klien] Cache lama & data simulasi dihapus murni.');
   } else {
     // 1. First install check: Bersihkan riwayat tugas lama
     if (!localStorage.getItem('sobatserabut_client_installed_v2')) {
@@ -686,8 +693,10 @@ function checkAuthSession() {
         // Akan jatuh ke onGuestSessionInit di bawah
       } else if (parsed && (!parsed.role || parsed.role === 'klien') && !String(parsed.id).startsWith('klien_') && parsed.id !== 'KLN-001') {
         currentUser = parsed;
+        currentUser.walletBalance = Number(currentUser.walletBalance || currentUser.balance || 0);
         localStorage.setItem('sobatserabut_client_user', JSON.stringify(currentUser));
         onUserAuthenticated(currentUser);
+        refreshUserProfile();
         return;
       }
     } catch(e) {}
@@ -767,7 +776,7 @@ function updateProfileTabUI() {
     }
     const walletBalText = document.getElementById('profileWalletBalanceText');
     if (walletBalText) {
-      walletBalText.innerText = `Rp ${Number(currentUser.balance || 0).toLocaleString('id-ID')}`;
+      walletBalText.innerText = `Rp ${Number(currentUser.walletBalance || currentUser.balance || 0).toLocaleString('id-ID')}`;
     }
     const avatarEl = document.getElementById('profileUserAvatar');
     if (avatarEl) {
@@ -3033,18 +3042,24 @@ async function refreshUserProfile() {
   if (!currentUser) return;
   try {
     const res = await fetch(`${API_BASE}/api/auth/profile/${currentUser.id}`).then(r => r.json());
-    if (res.success) {
+    if (res.success && res.data) {
       currentUser = res.data;
+      currentUser.walletBalance = Number(currentUser.walletBalance || currentUser.balance || 0);
       saveClientSession(currentUser);
       updateWalletDisplay();
+      updateProfileTabUI();
     }
   } catch(e) {}
 }
 
 function updateWalletDisplay() {
-  const bal = currentUser?.walletBalance || 0;
-  document.getElementById('headerWalletDisplay').innerText = `Rp ${bal.toLocaleString('id-ID')}`;
-  document.getElementById('walletMainBalance').innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const bal = Number(currentUser?.walletBalance || currentUser?.balance || 0);
+  const headEl = document.getElementById('headerWalletDisplay');
+  if (headEl) headEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const mainEl = document.getElementById('walletMainBalance');
+  if (mainEl) mainEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
+  const profEl = document.getElementById('profileWalletBalanceText');
+  if (profEl) profEl.innerText = `Rp ${bal.toLocaleString('id-ID')}`;
   loadWalletTransactions();
 }
 
@@ -3570,6 +3585,7 @@ async function confirmAutoTopupPayment() {
     }).then(r => r.json());
 
     if (res.success && res.data) {
+      currentUser.walletBalance = res.data.newBalance;
       currentUser.balance = res.data.newBalance;
       saveClientSession(currentUser);
       updateProfileTabUI();
