@@ -1,9 +1,9 @@
-// SobatSerabut v6.2.0 — Auto-generated config — 2026-10-31 00:41:54 WIB
+// SobatSerabut Driver v8.19.1 — Auto-generated config — 2026-10-31 23:25:33 WIB
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: "https://sobatserabut.160.19.166.231.sslip.io",
-  VERSION: "6.2.0",
-  BUILD_DATE: "2026-10-31 00:41:54 WIB",
-  APP_NAME: "SobatSerabut",
+  VERSION: "8.19.1",
+  BUILD_DATE: "2026-10-31 23:25:33 WIB",
+  APP_NAME: "SobatSerabut Driver",
   VPS_IP: "160.19.166.231",
   FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
 };

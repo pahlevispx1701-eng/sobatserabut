@@ -32,7 +32,7 @@
   </script>
 
   <!-- SobatSerabut Server Configuration -->
-  <script src="js/config.js?v=6.1.1"></script>
+  <script src="js/config.js?v=8.19.1"></script>
 
   <!-- Tailwind CSS Local + Fallback CDN -->
   <script src="vendor/tailwind/tailwind.min.js"></script>
@@ -540,577 +540,878 @@ input:focus, textarea:focus, select:focus {
        - Screen 3: Masuk Akun (Tampilan untuk pengguna terdaftar)
        - Screen 4: Lupa Kata Sandi (Tampil saat salah berulang / lupa sandi)
        ======================================================== -->
-  <div id="authContainer" class="fixed inset-0 w-full h-full bg-slate-950 z-50 flex justify-center overflow-y-auto">
-    <div class="w-full max-w-md min-h-screen flex flex-col justify-between relative bg-slate-950">
+    <div id="authContainer" class="fixed inset-0 w-full h-full bg-slate-950 z-50 flex justify-center overflow-y-auto">
+    <div class="w-full max-w-md min-h-screen flex flex-col relative" style="background:linear-gradient(160deg,#020810 0%,#050D1A 50%,#0D1F38 100%)">
 
-    <!-- 1. SCREEN REGISTRASI (TAMPILAN AWAL PERTAMA KALI DAFTAR) -->
-    <div id="authScreenRegister" class="flex flex-col justify-between min-h-screen p-5 pb-8 space-y-4">
-      <div class="space-y-4">
-        <!-- Header Brand -->
-        <div class="text-center pt-2 space-y-1">
-          <div class="w-14 h-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-1.5 shadow-lg">
-            <img id="authRegAppLogo" src="uploads/logo_icon.svg" class="w-10 h-10 object-contain">
-          </div>
-          <span class="inline-block px-3 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider">
-            Driver &amp; Mitra Kerja Resmi
-          </span>
-          <h2 class="text-xl font-black text-white">Pendaftaran Driver Baru</h2>
-          <p class="text-[11px] text-slate-400 max-w-xs mx-auto">Verifikasi KYC kamera selfie &amp; KTP untuk aktivasi akun dan pencairan saldo tugas.</p>
+    <!-- ====================================================
+         SCREEN P: IZIN NOTIFIKASI (Pertama kali buka / download)
+         ==================================================== -->
+    <div id="screenPermissionNotif" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <!-- Icon -->
+        <div class="w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl" style="background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.1));border:1.5px solid rgba(16,185,129,0.35)">
+          <span class="material-symbols-outlined text-5xl" style="color:#10B981">notifications_active</span>
         </div>
-
-        <!-- Banner Error: Akun Klien Mencoba Masuk ke Driver App -->
-        <div id="authKlienErrorBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 border-2 border-red-500/70 text-left space-y-2 shadow-2xl">
-          <div class="flex items-center space-x-2 text-red-300 font-black text-xs">
-            <i class="fa-solid fa-circle-exclamation text-red-400 text-base"></i>
-            <span>Akun Klien Tidak Dapat Masuk ke Driver App</span>
+        <!-- Logo + App name -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-center space-x-2 mb-2">
+            <img src="uploads/logo_icon.svg" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+            <span class="font-black text-xl text-white tracking-tight">sobatserabut driver</span>
           </div>
-          <p class="text-[11px] text-slate-200 leading-relaxed">
-            Akun ini adalah akun <strong>SobatSerabut (Klien)</strong>. Aplikasi Driver hanya untuk <strong>Mitra Driver</strong>. Silakan daftar akun baru sebagai Mitra Driver di bawah, atau buka Aplikasi SobatSerabut untuk memesan jasa.
+          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.19.1</span>
+        </div>
+        <!-- Message -->
+        <div class="p-5 rounded-2xl text-left space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(16,185,129,0.2)">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-emerald-400 text-xl">info</span>
+            <span class="font-bold text-white text-sm">Akses Notifikasi</span>
+          </div>
+          <p class="text-slate-300 text-[13px] leading-relaxed">
+            untuk memastikan anda dapat menerima pesanan dan menggunakan aplikasi dengan lancar ,harap aktifkan akses notifikasi untuk aplikasi sobatserabut driver pada pengaturan
           </p>
-          <button type="button" onclick="document.getElementById('authKlienErrorBanner').classList.add('hidden')" class="text-[10px] text-red-400 hover:text-red-300 font-bold underline">Tutup Peringatan Ini</button>
         </div>
-
-        <!-- Form Pendaftaran Lengkap Driver -->
-        <form id="formRegisterFlow" onsubmit="handleRegisterOtpSubmit(event)" class="space-y-3.5 text-xs">
-          <!-- Peran Akun: Driver / Mitra Kerja -->
-          <input type="hidden" name="regRole" id="regRole" value="mitra">
-          <div class="p-3 rounded-2xl bg-gradient-to-r from-emerald-950/50 to-slate-900 border border-emerald-500/40 flex items-center justify-between shadow-lg">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl border border-emerald-500/40 shadow-inner">
-                <i class="fa-solid fa-id-card"></i>
-              </div>
-              <div>
-                <span class="font-extrabold text-white text-xs block">Akun Driver SobatSerabut</span>
-                <span class="text-[10px] text-emerald-400 font-semibold">Penyedia Jasa &amp; Pengemudi Kerja Nyata</span>
-              </div>
-            </div>
-            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-[9px]">DRIVER MITRA</span>
-          </div>
-
-          <!-- Nama Lengkap Sesuai KTP -->
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Nama Lengkap (Sesuai KTP)</label>
-            <input type="text" id="regNameInput" placeholder="Contoh: Muhammad Rizky" required oninput="handleNameInputChange(this.value)" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-medium focus:border-blue-500 focus:outline-none">
-          </div>
-
-          <!-- NIK 16 Digit -->
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="font-semibold text-slate-300">Nomor Induk Kependudukan (NIK 16 Digit)</label>
-              <span id="regNikCount" class="text-[10px] text-slate-400 font-mono">0/16</span>
-            </div>
-            <input type="text" id="regNikInput" maxlength="16" placeholder="16 digit angka KTP resmi" required oninput="handleNikInput(this)" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono tracking-wider font-semibold focus:border-blue-500 focus:outline-none">
-            <p class="text-[10px] text-slate-500 mt-0.5">Wajib 16 digit sesuai e-KTP Republik Indonesia untuk verifikasi KYC.</p>
-          </div>
-
-          <!-- FOTO SELFIE LANGSUNG DARI KAMERA PENGGUNA (KYC) -->
-          <div class="p-3 rounded-2xl bg-gradient-to-br from-blue-950/40 to-slate-900 border border-blue-500/40 space-y-2">
-            <div class="flex items-center space-x-1.5 text-blue-300 font-bold text-xs">
-              <i class="fa-solid fa-camera"></i>
-              <span>Foto Selfie Langsung Kamera Pengguna (KYC Nyata)</span>
-            </div>
-            <p class="text-[10px] text-slate-400 leading-tight">Ambil foto selfie langsung dari kamera depan HP Anda untuk memastikan keaslian pendaftar.</p>
-            
-            <div class="flex items-center space-x-3 pt-1">
-              <div id="regAvatarPreview" onclick="openDirectCamera('avatar', 'user')" class="w-16 h-16 rounded-2xl bg-slate-950 border-2 border-dashed border-blue-500 flex flex-col items-center justify-center text-blue-400 overflow-hidden flex-shrink-0 cursor-pointer shadow-lg hover:border-blue-400 transition-all">
-                <i class="fa-solid fa-camera text-xl mb-0.5"></i>
-                <span class="text-[8px] font-bold">Selfie</span>
-              </div>
-              <div class="flex-1 space-y-1.5">
-                <button type="button" onclick="openDirectCamera('avatar', 'user')" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-extrabold text-[11px] shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all">
-                  <i class="fa-solid fa-camera text-xs"></i>
-                  <span>📸 Potret Selfie Kamera Langsung</span>
-                </button>
-                <div class="flex items-center justify-between text-[10px] text-slate-400 px-1">
-                  <span id="selfieCameraStatusText">Belum diambil</span>
-                  <button type="button" onclick="document.getElementById('regAvatarInput').click()" class="text-blue-400 hover:underline">Pilih dari Galeri</button>
-                </div>
-                <input type="file" id="regAvatarInput" accept="image/*" capture="user" onchange="previewAvatarImage(this)" class="hidden">
-              </div>
-            </div>
-          </div>
-
-          <!-- Foto e-KTP Asli -->
-          <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="font-semibold text-slate-300 text-xs">Foto Dokumen e-KTP Asli</label>
-              <span id="ktpPhotoStatusText" class="text-[10px] text-slate-500 font-medium">Wajib e-KTP</span>
-            </div>
-            <div class="flex items-center space-x-3">
-              <div id="regKtpPreviewBox" onclick="openDirectCamera('ktp', 'environment')" class="w-20 h-14 rounded-xl bg-slate-950 border border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-400 overflow-hidden cursor-pointer hover:border-blue-500 transition-all flex-shrink-0">
-                <i class="fa-solid fa-id-card text-lg text-blue-400 mb-0.5"></i>
-                <span class="text-[8px] font-bold text-slate-300">Foto KTP</span>
-              </div>
-              <div class="flex-1">
-                <button type="button" onclick="openDirectCamera('ktp', 'environment')" class="w-full py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] flex items-center justify-center space-x-1.5 border border-slate-700">
-                  <i class="fa-solid fa-camera text-blue-400"></i>
-                  <span>Buka Kamera Belakang (KTP)</span>
-                </button>
-                <input type="file" id="regKtpFileInput" accept="image/*" capture="environment" onchange="previewDocImage(this, 'regKtpPreviewBox')" class="hidden">
-              </div>
-            </div>
-          </div>
-
-          <!-- Nomor WhatsApp / HP -->
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Nomor WhatsApp / HP Aktif</label>
-            <div class="relative">
-              <span class="absolute left-3.5 top-2.5 font-bold text-slate-400">+62</span>
-              <input type="tel" id="regPhoneInput" placeholder="Contoh: 081234567890" required oninput="handlePhoneInputChange(this)" class="w-full pl-14 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold focus:border-blue-500 focus:outline-none">
-            </div>
-            <p class="text-[10px] text-slate-500 mt-0.5">Nomor HP utama akun driver Anda.</p>
-          </div>
-
-          <!-- NOMOR HP / WA PENERIMA KODE OTP FLEKSIBEL -->
-          <div class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="block font-semibold text-slate-300 text-xs flex items-center space-x-1.5">
-                <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i>
-                <span>Nomor HP / WhatsApp Penerima Kode OTP</span>
-              </label>
-              <button type="button" onclick="syncRegPhoneToOtpDelivery()" class="text-[10px] text-emerald-400 hover:underline font-bold">Sama dengan HP Driver</button>
-            </div>
-            <div class="relative">
-              <span class="absolute left-3.5 top-2.5 font-bold text-slate-400">+62</span>
-              <input type="tel" id="regOtpDeliveryPhoneInput" placeholder="Contoh: 081234567890" oninput="handlePhoneInputChange(this)" class="w-full pl-14 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold text-xs focus:border-emerald-500 focus:outline-none">
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <button type="button" onclick="quickRequestOtp('whatsapp')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow active:scale-95 transition-all">
-                <i class="fa-brands fa-whatsapp text-sm"></i>
-                <span>Minta OTP WhatsApp</span>
-              </button>
-              <button type="button" onclick="quickRequestOtp('sms')" class="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow active:scale-95 transition-all">
-                <i class="fa-solid fa-comment-sms text-sm"></i>
-                <span>Minta OTP SMS</span>
-              </button>
-            </div>
-            <p class="text-[10px] text-slate-400">Kode OTP verifikasi akan dikirimkan langsung ke nomor HP penerima yang Anda masukkan ini.</p>
-          </div>
-
-          <!-- NOMOR REKENING / E-WALLET NYATA TERHUBUNG DENGAN HP -->
-          <div class="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-1.5 text-emerald-400 font-bold text-xs">
-                <i class="fa-solid fa-wallet"></i>
-                <span>Rekening Bank / E-Wallet Nyata</span>
-              </div>
-              <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">Terhubung HP</span>
-            </div>
-            <p class="text-[10px] text-slate-400 leading-tight">Digunakan untuk pencairan saldo tugas mitra secara otomatis begitu pekerjaan dikonfirmasi selesai.</p>
-
-            <div class="grid grid-cols-3 gap-2">
-              <select id="regBankNameSelect" onchange="handleBankProviderChange(this.value)" class="col-span-1 px-2.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none">
-                <option value="DANA">DANA</option>
-                <option value="GoPay">GoPay</option>
-                <option value="OVO">OVO</option>
-                <option value="ShopeePay">ShopeePay</option>
-                <option value="LinkAja">LinkAja</option>
-                <option value="BCA">Bank BCA</option>
-                <option value="BRI">Bank BRI</option>
-                <option value="Mandiri">Bank Mandiri</option>
-                <option value="BNI">Bank BNI</option>
-                <option value="Bank Jago">Bank Jago</option>
-                <option value="SeaBank">SeaBank</option>
-              </select>
-              <input type="text" id="regBankAccountInput" placeholder="Nomor E-Wallet / Rekening" required oninput="handleBankAccountInputChange(this.value)" class="col-span-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:border-emerald-500 focus:outline-none">
-            </div>
-
-            <!-- Live Validation Feedback -->
-            <div id="regBankValidationFeedback" class="text-[10px] font-semibold min-h-[16px]"></div>
-
-            <!-- Tombol Pintas Hubungkan HP ke E-Wallet -->
-            <button type="button" onclick="syncPhoneToBankAccount()" id="btnSyncPhoneToBank" class="w-full py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold flex items-center justify-center space-x-1.5 transition-all">
-              <i class="fa-solid fa-mobile-screen-button"></i>
-              <span>Hubungkan Nomor HP Ini Sebagai Nomor E-Wallet</span>
-            </button>
-
-            <input type="text" id="regBankHolderInput" placeholder="Nama Pemilik Rekening (Sesuai KTP)" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none">
-          </div>
-
-          <!-- Alamat Lengkap Domisili -->
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Alamat Domisili Lengkap</label>
-            <input type="text" id="regAddressInput" placeholder="Contoh: Jl. Sudirman No. 12, Jakarta" required class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none">
-          </div>
-
-          <!-- Buat Kata Sandi Akun -->
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Buat Kata Sandi Akun</label>
-            <div class="relative">
-              <input type="password" id="regPasswordInput" placeholder="Minimal 6 karakter" required minlength="6" class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-medium focus:border-blue-500 focus:outline-none">
-              <button type="button" onclick="togglePasswordVisibility('regPasswordInput', this)" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-eye text-xs"></i>
-              </button>
-            </div>
-            <p class="text-[10px] text-slate-500 mt-0.5">Kata sandi ini digunakan untuk masuk login kembali di semua HP &amp; laptop.</p>
-          </div>
-
-          <!-- Pilihan Pengiriman Kode OTP -->
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Metode Pengiriman Kode OTP</label>
-            <div class="grid grid-cols-2 gap-2">
-              <label class="cursor-pointer">
-                <input type="radio" name="regOtpMethod" value="whatsapp" checked class="peer sr-only">
-                <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-emerald-500 peer-checked:bg-emerald-600/20 text-center transition-all">
-                  <i class="fa-brands fa-whatsapp text-emerald-400 mr-1"></i>
-                  <span class="text-[11px] font-bold text-white">WhatsApp Bot</span>
-                </div>
-              </label>
-              <label class="cursor-pointer">
-                <input type="radio" name="regOtpMethod" value="sms" class="peer sr-only">
-                <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 peer-checked:border-blue-500 peer-checked:bg-blue-600/20 text-center transition-all">
-                  <i class="fa-solid fa-comment-sms text-blue-400 mr-1"></i>
-                  <span class="text-[11px] font-bold text-white">SMS</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <!-- IZIN SENSOR LOKASI GPS HP NYATA DRIVER -->
-          <div class="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-slate-900 border border-emerald-500/40 space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-1.5 text-emerald-300 font-bold text-xs">
-                <i class="fa-solid fa-satellite-dish"></i>
-                <span>Izin Lokasi GPS Perangkat HP</span>
-              </div>
-              <span id="regGpsStatusPill" class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">Wajib Aktif</span>
-            </div>
-            <p class="text-[10px] text-slate-400 leading-tight">Sensor GPS presisi tinggi wajib aktif agar sistem dapat mendeteksi tugas klien terdekat di sekitar Anda.</p>
-            <button type="button" id="btnRegGpsPrompt" onclick="requestDriverGpsPermission(true)" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[11px] flex items-center justify-center space-x-2 border border-slate-700 active:scale-95 transition-all">
-              <i class="fa-solid fa-location-crosshairs text-emerald-400"></i>
-              <span>Hubungkan &amp; Izinkan Sensor GPS HP</span>
-            </button>
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-xl shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Kirim Kode OTP &amp; Lanjutkan Pendaftaran Driver</span>
-          </button>
-        </form>
       </div>
-
-      <!-- Footer: Link Masuk ke Akun Driver Terdaftar -->
-      <div class="pt-4 pb-2 text-center border-t border-slate-800">
-        <p class="text-xs text-slate-400">Sudah memiliki Akun Driver SobatSerabut?</p>
-        <button type="button" onclick="navigateToAuthScreen('login')" class="mt-2 py-2 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-emerald-400 hover:text-emerald-300 font-extrabold text-xs inline-flex items-center space-x-2 shadow-lg transition-all active:scale-95">
-          <i class="fa-solid fa-right-to-bracket text-xs"></i>
-          <span>Masuk ke Akun Driver</span>
+      <!-- Bottom buttons: nanti saja & pengaturan -->
+      <div class="p-5 pb-8 grid grid-cols-2 gap-3">
+        <button onclick="dismissNotifPermission()" class="py-3.5 rounded-2xl font-bold text-sm text-slate-400 transition-all active:scale-95" style="background:rgba(30,41,59,0.8);border:1px solid rgba(71,85,105,0.4)">
+          nanti saja
+        </button>
+        <button onclick="requestNotifPermission()" class="py-3.5 rounded-2xl font-black text-sm text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          pengaturan
         </button>
       </div>
     </div>
 
-    <!-- 2. SCREEN VERIFIKASI KODE OTP -->
-    <div id="authScreenOtp" class="hidden flex-col justify-between min-h-screen p-5 pb-8 space-y-6">
-      <div class="space-y-6 pt-4">
-        <!-- Header OTP -->
-        <div class="text-center space-y-2">
-          <div class="w-16 h-16 rounded-3xl bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center mx-auto shadow-xl">
-            <i class="fa-solid fa-shield-halved text-2xl text-emerald-400"></i>
+    <!-- ====================================================
+         POPUP 1: Izin Notifikasi Native
+         ==================================================== -->
+    <div id="notifPermDialog" class="hidden fixed inset-0 z-[200] flex items-end justify-center" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+      <div class="w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl" style="background:#0F2440;border-top:1px solid rgba(16,185,129,0.25)">
+        <div class="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3)">
+            <img src="uploads/logo_icon.svg" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
           </div>
-          <h2 class="text-xl font-black text-white">Verifikasi Kode OTP</h2>
-          <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-300 space-y-1">
-            <p>Kode 6-digit dikirim via <strong id="otpScreenMethodLabel" class="text-emerald-400">WhatsApp Bot</strong> ke nomor:</p>
-            <p id="otpScreenPhoneDisplay" class="font-mono font-black text-white text-sm tracking-wider">081234567890</p>
+          <div>
+            <p class="font-black text-white text-sm">izinkan driver mengirim notifikasi kepada anda ?</p>
+            <p class="text-slate-400 text-[11px] mt-0.5">sobatserabut driver</p>
+          </div>
+        </div>
+        <div class="space-y-2 pt-1">
+          <button onclick="onNotifAllowed()" class="w-full py-3.5 rounded-xl font-extrabold text-sm text-white transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669)">
+            izinkan
+          </button>
+          <button onclick="onNotifDenied()" class="w-full py-3.5 rounded-xl font-semibold text-sm text-slate-400 transition-all active:scale-95" style="background:rgba(30,41,59,0.8);border:1px solid rgba(71,85,105,0.3)">
+            jangan izinkan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         POPUP 2: Izin Penggunaan Informasi Anda
+         ==================================================== -->
+    <div id="locationInfoDialog" class="hidden fixed inset-0 z-[200] flex items-end justify-center" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+      <div class="w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl" style="background:#0F2440;border-top:1px solid rgba(16,185,129,0.25)">
+        <div class="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3)">
+            <span class="material-symbols-outlined text-2xl text-emerald-400">location_on</span>
+          </div>
+          <p class="font-black text-white text-sm flex-1">izinkan pengunaam informasi anda</p>
+        </div>
+        <div class="p-4 rounded-2xl text-xs text-slate-300 leading-relaxed" style="background:rgba(2,8,16,0.6);border:1px solid rgba(16,185,129,0.15)">
+          untuk layanan terbaik penguna perlu mengakses lokasi dan informasi perangkat anda sepanjang waktu .driver sobatserabut akan menggunakan lokasi anda untuk menunjukan rute pengantaran jasa yg disarankan pada peta sekaligus memberikan anda jasa dari lokasi terdekat
+        </div>
+        <button onclick="onLocationInfoAgreed()" class="w-full py-3.5 rounded-xl font-extrabold text-sm text-white transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 6px 20px rgba(5,150,105,0.4)">
+          setuju dan aktifkan
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         POPUP 3: Izin Lokasi Perangkat Native
+         ==================================================== -->
+    <div id="locationNativeDialog" class="hidden fixed inset-0 z-[200] flex items-end justify-center" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+      <div class="w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl" style="background:#0F2440;border-top:1px solid rgba(16,185,129,0.25)">
+        <div class="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2"></div>
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3)">
+            <span class="material-symbols-outlined text-2xl text-blue-400">my_location</span>
+          </div>
+          <p class="font-black text-white text-sm flex-1">izinkan driver mengakses lokasi perangkat ini ?</p>
+        </div>
+        <div class="space-y-2 pt-1">
+          <button onclick="onLocationGranted()" class="w-full py-3.5 rounded-xl font-extrabold text-sm text-white transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669)">
+            saat aplikasi digunakan
+          </button>
+          <button onclick="closeLocationNative()" class="w-full py-3.5 rounded-xl font-semibold text-sm text-slate-400 transition-all active:scale-95" style="background:rgba(30,41,59,0.8);border:1px solid rgba(71,85,105,0.3)">
+            jangan izinkan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         POPUP 4: Selalu Izinkan Lokasi di Pengaturan
+         ==================================================== -->
+    <div id="locationAlwaysDialog" class="hidden fixed inset-0 z-[200] flex items-end justify-center" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+      <div class="w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl" style="background:#0F2440;border-top:1px solid rgba(16,185,129,0.25)">
+        <div class="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2"></div>
+        <div class="w-10 h-10 rounded-2xl flex items-center justify-center mx-auto mb-1" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3)">
+          <span class="material-symbols-outlined text-xl text-emerald-400">check_circle</span>
+        </div>
+        <p class="text-white text-sm text-center leading-relaxed">
+          anda dapat menerima pesanan dan menggunakan aplikasi dengan lancar , pilih <strong class="text-emerald-400">'selalu izinkan'</strong> untuk dapat mengakses lokasi di pengaturan
+        </p>
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <button onclick="closeLocationAlways()" class="py-3 rounded-xl font-semibold text-sm text-slate-400 transition-all active:scale-95" style="background:rgba(30,41,59,0.8);border:1px solid rgba(71,85,105,0.3)">
+            batal
+          </button>
+          <button onclick="goToLocationSettings()" class="py-3 rounded-xl font-extrabold text-sm text-white transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669)">
+            pengaturan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN S-OS: PENGATURAN IZIN LOKASI HP (AKSES LOKASI)
+         ==================================================== -->
+    <div id="screenDeviceLocationSettings" class="hidden flex-col min-h-screen" style="background:#090F1C">
+      <div class="safe-top"></div>
+      <!-- Panah kembali sebelah kiri -->
+      <div class="flex items-center px-4 pt-4 pb-3 border-b border-slate-800/80">
+        <button onclick="backFromDeviceLocationSettings()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-colors" style="background:rgba(30,41,59,0.7)" title="Kembali ke tampilan pertama aplikasi">
+          <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </button>
+        <h2 class="font-bold text-white text-base ml-3 select-none">Akses Lokasi Aplikasi</h2>
+      </div>
+
+      <div class="flex-1 p-6 space-y-6">
+        <!-- App info card -->
+        <div class="flex items-center space-x-3.5 p-4 rounded-2xl" style="background:rgba(15,36,64,0.6);border:1px solid rgba(16,185,129,0.25)">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4)">
+            <img src="uploads/logo_icon.svg" class="w-8 h-8 object-contain" onerror="this.outerHTML='<span class=\'text-2xl\'>🛵</span>'">
+          </div>
+          <div>
+            <h3 class="font-black text-white text-sm">sobatserabut driver</h3>
+            <p class="text-xs text-slate-400">Versi 8.19.1</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider">akses lokasi untuk aplikasi ini</p>
+
+          <div class="space-y-2.5">
+            <!-- Pilihan: selalu izinkan -->
+            <label onclick="selectLocationOption('always')" class="flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all border" id="optAlwaysLabel" style="background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.6)">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-emerald-400 text-xl">check_circle</span>
+                <span class="font-bold text-white text-sm">selalu izinkan</span>
+              </div>
+              <input type="radio" name="deviceLocPerm" value="always" checked class="accent-emerald-500 w-4 h-4">
+            </label>
+
+            <!-- Pilihan: Saat Aplikasi Digunakan -->
+            <label onclick="selectLocationOption('in_use')" class="flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all border" id="optInUseLabel" style="background:rgba(15,36,64,0.4);border-color:rgba(71,85,105,0.3)">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-slate-400 text-xl">radio_button_unchecked</span>
+                <span class="font-medium text-slate-300 text-sm">saat aplikasi digunakan</span>
+              </div>
+              <input type="radio" name="deviceLocPerm" value="in_use" class="accent-emerald-500 w-4 h-4">
+            </label>
+
+            <!-- Pilihan: Jangan izinkan -->
+            <label onclick="selectLocationOption('never')" class="flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all border" id="optNeverLabel" style="background:rgba(15,36,64,0.4);border-color:rgba(71,85,105,0.3)">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-slate-400 text-xl">radio_button_unchecked</span>
+                <span class="font-medium text-slate-300 text-sm">jangan izinkan</span>
+              </div>
+              <input type="radio" name="deviceLocPerm" value="never" class="accent-emerald-500 w-4 h-4">
+            </label>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl text-xs text-slate-400 leading-relaxed" style="background:rgba(2,8,16,0.6);border:1px solid rgba(71,85,105,0.3)">
+          <p>Dengan memilih <strong>selalu izinkan</strong>, aplikasi <strong>sobatserabut driver</strong> dapat memindai rute pengantaran jasa pada peta sekaligus memberikan orderan dari lokasi terdekat secara akurat.</p>
+        </div>
+      </div>
+
+      <!-- Bottom button Selesai & Kembali ke tampilan pertama aplikasi -->
+      <div class="p-6 pb-8">
+        <button onclick="backFromDeviceLocationSettings()" class="w-full py-4 rounded-2xl font-black text-sm text-white shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2" style="background:linear-gradient(135deg,#10B981,#059669)">
+          <span class="material-symbols-outlined text-base">arrow_back</span>
+          <span>Kembali ke Tampilan Pertama Aplikasi</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN S: TAMPILAN PERTAMA APLIKASI
+         ==================================================== -->
+    <div id="screenSplash" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8">
+        <!-- Logo glow -->
+        <div class="relative flex items-center justify-center">
+          <div class="absolute w-40 h-40 rounded-full opacity-20 animate-pulse" style="background:radial-gradient(circle,#10B981,transparent 70%)"></div>
+          <div class="relative w-28 h-28 rounded-3xl flex items-center justify-center shadow-2xl" style="background:linear-gradient(135deg,rgba(16,185,129,0.25),rgba(5,150,105,0.1));border:2px solid rgba(16,185,129,0.4)">
+            <img id="splashLogoImg" src="uploads/logo_icon.svg" class="w-20 h-20 object-contain" style="filter:drop-shadow(0 0 20px rgba(16,185,129,0.6))" onerror="this.outerHTML='<span class=\'text-5xl\'>🛵</span>'">
+          </div>
+        </div>
+        <!-- App Name: sobatserabut driver -->
+        <div class="space-y-2">
+          <h1 id="splashAppName" class="font-black text-3xl tracking-tight capitalize" style="background:linear-gradient(90deg,#ffffff,#a7f3d0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">sobatserabut driver</h1>
+          <p class="text-slate-400 text-sm font-medium">Driver &amp; Mitra Kerja Resmi</p>
+          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.19.1</span>
+        </div>
+      </div>
+      <!-- Bottom CTA: log in & Daftar di sini -->
+      <div class="p-6 pb-10 space-y-4">
+        <button onclick="goToPhoneInput('login')" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-2xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981 0%,#059669 55%,#047857 100%);box-shadow:0 10px 32px rgba(5,150,105,0.5)">
+          log in
+        </button>
+        <div class="text-center space-y-1">
+          <p class="text-slate-400 text-sm">ingin daftar jadi mitra sobatserabut</p>
+          <button onclick="goToPhoneInput('register')" class="text-emerald-400 font-extrabold text-sm hover:text-emerald-300 transition-colors underline underline-offset-2">
+            Daftar di sini
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN PH: INPUT NOMOR HP (BUAT AKUN)
+         ==================================================== -->
+    <div id="screenPhoneInput" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <!-- Header: Tulisan atas nya 'buat akun' yg tidak bisa di klik + tanda panah untuk balik ke tampilan sebelumnya -->
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="backToSplash()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors" style="background:rgba(30,41,59,0.6)" title="Kembali ke tampilan sebelumnya">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 id="phoneInputTitle" class="font-black text-white text-base ml-3 select-none pointer-events-none cursor-default">buat akun</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 space-y-6 pt-8">
+        <!-- Icon -->
+        <div class="text-center space-y-3">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35)">
+            <span class="material-symbols-outlined text-3xl text-emerald-400">smartphone</span>
+          </div>
+          <p class="text-slate-400 text-sm">masukan no. handphone untuk memunculkan kode OTP</p>
+        </div>
+        <!-- Input -->
+        <div class="space-y-3">
+          <label class="block text-xs font-semibold text-slate-300">masukan no. handphone</label>
+          <div class="relative">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center space-x-2 pr-3" style="border-right:1px solid rgba(16,185,129,0.2)">
+              <span class="text-xl">🇮🇩</span>
+              <span class="font-bold text-slate-300 text-sm">+62</span>
+            </div>
+            <input type="tel" id="phoneInputField" placeholder="08xxxxxxxxxx" inputmode="numeric"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+              class="w-full pl-24 pr-4 py-4 rounded-2xl text-white font-semibold text-base focus:outline-none transition-all"
+              style="background:rgba(2,8,16,0.75);border:1.5px solid rgba(16,185,129,0.2);color:#E2FFF5">
+          </div>
+          <p class="text-[11px] text-slate-500">Kode OTP WA akan langsung dikirimkan ke nomor WhatsApp Anda</p>
+        </div>
+        <!-- Submit -->
+        <button onclick="submitPhoneInput()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          selanjutnya
+        </button>
+
+        <div class="text-center pt-2">
+          <button onclick="showScreen('screenLoginPassword')" class="text-xs text-slate-400 hover:text-emerald-400 transition-colors">
+            Sudah terdaftar & diverifikasi? <span class="text-emerald-400 font-bold underline">Masuk dengan kata sandi</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN CP: SLIDER PUZZLE CAPTCHA (GESER TEKA-TEKI)
+         ==================================================== -->
+    <div id="screenSliderCaptcha" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="backToPhoneInput()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3">Verifikasi Keamanan</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 items-center justify-center space-y-6">
+        <div class="text-center space-y-2">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35)">
+            <span class="material-symbols-outlined text-2xl text-emerald-400">security</span>
+          </div>
+          <h3 class="font-black text-white text-base">proses verifikasi slider puzzle (geser teka-teki)</h3>
+          <p class="text-slate-400 text-xs">Geser puzzle dengan tepat untuk melanjutkan</p>
+        </div>
+
+        <!-- Slider Puzzle Container -->
+        <div class="w-full space-y-3">
+          <!-- Puzzle Image Area -->
+          <div class="relative w-full rounded-2xl overflow-hidden" id="puzzleContainerArea" style="height:160px;background:linear-gradient(135deg,#0F2440,#132B4A);border:1px solid rgba(16,185,129,0.2)">
+            <!-- Background pattern -->
+            <div class="absolute inset-0" style="background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(16,185,129,0.03) 10px,rgba(16,185,129,0.03) 20px)"></div>
+            <!-- Puzzle hole target -->
+            <div id="puzzleHole" class="absolute rounded-lg" style="width:50px;height:50px;top:55px;left:75%;background:rgba(0,0,0,0.6);border:2px dashed rgba(16,185,129,0.6)"></div>
+            <!-- Puzzle piece overlay (moves with thumb) -->
+            <div id="puzzlePiece" class="absolute rounded-lg shadow-2xl flex items-center justify-center" style="width:50px;height:50px;top:55px;left:6%;background:linear-gradient(135deg,rgba(16,185,129,0.9),rgba(5,150,105,0.95));border:2px solid rgba(52,211,153,0.9);cursor:grab;z-index:10">
+              <span class="material-symbols-outlined text-white text-2xl">extension</span>
+            </div>
+            <!-- Lock icon in hole -->
+            <div class="absolute rounded-lg flex items-center justify-center" style="width:50px;height:50px;top:55px;left:75%">
+              <span class="material-symbols-outlined text-emerald-400 opacity-60 text-2xl">lock_open</span>
+            </div>
+            <!-- Status overlay -->
+            <div id="captchaStatusOverlay" class="hidden absolute inset-0 flex items-center justify-center rounded-2xl z-20" style="background:rgba(5,150,105,0.92)">
+              <div class="text-center text-white">
+                <span class="material-symbols-outlined text-5xl">check_circle</span>
+                <p class="font-black text-sm mt-1">Verifikasi Berhasil!</p>
+              </div>
+            </div>
           </div>
 
-          <!-- Akses Cepat Kode OTP Terbaru -->
-          <div id="otpScreenQuickCard" class="hidden p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/50 text-center space-y-1.5 shadow-lg animate-pulse">
-            <div class="text-[11px] text-emerald-300 font-bold flex items-center justify-center space-x-1.5">
-              <i class="fa-solid fa-key text-emerald-400"></i>
-              <span>KODE OTP RESMI ANDA</span>
+          <!-- Slider Track -->
+          <div id="sliderTrack" class="relative w-full h-14 rounded-2xl overflow-hidden select-none cursor-pointer" style="background:rgba(2,8,16,0.85);border:1.5px solid rgba(16,185,129,0.35)">
+            <!-- Track fill -->
+            <div id="sliderFill" class="absolute left-0 top-0 h-full rounded-2xl pointer-events-none" style="width:0%;background:linear-gradient(90deg,rgba(16,185,129,0.3),rgba(16,185,129,0.15))"></div>
+            <!-- Track text -->
+            <div id="sliderTrackText" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span class="text-slate-400 text-xs font-bold tracking-wider uppercase flex items-center space-x-1.5">
+                <span>Geser teka-teki ke kanan</span>
+                <span class="material-symbols-outlined text-base animate-pulse">chevron_right</span>
+              </span>
             </div>
-            <div id="otpScreenQuickCode" class="text-2xl font-black font-mono text-emerald-300 tracking-widest">------</div>
-            <p class="text-[10px] text-slate-300">"jangan berikan kode otp ini kepada siapapun"</p>
-            <button type="button" onclick="applyQuickDriverOtp()" class="mt-1 py-1 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow inline-flex items-center space-x-1.5">
-              <i class="fa-solid fa-check"></i>
-              <span>Isi Otomatis Kode Ini</span>
+            <!-- Slider Thumb -->
+            <div id="sliderThumb" class="absolute top-1 bottom-1 left-1 aspect-square rounded-xl flex items-center justify-center text-white shadow-lg cursor-grab active:cursor-grabbing touch-none z-10"
+              style="background:linear-gradient(135deg,#10B981,#059669);width:48px;box-shadow:0 4px 16px rgba(5,150,105,0.5)">
+              <span class="material-symbols-outlined text-2xl">chevron_right</span>
+            </div>
+          </div>
+          <p id="captchaMsg" class="text-center text-xs text-slate-400">Seret slider ke kanan dengan tepat hingga pas</p>
+        </div>
+
+        <!-- Refresh button -->
+        <button onclick="resetCaptcha()" class="flex items-center space-x-2 text-sm text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+          <span class="material-symbols-outlined text-base">refresh</span>
+          <span>Muat ulang puzzle</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN OTP: MASUKKAN KODE OTP WA
+         ==================================================== -->
+    <div id="screenOtp" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="backToPhoneInput()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3">Kode Verifikasi OTP</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 space-y-6 pt-6">
+        <!-- Header & Notifikasi WA -->
+        <div class="text-center space-y-3">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35)">
+            <span class="material-symbols-outlined text-3xl text-emerald-400">verified</span>
+          </div>
+          <div class="space-y-1">
+            <h3 class="font-black text-white text-lg">masukan kode otp</h3>
+            <div class="p-3 rounded-2xl text-xs text-emerald-300 leading-relaxed font-medium text-center" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25)">
+              sobatserabut akan mengirimkan kode otp wa yg langsung dikirim ke tiap penguna yg meminta otp
+            </div>
+            <p id="otpPhoneDisplay" class="font-mono font-black text-emerald-400 text-base mt-2">08xxxxxxxxxx</p>
+          </div>
+        </div>
+
+        <!-- OTP Quick Helper Card -->
+        <div id="newOtpQuickCard" class="p-3 rounded-2xl text-center space-y-1 animate-pulse" style="background:rgba(5,150,105,0.2);border:1px solid rgba(16,185,129,0.4)">
+          <p class="text-[11px] text-emerald-300 font-bold flex items-center justify-center space-x-1">
+            <span class="material-symbols-outlined text-sm">key</span>
+            <span>KODE OTP WA RESMI</span>
+          </p>
+          <div id="newOtpQuickCode" class="text-3xl font-black font-mono text-emerald-300 tracking-widest">123456</div>
+          <p class="text-[10px] text-slate-300">"jangan berikan kode otp ini kepada siapapun"</p>
+        </div>
+
+        <!-- 6-digit OTP boxes -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 text-center mb-3">masukan 6 digit otp yang masuk</label>
+          <div id="newOtpBoxes" class="flex justify-center space-x-2">
+            <input type="text" maxlength="1" inputmode="numeric" class="new-otp-input w-12 h-14 text-center text-xl font-black font-mono rounded-xl text-white focus:outline-none transition-all" style="background:rgba(2,8,16,0.8);border:1.5px solid rgba(16,185,129,0.2)" oninput="handleNewOtpInput(this,0)" onkeydown="handleNewOtpBackspace(event,0)">
+            <input type="text" maxlength="1" inputmode="numeric" class="new-otp-input w-12 h-14 text-center text-xl font-black font-mono rounded-xl text-white focus:outline-none transition-all" style="background:rgba(2,8,16,0.8);border:1.5px solid rgba(16,185,129,0.2)" oninput="handleNewOtpInput(this,1)" onkeydown="handleNewOtpBackspace(event,1)">
+            <input type="text" maxlength="1" inputmode="numeric" class="new-otp-input w-12 h-14 text-center text-xl font-black font-mono rounded-xl text-white focus:outline-none transition-all" style="background:rgba(2,8,16,0.8);border:1.5px solid rgba(16,185,129,0.2)" oninput="handleNewOtpInput(this,2)" onkeydown="handleNewOtpBackspace(event,2)">
+            <input type="text" maxlength="1" inputmode="numeric" class="new-otp-input w-12 h-14 text-center text-xl font-black font-mono rounded-xl text-white focus:outline-none transition-all" style="background:rgba(2,8,16,0.8);border:1.5px solid rgba(16,185,129,0.2)" oninput="handleNewOtpInput(this,3)" onkeydown="handleNewOtpBackspace(event,3)">
+            <input type="text" maxlength="1" inputmode="numeric" class="new-otp-input w-12 h-14 text-center text-xl font-black font-mono rounded-xl text-white focus:outline-none transition-all" style="background:rgba(2,8,16,0.8);border:1.5px solid rgba(16,185,129,0.2)" oninput="handleNewOtpInput(this,4)" onkeydown="handleNewOtpBackspace(event,4)">
+            <input type="text" maxlength="1" inputmode="numeric" class="new-otp-input w-12 h-14 text-center text-xl font-black font-mono rounded-xl text-white focus:outline-none transition-all" style="background:rgba(2,8,16,0.8);border:1.5px solid rgba(16,185,129,0.2)" oninput="handleNewOtpInput(this,5)" onkeydown="handleNewOtpBackspace(event,5)">
+          </div>
+          <p class="text-[10px] text-slate-500 text-center mt-2">Jangan berikan kode OTP kepada siapapun</p>
+        </div>
+
+        <!-- Submit -->
+        <button onclick="submitNewOtp()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          selanjutnya
+        </button>
+
+        <!-- Resend -->
+        <div class="text-center text-xs text-slate-400">
+          <span>Belum terima kode? </span>
+          <span id="newOtpTimerLabel">Tunggu <strong id="newOtpCountdown" class="text-emerald-400">60</strong>s</span>
+          <button id="newOtpResendBtn" onclick="resendNewOtp()" class="hidden text-emerald-400 font-bold hover:underline">Kirim Ulang OTP WA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN PW: BUAT PASSWORD
+         ==================================================== -->
+    <div id="screenCreatePassword" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="navigateNewAuth('otp')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3 select-none pointer-events-none cursor-default">buat password</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 space-y-6 pt-8">
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35)">
+            <span class="material-symbols-outlined text-3xl text-emerald-400">lock</span>
+          </div>
+          <p class="text-slate-400 text-sm">isi password sesuai keinginan anda</p>
+        </div>
+        <div class="space-y-3">
+          <label class="block text-xs font-semibold text-slate-300">buat password</label>
+          <div class="relative">
+            <input type="password" id="newPasswordInput" placeholder="Isi password sesuai keinginan" minlength="6"
+              class="w-full px-4 pr-12 py-4 rounded-2xl text-white font-semibold focus:outline-none transition-all"
+              style="background:rgba(2,8,16,0.75);border:1.5px solid rgba(16,185,129,0.2)">
+            <button type="button" onclick="toggleNewPasswordVis('newPasswordInput',this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+              <span class="material-symbols-outlined text-xl">visibility</span>
+            </button>
+          </div>
+          <label class="block text-xs font-semibold text-slate-300 mt-2">konfirmasi password</label>
+          <div class="relative">
+            <input type="password" id="confirmPasswordInput" placeholder="Ketik ulang password"
+              class="w-full px-4 pr-12 py-4 rounded-2xl text-white font-semibold focus:outline-none transition-all"
+              style="background:rgba(2,8,16,0.75);border:1.5px solid rgba(16,185,129,0.2)">
+            <button type="button" onclick="toggleNewPasswordVis('confirmPasswordInput',this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+              <span class="material-symbols-outlined text-xl">visibility</span>
             </button>
           </div>
         </div>
+        <button onclick="submitCreatePassword()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          selanjutnya
+        </button>
+      </div>
+    </div>
 
-        <!-- 6 Digit Input Boxes -->
-        <div>
-          <label class="block font-semibold text-slate-300 text-center mb-2">Masukkan 6-Digit Kode Verifikasi</label>
-          <div class="flex justify-center space-x-2" id="otpDigitsContainer">
-            <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-mono font-black rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none" oninput="handleOtpBoxInput(this, 0)" onkeydown="handleOtpBoxBackspace(event, 0)">
-            <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-mono font-black rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none" oninput="handleOtpBoxInput(this, 1)" onkeydown="handleOtpBoxBackspace(event, 1)">
-            <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-mono font-black rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none" oninput="handleOtpBoxInput(this, 2)" onkeydown="handleOtpBoxBackspace(event, 2)">
-            <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-mono font-black rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none" oninput="handleOtpBoxInput(this, 3)" onkeydown="handleOtpBoxBackspace(event, 3)">
-            <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-mono font-black rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none" oninput="handleOtpBoxInput(this, 4)" onkeydown="handleOtpBoxBackspace(event, 4)">
-            <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-mono font-black rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:outline-none" oninput="handleOtpBoxInput(this, 5)" onkeydown="handleOtpBoxBackspace(event, 5)">
-          </div>
-          <p class="text-[10px] text-slate-500 text-center mt-2">Jangan berikan kode OTP ini kepada siapapun demi keamanan akun.</p>
+    <!-- ====================================================
+         SCREEN PROF: PENDAFTARAN PROFIL
+         ==================================================== -->
+    <div id="screenProfileSetup" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="navigateNewAuth('createPassword')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3">Pendaftaran Driver</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 space-y-5 overflow-y-auto pb-8">
+        <!-- Success message -->
+        <div class="p-4 rounded-2xl text-center space-y-1" style="background:rgba(5,150,105,0.15);border:1px solid rgba(16,185,129,0.3)">
+          <span class="material-symbols-outlined text-3xl text-emerald-400">check_circle</span>
+          <p class="font-black text-white text-sm">anda telah berhasil membuat akun</p>
+          <p class="text-slate-300 text-xs">lengkapi profil anda untuk memulai proses pendaftaran</p>
         </div>
 
-        <!-- Pilihan Masukkan Nomor HP Lain untuk Menerima Kode OTP -->
-        <div class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
+        <!-- Nama Lengkap -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-300">nama lengkap</label>
+          <input type="text" id="profileFullNameInput" placeholder="Isi nama lengkap sesuai KTP"
+            class="w-full px-4 py-3.5 rounded-2xl text-white font-semibold focus:outline-none transition-all"
+            style="background:rgba(2,8,16,0.75);border:1.5px solid rgba(16,185,129,0.2)">
+        </div>
+
+        <!-- Referral source -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold text-slate-300">dari mana anda mengetahui tentang menjadi mitra driver ?</label>
+          <div class="grid grid-cols-1 gap-2" id="referralOptions">
+            <label class="flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all border" style="background:rgba(13,31,56,0.8);border-color:rgba(71,85,105,0.4)" onclick="selectReferral(this,'konten instagram')">
+              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 referral-radio" style="border-color:rgba(71,85,105,0.6)"></div>
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">📸</span>
+                <span class="text-sm text-white font-medium">.konten instagram</span>
+              </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all border" style="background:rgba(13,31,56,0.8);border-color:rgba(71,85,105,0.4)" onclick="selectReferral(this,'konten tiktok')">
+              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 referral-radio" style="border-color:rgba(71,85,105,0.6)"></div>
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🎵</span>
+                <span class="text-sm text-white font-medium">.konten tiktok</span>
+              </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all border" style="background:rgba(13,31,56,0.8);border-color:rgba(71,85,105,0.4)" onclick="selectReferral(this,'iklan facebook')">
+              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 referral-radio" style="border-color:rgba(71,85,105,0.6)"></div>
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">👥</span>
+                <span class="text-sm text-white font-medium">.iklan facebook</span>
+              </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all border" style="background:rgba(13,31,56,0.8);border-color:rgba(71,85,105,0.4)" onclick="selectReferral(this,'video iklan youtube')">
+              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 referral-radio" style="border-color:rgba(71,85,105,0.6)"></div>
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">▶️</span>
+                <span class="text-sm text-white font-medium">.video iklan youtube</span>
+              </div>
+            </label>
+            <label class="flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all border" style="background:rgba(13,31,56,0.8);border-color:rgba(71,85,105,0.4)" onclick="selectReferral(this,'diajak teman')">
+              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 referral-radio" style="border-color:rgba(71,85,105,0.6)"></div>
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🤝</span>
+                <span class="text-sm text-white font-medium">.diajak teman</span>
+              </div>
+            </label>
+          </div>
+          <input type="hidden" id="selectedReferral" value="">
+        </div>
+
+        <button onclick="submitProfileSetup()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          lanjutkan
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN WELC: SELAMAT DATANG! + 2 LANGKAH DOKUMEN
+         ==================================================== -->
+    <div id="screenWelcomeDocs" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex-1 flex flex-col p-6 items-center justify-center space-y-8">
+        <!-- Welcome icon -->
+        <div class="relative">
+          <div class="absolute w-32 h-32 rounded-full opacity-15 animate-pulse" style="background:radial-gradient(circle,#10B981,transparent 70%);top:-8px;left:-8px"></div>
+          <div class="w-24 h-24 rounded-full flex items-center justify-center shadow-2xl relative" style="background:linear-gradient(135deg,rgba(16,185,129,0.25),rgba(5,150,105,0.1));border:2px solid rgba(16,185,129,0.4)">
+            <span class="text-5xl">🎉</span>
+          </div>
+        </div>
+
+        <div class="text-center space-y-2">
+          <h2 class="font-black text-white text-2xl">Selamat Datang!</h2>
+          <p class="text-slate-400 text-sm">Lengkapi dokumen untuk aktivasi akun mitra driver</p>
+        </div>
+
+        <!-- Steps list -->
+        <div class="w-full space-y-3">
+          <div class="flex items-center space-x-4 p-4 rounded-2xl" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2)">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-base text-slate-950 flex-shrink-0" style="background:linear-gradient(135deg,#10B981,#059669)">1</div>
+            <div>
+              <p class="font-bold text-white text-sm">1.upload dokumen terkait</p>
+              <p class="text-slate-400 text-xs">e-ktp, foto selfi, nomer e-wallet/rekening, alamat lengkap</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-4 p-4 rounded-2xl" style="background:rgba(13,31,56,0.8);border:1px solid rgba(71,85,105,0.4)">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-base text-slate-950 flex-shrink-0" style="background:linear-gradient(135deg,#f59e0b,#d97706)">2</div>
+            <div>
+              <p class="font-bold text-white text-sm">2.upload foto profil</p>
+              <p class="text-slate-400 text-xs">foto profil resmi untuk tampilan akun driver</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 pb-10">
+        <button onclick="navigateNewAuth('uploadDocs')" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          mulai
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN DOCS: UPLOAD DOKUMEN TERKAIT
+         ==================================================== -->
+    <div id="screenUploadDocs" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="navigateNewAuth('welcomeDocs')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3">upload dokumen terkait</h2>
+      </div>
+      <div class="flex-1 overflow-y-auto p-5 pb-8 space-y-4">
+
+        <!-- e-KTP -->
+        <div class="p-4 rounded-2xl space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(71,85,105,0.4)">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-white text-[11px] flex items-center space-x-1.5">
-              <i class="fa-solid fa-paper-plane text-emerald-400"></i>
-              <span>Belum terima kode di HP Anda? Kirim ke nomor lain:</span>
+            <div class="flex items-center space-x-2">
+              <span class="material-symbols-outlined text-blue-400 text-xl">badge</span>
+              <span class="font-bold text-white text-sm">e-ktp</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full text-rose-300 font-bold" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3)">Wajib</span>
+          </div>
+          <div id="ktpPreview" onclick="triggerDocUpload('ktpFile')" class="h-32 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all hover:border-blue-400 overflow-hidden relative" style="background:rgba(2,8,16,0.6);border:2px dashed rgba(71,85,105,0.5)">
+            <span class="material-symbols-outlined text-3xl text-slate-500 mb-1">add_photo_alternate</span>
+            <span class="text-xs text-slate-400">Ketuk untuk upload foto e-KTP</span>
+          </div>
+          <input type="file" id="ktpFile" accept="image/*" capture="environment" class="hidden" onchange="previewDocUpload(this,'ktpPreview','ktpBase64')">
+          <input type="text" id="docsNikNumber" placeholder="Nomor NIK KTP (16 digit)" maxlength="16" class="w-full px-3 py-2.5 rounded-xl text-white text-sm font-mono focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)">
+        </div>
+
+        <!-- foto selfi -->
+        <div class="p-4 rounded-2xl space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(71,85,105,0.4)">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="material-symbols-outlined text-emerald-400 text-xl">face</span>
+              <span class="font-bold text-white text-sm">foto selfi</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full text-rose-300 font-bold" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3)">Wajib</span>
+          </div>
+          <div id="selfiePreview" onclick="triggerDocUpload('selfieFile')" class="h-32 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative" style="background:rgba(2,8,16,0.6);border:2px dashed rgba(71,85,105,0.5)">
+            <span class="material-symbols-outlined text-3xl text-slate-500 mb-1">camera_front</span>
+            <span class="text-xs text-slate-400">Ketuk untuk ambil foto selfi</span>
+          </div>
+          <input type="file" id="selfieFile" accept="image/*" capture="user" class="hidden" onchange="previewDocUpload(this,'selfiePreview','selfieBase64')">
+        </div>
+
+        <!-- nomer e-wallet/rekening pendaftar -->
+        <div class="p-4 rounded-2xl space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(71,85,105,0.4)">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-amber-400 text-xl">account_balance_wallet</span>
+            <span class="font-bold text-white text-sm">nomer e-wallet/rekening pendaftar</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <select id="docsWalletProvider" class="col-span-1 px-2 py-2.5 rounded-xl text-white text-xs font-semibold focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)">
+              <option value="DANA">DANA</option>
+              <option value="GOPAY">GoPay</option>
+              <option value="OVO">OVO</option>
+              <option value="SHOPEEPAY">ShopeePay</option>
+              <option value="SeaBank">SeaBank</option>
+              <option value="BCA">BCA</option>
+              <option value="BRI">BRI</option>
+              <option value="Mandiri">Mandiri</option>
+              <option value="BNI">BNI</option>
+            </select>
+            <input type="text" id="docsWalletNumber" placeholder="Nomor rekening / e-wallet" class="col-span-2 px-3 py-2.5 rounded-xl text-white text-sm font-mono focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)">
+          </div>
+          <input type="text" id="docsWalletName" placeholder="Nama pemilik rekening sesuai KTP" class="w-full px-3 py-2.5 rounded-xl text-white text-sm focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)">
+        </div>
+
+        <!-- alamat lengkap -->
+        <div class="p-4 rounded-2xl space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(71,85,105,0.4)">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-rose-400 text-xl">location_on</span>
+            <span class="font-bold text-white text-sm">alamat lengkap</span>
+          </div>
+          <textarea id="docsAddress" rows="3" placeholder="Masukan alamat lengkap domisili pendaftar" class="w-full px-3 py-2.5 rounded-xl text-white text-xs resize-none focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)"></textarea>
+        </div>
+
+        <!-- Submit: lanjutkan -->
+        <button onclick="submitDocsUpload()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          lanjutkan
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN PHOTO: UPLOAD FOTO PROFIL
+         ==================================================== -->
+    <div id="screenUploadPhoto" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="navigateNewAuth('uploadDocs')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3">upload foto profil</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 items-center justify-center space-y-6">
+        <div class="text-center space-y-2">
+          <h3 class="font-black text-white text-xl">upload foto profil</h3>
+          <p class="text-slate-400 text-sm">Foto profil resmi Anda sebagai mitra driver</p>
+        </div>
+
+        <!-- Avatar preview -->
+        <div id="profilePhotoPreview" onclick="triggerDocUpload('profilePhotoFile')" class="relative w-36 h-36 rounded-full overflow-hidden cursor-pointer flex items-center justify-center shadow-2xl" style="background:rgba(13,31,56,0.8);border:3px solid rgba(16,185,129,0.4)">
+          <span class="material-symbols-outlined text-5xl text-slate-500">person</span>
+          <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity" style="background:rgba(0,0,0,0.5)">
+            <span class="material-symbols-outlined text-white text-3xl">camera_alt</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 text-center">Ketuk lingkaran di atas untuk memilih foto</p>
+        <input type="file" id="profilePhotoFile" accept="image/*" capture="user" class="hidden" onchange="previewProfilePhoto(this)">
+
+        <button onclick="triggerDocUpload('profilePhotoFile')" class="px-8 py-3 rounded-2xl font-bold text-sm text-white transition-all active:scale-95" style="background:rgba(13,31,56,0.8);border:1.5px solid rgba(16,185,129,0.35)">
+          <span class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-base">camera_alt</span>
+            <span>Pilih Foto</span>
+          </span>
+        </button>
+
+        <button onclick="submitProfilePhoto()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95 mt-4" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          selanjutnya
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN PEND: MENUNGGU VERIFIKASI ADMIN
+         ==================================================== -->
+    <div id="screenPending" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex-1 flex flex-col p-6 items-center justify-center space-y-8">
+        <!-- Pending animation graphic -->
+        <div class="relative flex items-center justify-center">
+          <div class="absolute w-40 h-40 rounded-full animate-ping opacity-10" style="background:radial-gradient(circle,#f59e0b,transparent)"></div>
+          <div class="absolute w-32 h-32 rounded-full animate-pulse opacity-20" style="background:radial-gradient(circle,#f59e0b,transparent)"></div>
+          <div class="w-24 h-24 rounded-full flex items-center justify-center shadow-2xl relative" style="background:linear-gradient(135deg,rgba(245,158,11,0.25),rgba(217,119,6,0.1));border:2px solid rgba(245,158,11,0.5)">
+            <span class="material-symbols-outlined text-5xl text-amber-400 animate-spin" style="animation-duration:3s">pending</span>
+          </div>
+        </div>
+
+        <div class="text-center space-y-3">
+          <h2 class="font-black text-white text-xl">Selamat , data diri anda akan segera diproses oleh tim terkait</h2>
+          <p class="text-slate-400 text-sm leading-relaxed">mohon menunggu ...maka semua data akan dikirim ke admin untuk keperluan konfirmasi</p>
+          <div class="flex items-center justify-center space-x-1.5 pt-2">
+            <div class="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style="animation-delay:0s"></div>
+            <div class="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style="animation-delay:0.15s"></div>
+            <div class="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style="animation-delay:0.3s"></div>
+          </div>
+        </div>
+
+        <div class="w-full p-4 rounded-2xl space-y-2" style="background:rgba(13,31,56,0.8);border:1px solid rgba(245,158,11,0.25)">
+          <div class="flex items-center space-x-2 text-amber-300 text-xs font-bold">
+            <span class="material-symbols-outlined text-base">info</span>
+            <span>Informasi Konfirmasi Admin</span>
+          </div>
+          <p class="text-slate-300 text-xs leading-relaxed">
+            Data diri dan foto dokumen Anda telah berhasil dikirim ke Admin SobatSerabut. Setelah data diri dikonfirmasi admin, halaman ini akan otomatis berubah ke tampilan awal untuk log in.
+          </p>
+        </div>
+
+        <button onclick="checkPendingStatus()" class="flex items-center space-x-2 text-emerald-400 font-semibold text-sm hover:underline">
+          <span class="material-symbols-outlined text-base">refresh</span>
+          <span>Cek status konfirmasi admin</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ====================================================
+         SCREEN LOGIN: SOBATSERABUT DRIVER LOG IN
+         ==================================================== -->
+    <div id="screenLoginPassword" class="hidden flex-col min-h-screen">
+      <div class="safe-top"></div>
+      <div class="flex items-center px-4 pt-4 pb-2">
+        <button onclick="backToSplash()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </button>
+        <h2 class="font-black text-white text-base ml-3">sobatserabut driver log in</h2>
+      </div>
+      <div class="flex-1 flex flex-col p-6 space-y-5 pt-6">
+        <!-- Header -->
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-lg" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35)">
+            <img src="uploads/logo_icon.svg" class="w-11 h-11 object-contain" onerror="this.outerHTML='<span class=\'text-3xl\'>🛵</span>'">
+          </div>
+          <p class="text-slate-400 text-xs">masukan nomer dan password yg dibuat sebelumnya</p>
+        </div>
+
+        <!-- Banner sukses pendaftaran dikonfirmasi admin -->
+        <div id="loginSuccessRegBanner" class="hidden p-4 rounded-2xl space-y-1" style="background:rgba(5,150,105,0.15);border:1px solid rgba(16,185,129,0.35)">
+          <div class="flex items-center space-x-2 text-emerald-300 font-bold text-xs">
+            <span class="material-symbols-outlined text-base">check_circle</span>
+            <span>Data Anda Telah Dikonfirmasi Admin!</span>
+          </div>
+          <p class="text-slate-200 text-[11px]">Nomor akun Anda telah terisi otomatis. Cukup masukkan password yang dibuat sebelumnya untuk masuk.</p>
+        </div>
+
+        <!-- Phone input -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-300">Nomor WhatsApp / HP</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">+62</span>
+            <input type="tel" id="loginPhoneInput" placeholder="08xxxxxxxxxx" inputmode="numeric"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+              class="w-full pl-16 pr-4 py-3.5 rounded-2xl text-white font-semibold focus:outline-none transition-all"
+              style="background:rgba(2,8,16,0.75);border:1.5px solid rgba(16,185,129,0.2)">
+            <span id="loginPhoneSavedBadge" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-emerald-400 font-bold flex items-center space-x-0.5">
+              <span class="material-symbols-outlined text-xs">bookmark</span>
+              <span>Tersimpan</span>
             </span>
           </div>
-          <div class="space-y-2">
-            <div class="relative">
-              <span class="absolute left-3 top-2 font-bold text-slate-400 text-xs">+62</span>
-              <input type="tel" id="driverResendOtherPhoneInput" placeholder="Contoh: 081234567890" class="w-full pl-12 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs font-bold focus:border-emerald-500 focus:outline-none">
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" onclick="resendDriverOtpToOtherPhone('whatsapp')" class="py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow flex items-center justify-center space-x-1.5 active:scale-95 transition-all">
-                <i class="fa-brands fa-whatsapp text-sm"></i>
-                <span>Kirim via WA</span>
-              </button>
-              <button type="button" onclick="resendDriverOtpToOtherPhone('sms')" class="py-2 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow flex items-center justify-center space-x-1.5 active:scale-95 transition-all">
-                <i class="fa-solid fa-comment-sms text-sm"></i>
-                <span>Kirim via SMS</span>
-              </button>
-            </div>
-          </div>
-          <p class="text-[10px] text-slate-400 leading-tight">Masukkan nomor HP lain jika ingin menerima kode di HP kedua/anggota keluarga.</p>
         </div>
 
-        <!-- Buka WhatsApp Bot Langsung -->
-        <a href="https://wa.me/6287791201091?text=Halo%20Bot%20SobatSerabut,%20mohon%20kirimkan%20kode%20OTP%20saya" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-emerald-400 font-bold text-xs flex items-center justify-center space-x-2 transition-all active:scale-95">
-          <i class="fa-brands fa-whatsapp text-sm"></i>
-          <span>Buka Chat Bot WhatsApp (087791201091) Langsung</span>
-        </a>
+        <!-- Password input -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-slate-300">Kata Sandi</label>
+            <button onclick="showForgotPasswordFlow()" class="text-xs text-emerald-400 font-bold hover:underline">Lupa Kata Sandi?</button>
+          </div>
+          <div class="relative">
+            <input type="password" id="loginPasswordInput" placeholder="Masukkan kata sandi yang dibuat"
+              class="w-full px-4 pr-12 py-3.5 rounded-2xl text-white font-semibold focus:outline-none transition-all"
+              style="background:rgba(2,8,16,0.75);border:1.5px solid rgba(16,185,129,0.2)">
+            <button type="button" onclick="toggleNewPasswordVis('loginPasswordInput',this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+              <span class="material-symbols-outlined text-xl">visibility</span>
+            </button>
+          </div>
+        </div>
 
-        <button type="button" onclick="submitVerifyOtpLogin()" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-xl shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Verifikasi &amp; Masuk / Selesaikan Pendaftaran</span>
+        <!-- Wrong password hint -->
+        <div id="wrongPasswordHint" class="hidden p-3.5 rounded-2xl space-y-2" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3)">
+          <div class="flex items-center space-x-2 text-amber-300 font-bold text-xs">
+            <span class="material-symbols-outlined text-base">warning</span>
+            <span>Salah memasukkan kata sandi?</span>
+          </div>
+          <p class="text-slate-300 text-[11px]">Jika Anda lupa kata sandi, pulihkan dengan kode OTP sekarang.</p>
+          <button onclick="showForgotPasswordFlow()" class="w-full py-2 rounded-xl font-extrabold text-xs text-white transition-all" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+            Reset &amp; Pulihkan Kata Sandi via OTP
+          </button>
+        </div>
+
+        <!-- Login button: log in -->
+        <button onclick="submitLoginPassword()" class="w-full py-4 rounded-2xl font-black text-base text-white shadow-xl transition-all active:scale-95" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(5,150,105,0.4)">
+          log in
         </button>
 
-        <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
-          <button type="button" onclick="navigateToAuthScreen('register')" class="text-slate-400 hover:text-white flex items-center space-x-1">
-            <i class="fa-solid fa-arrow-left text-[10px]"></i>
-            <span>Kembali</span>
-          </button>
-          <div class="flex items-center space-x-2">
-            <span id="otpTimerLabel" class="text-slate-400">Tunggu (<strong id="otpCountdownSec" class="text-emerald-400">60</strong>s)</span>
-            <button type="button" onclick="resendCurrentDriverOtp()" class="text-blue-400 hover:text-blue-300 font-bold underline">Kirim Ulang</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. SCREEN MASUK (LOGIN DEDIKASI KHUSUS AKUN DRIVER MITRA) -->
-    <div id="authScreenLogin" class="hidden flex-col justify-between min-h-screen p-5 pb-8 space-y-6">
-      <div class="space-y-4 pt-4">
-        <!-- Header Login Driver Khusus -->
-        <div class="text-center space-y-1">
-          <div class="w-16 h-16 rounded-3xl bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-2 shadow-lg">
-            <img id="authLoginAppLogo" src="uploads/logo_icon.svg" class="w-11 h-11 object-contain">
-          </div>
-          <span class="inline-block px-3 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
-            KHUSUS DRIVER &amp; MITRA KERJA
-          </span>
-          <h2 class="text-2xl font-black text-white">🚗 Masuk Akun Driver Mitra</h2>
-          <p class="text-xs text-slate-400">Khusus Mitra Driver — Bukan untuk Pelanggan SobatSerabut</p>
-        </div>
-
-        <!-- Banner Sukses Pendaftaran Driver Baru (Otomatis Muncul Setelah Daftar) -->
-        <div id="driverRegisteredNotice" class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border border-emerald-500/60 text-left space-y-1.5 shadow-2xl">
-          <div class="flex items-center space-x-2 text-emerald-300 font-black text-xs">
-            <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-            <span>Pendaftaran Driver Berhasil Disimpan!</span>
-          </div>
-          <p class="text-[11px] text-slate-200 leading-relaxed">
-            Data Anda telah tersimpan rapi. Nomor akun Anda telah terisi otomatis di bawah. Silakan masukkan kata sandi yang baru Anda buat untuk masuk ke Akun Driver Anda.
+        <!-- OTP Login options -->
+        <div class="p-4 rounded-2xl space-y-3" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2)">
+          <p class="text-xs text-emerald-300 font-bold flex items-center space-x-1">
+            <span class="material-symbols-outlined text-sm">bolt</span>
+            <span>Masuk Cepat via OTP</span>
           </p>
-        </div>
-
-        <!-- Form Login Driver -->
-        <form id="formPasswordLogin" onsubmit="handlePasswordLoginSubmit(event)" class="space-y-4 text-xs">
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span>Nomor WhatsApp / HP Driver Terdaftar</span>
-              <span id="loginDriverSavedBadge" class="hidden text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-bookmark mr-0.5"></i>Tersimpan</span>
-            </label>
-            <div class="relative">
-              <span class="absolute left-3.5 top-3 text-emerald-400"><i class="fa-solid fa-id-badge text-xs"></i></span>
-              <input type="text" id="loginPassPhoneInput" placeholder="Contoh: 081234567890" required class="w-full pl-10 pr-3.5 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 font-semibold focus:border-emerald-500 focus:outline-none">
-            </div>
-            <p class="text-[10px] text-slate-500 mt-1">Nomor HP driver otomatis tersimpan di HP ini untuk mempermudah masuk.</p>
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <label class="font-semibold text-slate-300">Kata Sandi Akun Driver</label>
-              <button type="button" onclick="navigateToAuthScreen('forgot')" class="text-xs text-emerald-400 hover:underline font-bold">
-                Lupa Kata Sandi?
-              </button>
-            </div>
-            <div class="relative">
-              <span class="absolute left-3.5 top-3 text-slate-400"><i class="fa-solid fa-lock text-xs"></i></span>
-              <input type="password" id="loginPassSecretInput" placeholder="Masukkan kata sandi akun Driver" required class="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none">
-              <button type="button" onclick="togglePasswordVisibility('loginPassSecretInput', this)" class="absolute right-3.5 top-3 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-eye text-xs"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- WRONG PASSWORD REPEATED DYNAMIC MENU LUPA KATA SANDI -->
-          <div id="wrongPasswordLupaBox" class="hidden p-3.5 rounded-2xl bg-amber-950/60 border border-amber-500/50 space-y-2 text-left animate-pulse">
-            <div class="flex items-center space-x-2 text-amber-300 font-bold text-xs">
-              <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
-              <span>Salah memasukkan kata sandi?</span>
-            </div>
-            <p class="text-[11px] text-slate-300 leading-relaxed">
-              Jika Anda lupa kata sandi akun yang dibuat saat pendaftaran awal, pulihkan kata sandi dengan kode OTP sekarang.
-            </p>
-            <button type="button" onclick="navigateToAuthScreen('forgot')" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-white font-extrabold text-xs shadow-lg flex items-center justify-center space-x-1.5 transition-all">
-              <i class="fa-solid fa-key"></i>
-              <span>Reset &amp; Pulihkan Kata Sandi via OTP</span>
-            </button>
-          </div>
-
-          <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
-            <i class="fa-solid fa-truck-fast text-sm"></i>
-            <span>Masuk ke Akun Driver Sekarang</span>
-          </button>
-
-          <!-- Masuk Cepat Langsung via OTP WhatsApp & SMS Fonnte -->
-          <div class="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/40 space-y-2">
-            <div class="flex items-center space-x-1.5 text-emerald-300 font-bold text-xs">
-              <i class="fa-solid fa-bolt text-emerald-400"></i>
-              <span>Masuk Cepat via OTP WhatsApp / SMS</span>
-            </div>
-            <p class="text-[10px] text-slate-300">
-              Ketik nomor HP Anda pada kolom di atas, lalu ketuk tombol di bawah untuk meminta kode OTP instan:
-            </p>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" onclick="requestLoginOtp('whatsapp')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow active:scale-95 transition-all">
-                <i class="fa-brands fa-whatsapp text-sm"></i>
-                <span>OTP WhatsApp</span>
-              </button>
-              <button type="button" onclick="requestLoginOtp('sms')" class="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow active:scale-95 transition-all">
-                <i class="fa-solid fa-comment-sms text-sm"></i>
-                <span>OTP SMS</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="relative flex items-center justify-center my-2">
-            <div class="border-t border-slate-800 w-full"></div>
-            <span class="bg-slate-950 px-3 text-[10px] text-slate-500 uppercase tracking-wider font-bold">atau</span>
-            <div class="border-t border-slate-800 w-full"></div>
-          </div>
-
-          <!-- Sambungkan Google dengan Nomor HP Nyata -->
-          <button type="button" onclick="handleDriverGoogleAuth()" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all active:scale-95 shadow">
-            <svg class="w-4 h-4" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-            </svg>
-            <span>Masuk / Sambungkan Akun Google Driver</span>
-          </button>
-        </form>
-      </div>
-
-      <!-- Footer: Link Daftar Driver Baru -->
-      <div class="pt-4 pb-2 text-center border-t border-slate-800">
-        <p class="text-xs text-slate-400">Belum memiliki Akun Driver Mitra?</p>
-        <button type="button" onclick="navigateToAuthScreen('register')" class="mt-2 py-2 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-blue-500/40 text-blue-400 hover:text-blue-300 font-extrabold text-xs inline-flex items-center space-x-2 shadow-lg transition-all active:scale-95">
-          <i class="fa-solid fa-user-plus text-xs"></i>
-          <span>Daftar Akun Driver Baru di Sini</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 4. SCREEN LUPA KATA SANDI (DEDIKASI PULIHKAN SANDI) -->
-    <div id="authScreenForgot" class="hidden flex-col justify-between min-h-screen p-5 pb-8 space-y-6">
-      <div class="space-y-5 pt-4">
-        <!-- Header Lupa Sandi -->
-        <div class="text-center space-y-1">
-          <div class="w-16 h-16 rounded-3xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center mx-auto mb-2 shadow-lg">
-            <i class="fa-solid fa-key text-2xl text-amber-400"></i>
-          </div>
-          <h2 class="text-2xl font-black text-white">Pulihkan Kata Sandi</h2>
-          <p class="text-xs text-slate-400">Masukkan nomor WhatsApp atau HP terdaftar untuk menerima kode verifikasi OTP reset sandi</p>
-        </div>
-
-        <!-- Step 1: Input Nomor HP -->
-        <div id="forgotPhoneInputStep" class="space-y-4 text-xs">
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Nomor WhatsApp atau HP Terdaftar</label>
-            <div class="relative">
-              <span class="absolute left-3.5 top-2.5 font-bold text-slate-400">+62</span>
-              <input type="tel" id="forgotPhoneInput" placeholder="Contoh: 081234567890" class="w-full pl-14 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold focus:border-amber-500 focus:outline-none">
-            </div>
-            <p class="text-[10px] text-slate-500 mt-1">Bot resmi 087791201091 akan mengirimkan kode OTP 6-digit.</p>
-          </div>
-
-          <div class="space-y-2 pt-1">
-            <button type="button" onclick="requestForgotPasswordOtp('whatsapp')" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all">
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="requestLoginOtp('whatsapp')" class="py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center space-x-1.5 transition-all active:scale-95" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
               <i class="fa-brands fa-whatsapp text-sm"></i>
-              <span>Kirim OTP Reset via WhatsApp Bot</span>
+              <span>OTP WhatsApp</span>
             </button>
-            <button type="button" onclick="requestForgotPasswordOtp('sms')" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 transition-all">
+            <button onclick="requestLoginOtp('sms')" class="py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center space-x-1.5 transition-all active:scale-95" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
               <i class="fa-solid fa-comment-sms text-sm"></i>
-              <span>Kirim OTP Reset via SMS</span>
+              <span>OTP SMS</span>
             </button>
           </div>
         </div>
 
-        <!-- Step 2: Layar Masukkan OTP & Kata Sandi Baru -->
-        <div id="forgotVerifyStep" class="hidden space-y-4 text-xs">
-          <div class="p-3 rounded-2xl bg-amber-900/20 border border-amber-500/30 text-center space-y-0.5">
-            <p class="text-xs text-slate-300">Kode OTP reset telah dikirim via <strong id="forgotMethodLabel" class="text-emerald-400">WhatsApp</strong> ke:</p>
-            <p id="forgotPhoneTargetDisplay" class="font-mono font-bold text-white text-xs">081234567890</p>
-          </div>
-
-          <!-- Akses Cepat OTP Reset -->
-          <div id="forgotOtpScreenQuickCard" class="hidden p-3 rounded-2xl bg-amber-950/70 border border-amber-500/50 text-center space-y-1 shadow-lg animate-pulse">
-            <div class="text-[11px] text-amber-300 font-bold flex items-center justify-center space-x-1.5">
-              <i class="fa-solid fa-key text-amber-400"></i>
-              <span>KODE OTP RESET KATA SANDI</span>
-            </div>
-            <div id="forgotOtpScreenQuickCode" class="text-2xl font-black font-mono text-amber-300 tracking-widest">------</div>
-            <p class="text-[10px] text-slate-400">"jangan berikan kode otp ini kepada siapapun"</p>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-300 text-center mb-1.5">Masukkan 6-Digit Kode OTP</label>
-            <div class="flex justify-center space-x-1.5" id="forgotOtpDigitsContainer">
-              <input type="text" maxlength="1" class="otp-box w-10 h-11 text-center text-lg font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none" oninput="handleForgotOtpBoxInput(this, 0)" onkeydown="handleForgotOtpBoxBackspace(event, 0)">
-              <input type="text" maxlength="1" class="otp-box w-10 h-11 text-center text-lg font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none" oninput="handleForgotOtpBoxInput(this, 1)" onkeydown="handleForgotOtpBoxBackspace(event, 1)">
-              <input type="text" maxlength="1" class="otp-box w-10 h-11 text-center text-lg font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none" oninput="handleForgotOtpBoxInput(this, 2)" onkeydown="handleForgotOtpBoxBackspace(event, 2)">
-              <input type="text" maxlength="1" class="otp-box w-10 h-11 text-center text-lg font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none" oninput="handleForgotOtpBoxInput(this, 3)" onkeydown="handleForgotOtpBoxBackspace(event, 3)">
-              <input type="text" maxlength="1" class="otp-box w-10 h-11 text-center text-lg font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none" oninput="handleForgotOtpBoxInput(this, 4)" onkeydown="handleForgotOtpBoxBackspace(event, 4)">
-              <input type="text" maxlength="1" class="otp-box w-10 h-11 text-center text-lg font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-amber-500 focus:outline-none" oninput="handleForgotOtpBoxInput(this, 5)" onkeydown="handleForgotOtpBoxBackspace(event, 5)">
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Kata Sandi Baru (Min. 6 Karakter)</label>
-            <input type="password" id="forgotNewPasswordInput" placeholder="Masukkan kata sandi baru..." required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-500">
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-300 mb-1">Konfirmasi Kata Sandi Baru</label>
-            <input type="password" id="forgotConfirmPasswordInput" placeholder="Ketik ulang kata sandi baru..." required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-amber-500">
-          </div>
-
-          <button type="button" onclick="submitResetPasswordWithOtp()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-white font-extrabold text-xs shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 transition-all">
-            <i class="fa-solid fa-lock-check"></i>
-            <span>Simpan Kata Sandi Baru &amp; Masuk</span>
+        <!-- Register link: Daftar di sini -->
+        <div class="text-center pt-2 pb-4 border-t border-slate-800/60">
+          <p class="text-xs text-slate-400">ingin daftar jadi mitra sobatserabut?</p>
+          <button onclick="goToPhoneInput('register')" class="mt-1 text-emerald-400 font-extrabold text-sm hover:underline">
+            Daftar di sini
           </button>
         </div>
       </div>
-
-      <!-- Footer: Kembali ke Login -->
-      <div class="pt-4 pb-2 text-center border-t border-slate-800">
-        <button type="button" onclick="navigateToAuthScreen('login')" class="text-xs text-slate-400 hover:text-white flex items-center justify-center space-x-1 mx-auto underline">
-          <i class="fa-solid fa-arrow-left text-[10px]"></i>
-          <span>Batal &amp; Kembali ke Halaman Masuk</span>
-        </button>
-      </div>
     </div>
-  </div>
-</div> <!-- /authContainer -->
+
+    <!-- Legacy hidden containers for compatibility -->
+    <div id="authScreenRegister" class="hidden"></div>
+    <div id="authScreenOtp" class="hidden"></div>
+    <div id="authScreenLogin" class="hidden"></div>
+    <div id="authScreenForgot" class="hidden"></div>
+
+    </div>
+  </div> <!-- /authContainer -->
 
 
   <!-- ========================================================
@@ -1143,7 +1444,7 @@ input:focus, textarea:focus, select:focus {
           <div class="flex items-center space-x-2">
             <div>
               <div class="flex items-center space-x-1.5">
-                <span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #a7f3d0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
+                <button onclick="openDriverDrawer()" title="Menu Driver" class="inline-flex items-center justify-center mr-1 text-emerald-400 hover:text-emerald-300"><span class="material-symbols-outlined text-xl">menu</span></button><span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #a7f3d0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
                 <span id="roleHeaderBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">DRIVER MITRA</span>
               </div>
               <div class="flex items-center space-x-1.5 mt-0.5">
@@ -1927,7 +2228,7 @@ input:focus, textarea:focus, select:focus {
       <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
       <span class="text-[10px]">Dompet</span>
     </button>
-    <button onclick="switchMainTab('profile')" id="navBtn-profile" class="flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-200 transition-all">
+    <button onclick="openDriverDrawer(); switchMainTab('profile')" id="navBtn-profile" class="flex flex-col items-center space-y-0.5 text-slate-400 hover:text-slate-200 transition-all">
       <span class="material-symbols-outlined text-2xl">person</span>
       <span class="text-[10px]">Saya</span>
     </button>
@@ -3022,7 +3323,559 @@ input:focus, textarea:focus, select:focus {
   </div>
 
   <!-- SCRIPT -->
-  <script src="js/app.js?v=7.0.0"></script>
+  <script src="js/app.js?v=8.19.1"></script>
+
+  <!-- ========================================================
+       SLIDING DRAWER / PERSISTENT BOTTOM SHEET PANEL
+       Flutter / React Native / Web Hybrid Touch & Gesture Handling
+       ======================================================== -->
+  <div id="driverDrawerBackdrop" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[9980] transition-opacity duration-300" onclick="closeDriverDrawer()"></div>
+
+  <div id="driverDrawerPanel" class="fixed inset-y-0 left-0 w-full sm:w-96 max-w-[85vw] bg-slate-950 border-r border-emerald-500/30 z-[9985] transform -translate-x-full transition-transform duration-300 ease-out flex flex-col shadow-2xl overflow-hidden" style="background: linear-gradient(180deg, #071120 0%, #0d1a2d 60%, #060d17 100%);">
+    
+    <!-- 1. Header Panel -->
+    <div class="p-4 pb-3 border-b border-slate-800/80 flex items-center justify-between safe-top">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style="background: rgba(16,185,129,0.15); border: 1.5px solid rgba(16,185,129,0.35);">
+          <img src="uploads/logo_icon.svg" class="w-6 h-6 object-contain" onerror="this.outerHTML='<span class=\'text-lg\'>🛵</span>'">
+        </div>
+        <div>
+          <h2 class="text-sm font-black text-white tracking-tight">sobatserabut driver</h2>
+          <span class="inline-block px-2 py-0.2 rounded-full text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">v8.19.1</span>
+        </div>
+      </div>
+      <button onclick="closeDriverDrawer()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors" style="background: rgba(30,41,59,0.6);" title="Tutup Menu">
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    </div>
+
+    <!-- Scrollable Drawer Body with gesture handling -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4" id="driverDrawerContent">
+      
+      <!-- 2. Informasi Akun -->
+      <div class="p-4 rounded-2xl relative overflow-hidden space-y-3" style="background: rgba(15,36,64,0.65); border: 1px solid rgba(16,185,129,0.25);">
+        <div class="flex items-center space-x-3.5">
+          <div class="relative w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg" style="border: 2px solid rgba(16,185,129,0.5); background: #0F2440;">
+            <img id="drawerDriverAvatar" src="uploads/avatar_mitra.svg" class="w-full h-full object-cover" onerror="this.src='uploads/avatar_mitra.svg'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 id="drawerDriverName" class="font-black text-white text-sm truncate">Mitra Driver</h3>
+            <p id="drawerDriverPhone" class="text-xs text-slate-400 font-mono truncate">08xxxxxxxxxx</p>
+            <div class="flex items-center space-x-2 mt-1">
+              <span id="drawerDriverIdBadge" class="text-[9px] px-2 py-0.5 rounded-full font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">MTR-0001</span>
+              <span class="text-[10px] text-amber-400 font-extrabold flex items-center space-x-0.5">
+                <span class="material-symbols-outlined text-xs">star</span>
+                <span id="drawerDriverRating">5.0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+          <span class="text-slate-400">Status Akun:</span>
+          <span id="drawerAccountStatusBadge" class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">TERVERIFIKASI AKTIF</span>
+        </div>
+      </div>
+
+      <!-- 3. List Menu Navigasi (ikon + teks judul + teks sub-judul + panah kanan) -->
+      <div class="space-y-2">
+        <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider px-1">Menu Kerja Driver</p>
+
+        <!-- Menu 1: status kerja (merubah status on/off) -->
+        <div class="p-3.5 rounded-2xl flex items-center justify-between transition-all" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);">
+              <span class="material-symbols-outlined text-xl text-emerald-400">power_settings_new</span>
+            </div>
+            <div>
+              <h4 class="font-black text-white text-xs">status kerja</h4>
+              <p id="drawerStatusSubtext" class="text-[10px] text-emerald-300">Driver ONLINE (Siap Terima Order)</p>
+            </div>
+          </div>
+          <!-- Switch Toggle ON / OFF -->
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="drawerStatusWorkToggle" onchange="onDrawerWorkToggleChange(this.checked)" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <!-- Menu 2: saldo saya (isi saldo, tarik saldo, riwayat transaksi) -->
+        <div onclick="openDrawerSaldoView()" class="p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all active:scale-[0.99]" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);">
+              <span class="material-symbols-outlined text-xl text-amber-400">account_balance_wallet</span>
+            </div>
+            <div>
+              <h4 class="font-black text-white text-xs">saldo saya</h4>
+              <p id="drawerSaldoDisplay" class="text-[10px] text-amber-300 font-mono font-bold">Rp 0</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-lg">chevron_right</span>
+        </div>
+
+        <!-- Menu 3: rangkuman pendapatan -->
+        <div onclick="openDrawerIncomeView()" class="p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all active:scale-[0.99]" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);">
+              <span class="material-symbols-outlined text-xl text-blue-400">monitoring</span>
+            </div>
+            <div>
+              <h4 class="font-black text-white text-xs">rangkuman pendapatan</h4>
+              <p class="text-[10px] text-slate-400">Ringkasan hasil kerja harian &amp; kinerja</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-lg">chevron_right</span>
+        </div>
+
+        <!-- Menu 4: pengaturan (membuka tampilan baru data profil saya & akun saya) -->
+        <div onclick="openDriverSettingsView()" class="p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all active:scale-[0.99]" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);">
+              <span class="material-symbols-outlined text-xl text-emerald-400">settings</span>
+            </div>
+            <div>
+              <h4 class="font-black text-white text-xs">pengaturan</h4>
+              <p class="text-[10px] text-slate-400">data profil saya &amp; akun saya</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-lg">chevron_right</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Drawer -->
+    <div class="p-4 border-t border-slate-800/80 safe-bottom flex items-center justify-between text-[11px] text-slate-500">
+      <span>Versi 8.19.1</span>
+      <span class="text-emerald-400 font-bold flex items-center space-x-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span>Terhubung ke Admin</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: TAMPILAN BARU PENGATURAN
+       (data profil saya & akun saya dengan opsi ubah & log out)
+       ======================================================== -->
+  <div id="driverSettingsViewModal" class="hidden fixed inset-0 z-[9990] flex flex-col justify-end max-w-md mx-auto" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+    <div class="w-full h-[90vh] bg-slate-950 rounded-t-3xl border-t border-emerald-500/30 flex flex-col shadow-2xl overflow-hidden" style="background: linear-gradient(180deg, #071120 0%, #0d1a2d 60%, #060d17 100%);">
+      
+      <!-- Header Pengaturan -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button onclick="closeDriverSettingsView()" class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background: rgba(30,41,59,0.6);">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+          </button>
+          <div>
+            <h3 class="font-black text-white text-base">Pengaturan Driver</h3>
+            <p class="text-[10px] text-emerald-400">data profil saya &amp; akun saya</p>
+          </div>
+        </div>
+        <button onclick="closeDriverSettingsView()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <!-- Body Pengaturan -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-5 pb-12">
+        
+        <!-- BAGIAN 1: DATA PROFIL SAYA -->
+        <div class="space-y-3">
+          <div class="flex items-center space-x-2 px-1">
+            <span class="material-symbols-outlined text-emerald-400 text-lg">badge</span>
+            <h4 class="font-black text-white text-xs uppercase tracking-wider">data profil saya</h4>
+          </div>
+          <div class="p-4 rounded-2xl space-y-3.5" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+            <!-- Nama Lengkap -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div>
+                <p class="text-[10px] text-slate-400">Nama Lengkap</p>
+                <p id="setProfileName" class="font-bold text-white text-xs mt-0.5">-</p>
+              </div>
+              <button onclick="openEditProfileDialog('name')" class="text-xs text-emerald-400 font-bold hover:underline">Ubah</button>
+            </div>
+            <!-- No HP -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div>
+                <p class="text-[10px] text-slate-400">Nomor Handphone / WhatsApp</p>
+                <p id="setProfilePhone" class="font-bold text-white text-xs font-mono mt-0.5">-</p>
+              </div>
+              <button onclick="openChangePhoneDialog()" class="text-xs text-emerald-400 font-bold hover:underline">Ubah</button>
+            </div>
+            <!-- Alamat Lengkap -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div class="flex-1 pr-2">
+                <p class="text-[10px] text-slate-400">Alamat Lengkap</p>
+                <p id="setProfileAddress" class="font-bold text-white text-xs mt-0.5 leading-snug">-</p>
+              </div>
+              <button onclick="openEditProfileDialog('address')" class="text-xs text-emerald-400 font-bold hover:underline">Ubah</button>
+            </div>
+            <!-- NIK / e-KTP -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div>
+                <p class="text-[10px] text-slate-400">Nomor Induk Kependudukan (NIK e-KTP)</p>
+                <p id="setProfileNik" class="font-bold text-white text-xs font-mono mt-0.5">-</p>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold">Terdaftar</span>
+            </div>
+            <!-- Rekening / E-Wallet -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div>
+                <p class="text-[10px] text-slate-400">Rekening / E-Wallet Pencairan</p>
+                <p id="setProfileBank" class="font-bold text-white text-xs mt-0.5">-</p>
+              </div>
+              <button onclick="openEditProfileDialog('bank')" class="text-xs text-emerald-400 font-bold hover:underline">Ubah</button>
+            </div>
+            <!-- Foto Verifikasi e-KTP & Selfie -->
+            <div class="pt-1">
+              <p class="text-[10px] text-slate-400 mb-2">Foto Verifikasi Identitas (KYC)</p>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div onclick="viewFullKycPhoto('ktp')" class="h-24 rounded-xl relative overflow-hidden flex flex-col items-center justify-center cursor-pointer border border-slate-700 hover:border-emerald-400 transition-all" style="background: rgba(2,8,16,0.8);">
+                  <img id="setKtpImgPreview" src="" class="hidden w-full h-full object-cover">
+                  <div id="setKtpFallbackIcon" class="text-center text-slate-500">
+                    <span class="material-symbols-outlined text-2xl">badge</span>
+                    <p class="text-[9px] mt-0.5">e-KTP</p>
+                  </div>
+                </div>
+                <div onclick="viewFullKycPhoto('selfie')" class="h-24 rounded-xl relative overflow-hidden flex flex-col items-center justify-center cursor-pointer border border-slate-700 hover:border-emerald-400 transition-all" style="background: rgba(2,8,16,0.8);">
+                  <img id="setSelfieImgPreview" src="" class="hidden w-full h-full object-cover">
+                  <div id="setSelfieFallbackIcon" class="text-center text-slate-500">
+                    <span class="material-symbols-outlined text-2xl">face</span>
+                    <p class="text-[9px] mt-0.5">Selfie</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BAGIAN 2: AKUN SAYA -->
+        <div class="space-y-3">
+          <div class="flex items-center space-x-2 px-1">
+            <span class="material-symbols-outlined text-blue-400 text-lg">manage_accounts</span>
+            <h4 class="font-black text-white text-xs uppercase tracking-wider">akun saya</h4>
+          </div>
+          <div class="rounded-2xl divide-y divide-slate-800/80 overflow-hidden" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+            <!-- ubah password -->
+            <div onclick="openChangePasswordDialog()" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-colors">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-amber-400 text-lg">lock_reset</span>
+                <span class="font-bold text-white text-xs">ubah password</span>
+              </div>
+              <span class="material-symbols-outlined text-slate-400 text-base">chevron_right</span>
+            </div>
+            <!-- no hp -->
+            <div onclick="openChangePhoneDialog()" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-colors">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-emerald-400 text-lg">smartphone</span>
+                <div>
+                  <span class="font-bold text-white text-xs block">no hp</span>
+                  <span id="setAkunPhoneSubtext" class="text-[10px] text-slate-400 font-mono">08xxxxxxxxxx</span>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-slate-400 text-base">chevron_right</span>
+            </div>
+            <!-- email -->
+            <div onclick="openChangeEmailDialog()" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-colors">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-blue-400 text-lg">mail</span>
+                <div>
+                  <span class="font-bold text-white text-xs block">email</span>
+                  <span id="setAkunEmailSubtext" class="text-[10px] text-slate-400">mitra@sobatserabut.id</span>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-slate-400 text-base">chevron_right</span>
+            </div>
+            <!-- login cepat -->
+            <div class="p-3.5 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-purple-400 text-lg">bolt</span>
+                <div>
+                  <span class="font-bold text-white text-xs block">login cepat</span>
+                  <span class="text-[10px] text-slate-400">Masuk otomatis tanpa minta ulang password</span>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setToggleQuickLogin" onchange="toggleQuickLogin(this.checked)" class="sr-only peer" checked>
+                <div class="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+            <!-- autentikasi biometrik -->
+            <div class="p-3.5 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-rose-400 text-lg">fingerprint</span>
+                <div>
+                  <span class="font-bold text-white text-xs block">autentikasi biometrik</span>
+                  <span class="text-[10px] text-slate-400">Kunci aplikasi dengan sidik jari / Face ID</span>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setToggleBiometric" onchange="toggleBiometricAuth(this.checked)" class="sr-only peer">
+                <div class="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+            <!-- ajukan penghapusan akun -->
+            <div onclick="openDeleteAccountDialog()" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-rose-950/20 transition-colors">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-rose-500 text-lg">person_remove</span>
+                <div>
+                  <span class="font-bold text-rose-400 text-xs block">ajukan pengahpusan akun</span>
+                  <span class="text-[10px] text-slate-500">Kirim permohonan tutup akun ke admin</span>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-rose-500 text-base">chevron_right</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol Log Out di bagian bawah tampilan akun saya -->
+        <div class="pt-4">
+          <button onclick="handleLogout()" class="w-full py-4 rounded-2xl font-black text-sm text-rose-300 bg-rose-600/15 border border-rose-500/30 hover:bg-rose-600/25 active:scale-95 transition-all flex items-center justify-center space-x-2 shadow-lg shadow-rose-950/30">
+            <span class="material-symbols-outlined text-lg">logout</span>
+            <span>log out</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: TAMPILAN SALDO DRIVER
+       (saldo saya, isi saldo, tarik saldo, riwayat transaksi)
+       ======================================================== -->
+  <div id="driverSaldoViewModal" class="hidden fixed inset-0 z-[9990] flex flex-col justify-end max-w-md mx-auto" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+    <div class="w-full h-[85vh] bg-slate-950 rounded-t-3xl border-t border-amber-500/30 flex flex-col shadow-2xl overflow-hidden" style="background: linear-gradient(180deg, #071120 0%, #0d1a2d 60%, #060d17 100%);">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button onclick="closeDriverSaldoView()" class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background: rgba(30,41,59,0.6);">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+          </button>
+          <div>
+            <h3 class="font-black text-white text-base">saldo saya</h3>
+            <p class="text-[10px] text-amber-400">100% Saldo Dompet Driver Nyata</p>
+          </div>
+        </div>
+        <button onclick="closeDriverSaldoView()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-12">
+        <!-- Big Saldo Card -->
+        <div class="p-5 rounded-3xl relative overflow-hidden shadow-2xl text-center space-y-3" style="background: linear-gradient(135deg, #132a4a 0%, #0f1f35 100%); border: 1.5px solid rgba(245,158,11,0.35);">
+          <p class="text-xs text-amber-300 font-extrabold uppercase tracking-wider">Saldo Driver Aktif</p>
+          <h2 id="saldoModalBigAmount" class="text-3xl font-black font-mono text-white tracking-tight">Rp 0</h2>
+          
+          <!-- Tombol Isi Saldo & Tarik Saldo -->
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="openTopupModalFromSaldo()" class="py-3 px-4 rounded-xl font-black text-xs text-white shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-1.5" style="background: linear-gradient(135deg, #10B981, #059669);">
+              <span class="material-symbols-outlined text-base">add_circle</span>
+              <span>isi saldo</span>
+            </button>
+            <button onclick="openWithdrawModalFromSaldo()" class="py-3 px-4 rounded-xl font-black text-xs text-white shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-1.5" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+              <span class="material-symbols-outlined text-base">payments</span>
+              <span>tarik saldo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Riwayat Transaksi di Bagian Bawah -->
+        <div class="space-y-2 pt-2">
+          <div class="flex items-center justify-between px-1">
+            <h4 class="font-black text-white text-xs uppercase tracking-wider">riwayat transaksi</h4>
+            <span class="text-[10px] text-slate-400 font-semibold" id="saldoTxCountLabel">0 Transaksi</span>
+          </div>
+          <div id="saldoModalTxList" class="space-y-2">
+            <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-center text-xs text-slate-400">
+              Belum ada riwayat transaksi. Saldo diperoleh dari tugas selesai atau top up riil.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: RANGKUMAN PENDAPATAN DRIVER
+       ======================================================== -->
+  <div id="driverIncomeViewModal" class="hidden fixed inset-0 z-[9990] flex flex-col justify-end max-w-md mx-auto" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+    <div class="w-full h-[85vh] bg-slate-950 rounded-t-3xl border-t border-blue-500/30 flex flex-col shadow-2xl overflow-hidden" style="background: linear-gradient(180deg, #071120 0%, #0d1a2d 60%, #060d17 100%);">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button onclick="closeDriverIncomeView()" class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background: rgba(30,41,59,0.6);">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+          </button>
+          <div>
+            <h3 class="font-black text-white text-base">rangkuman pendapatan</h3>
+            <p class="text-[10px] text-blue-400">Kinerja &amp; Statistik Tugas Driver</p>
+          </div>
+        </div>
+        <button onclick="closeDriverIncomeView()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-12">
+        <!-- 4 Grid Metrik -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-4 rounded-2xl border border-slate-800 space-y-1" style="background: rgba(13,31,56,0.8);">
+            <p class="text-[10px] text-slate-400 font-medium">Pendapatan Hari Ini</p>
+            <p id="incomeTodayAmount" class="font-mono font-black text-emerald-400 text-base">Rp 0</p>
+          </div>
+          <div class="p-4 rounded-2xl border border-slate-800 space-y-1" style="background: rgba(13,31,56,0.8);">
+            <p class="text-[10px] text-slate-400 font-medium">Tugas Selesai</p>
+            <p id="incomeCompletedTasks" class="font-mono font-black text-blue-400 text-base">0 Order</p>
+          </div>
+          <div class="p-4 rounded-2xl border border-slate-800 space-y-1" style="background: rgba(13,31,56,0.8);">
+            <p class="text-[10px] text-slate-400 font-medium">Jam Online Hari Ini</p>
+            <p id="incomeOnlineHours" class="font-mono font-black text-amber-400 text-base">0 Jam</p>
+          </div>
+          <div class="p-4 rounded-2xl border border-slate-800 space-y-1" style="background: rgba(13,31,56,0.8);">
+            <p class="text-[10px] text-slate-400 font-medium">Rating Kinerja</p>
+            <p class="font-mono font-black text-yellow-400 text-base flex items-center space-x-1">
+              <span>★</span>
+              <span id="incomeRatingVal">5.0</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl border border-emerald-500/25 space-y-2 text-xs" style="background: rgba(5,150,105,0.1);">
+          <div class="flex items-center space-x-2 text-emerald-400 font-bold">
+            <span class="material-symbols-outlined text-sm">shield</span>
+            <span>100% Pendapatan &amp; Komisi Transparan</span>
+          </div>
+          <p class="text-slate-300 text-[11px] leading-relaxed">
+            Semua komisi dari tugas yang Anda selesaikan langsung masuk ke Saldo Driver Anda dan dapat ditarik kapan saja ke rekening atau e-wallet terdaftar.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL DIALOG EDIT PROFIL & AKUN INTERAKTIF
+       ======================================================== -->
+  <!-- Edit Profile Field (Name / Address / Bank) -->
+  <div id="modalEditProfileField" class="hidden fixed inset-0 z-[9995] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl" style="background:#0F2440;border:1px solid rgba(16,185,129,0.3)">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 id="editProfileModalTitle" class="font-black text-white text-sm">Ubah Profil</h3>
+        <button onclick="closeEditProfileDialog()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined text-base">close</span></button>
+      </div>
+      <div id="editProfileModalBody" class="space-y-3">
+        <!-- Dynamic input generated via JS -->
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeEditProfileDialog()" class="py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-slate-800">Batal</button>
+        <button onclick="saveEditProfileDialog()" class="py-2.5 rounded-xl font-black text-xs text-white" style="background:linear-gradient(135deg,#10B981,#059669)">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="modalChangePassword" class="hidden fixed inset-0 z-[9995] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl" style="background:#0F2440;border:1px solid rgba(16,185,129,0.3)">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 class="font-black text-white text-sm">Ubah Password</h3>
+        <button onclick="closeChangePasswordDialog()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined text-base">close</span></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Password Baru (min 6 karakter)</label>
+          <input type="password" id="modalNewPassInput" placeholder="Password baru" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Konfirmasi Password Baru</label>
+          <input type="password" id="modalConfirmPassInput" placeholder="Ketik ulang password" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeChangePasswordDialog()" class="py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-slate-800">Batal</button>
+        <button onclick="submitChangePassword()" class="py-2.5 rounded-xl font-black text-xs text-white" style="background:linear-gradient(135deg,#10B981,#059669)">Simpan Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Phone Modal -->
+  <div id="modalChangePhone" class="hidden fixed inset-0 z-[9995] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl" style="background:#0F2440;border:1px solid rgba(16,185,129,0.3)">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 class="font-black text-white text-sm">Ubah Nomor Handphone</h3>
+        <button onclick="closeChangePhoneDialog()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined text-base">close</span></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor WhatsApp / HP Baru</label>
+          <input type="tel" id="modalNewPhoneInput" placeholder="08xxxxxxxxxx" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm font-mono focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeChangePhoneDialog()" class="py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-slate-800">Batal</button>
+        <button onclick="submitChangePhone()" class="py-2.5 rounded-xl font-black text-xs text-white" style="background:linear-gradient(135deg,#10B981,#059669)">Simpan No HP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Email Modal -->
+  <div id="modalChangeEmail" class="hidden fixed inset-0 z-[9995] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl" style="background:#0F2440;border:1px solid rgba(16,185,129,0.3)">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 class="font-black text-white text-sm">Ubah Alamat Email</h3>
+        <button onclick="closeChangeEmailDialog()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined text-base">close</span></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Alamat Email Baru</label>
+          <input type="email" id="modalNewEmailInput" placeholder="driver@email.com" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeChangeEmailDialog()" class="py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-slate-800">Batal</button>
+        <button onclick="submitChangeEmail()" class="py-2.5 rounded-xl font-black text-xs text-white" style="background:linear-gradient(135deg,#10B981,#059669)">Simpan Email</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Modal -->
+  <div id="modalDeleteAccount" class="hidden fixed inset-0 z-[9995] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl" style="background:#0F2440;border:1px solid rgba(239,68,68,0.35)">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2 text-rose-400">
+          <span class="material-symbols-outlined text-base">warning</span>
+          <h3 class="font-black text-sm">Ajukan Penghapusan Akun</h3>
+        </div>
+        <button onclick="closeDeleteAccountDialog()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined text-base">close</span></button>
+      </div>
+      <div class="space-y-3 text-xs text-slate-300">
+        <p>Permohonan penghapusan akun driver akan dikirimkan ke Admin SobatSerabut untuk ditindaklanjuti. Pastikan seluruh saldo telah ditarik.</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Alasan Penghapusan (Wajib)</label>
+          <textarea id="modalDeleteReasonInput" rows="3" placeholder="Contoh: Sudah tidak aktif bekerja / ganti nomor" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs resize-none focus:outline-none"></textarea>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="closeDeleteAccountDialog()" class="py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-slate-800">Batal</button>
+        <button onclick="submitDeleteAccountRequest()" class="py-2.5 rounded-xl font-black text-xs text-white bg-rose-600 hover:bg-rose-500">Ajukan ke Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KYC Full Image Viewer Modal -->
+  <div id="modalKycImageViewer" class="hidden fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4" onclick="this.classList.add('hidden')">
+    <div class="w-full max-w-sm space-y-3 text-center" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center text-white pb-2 border-b border-slate-800">
+        <h4 id="kycImageViewerTitle" class="font-bold text-sm">Foto Dokumen</h4>
+        <button onclick="document.getElementById('modalKycImageViewer').classList.add('hidden')" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <img id="kycImageViewerImg" src="" class="w-full max-h-[70vh] object-contain rounded-2xl border border-slate-700">
+    </div>
+  </div>
+
+  <!-- SCRIPT ENGINE V8.19.1 -->
+  <script src="js/driver-v8191.js?v=8.19.1"></script>
 </body>
 </html>
 

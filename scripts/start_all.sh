@@ -84,26 +84,42 @@ echo ""
 echo -e "${BOLD}${CYAN}⚙️  2. Menyinkronkan konfigurasi domain produksi...${RESET}"
 
 BUILD_TS="$(date '+%Y-%m-%d %H:%M:%S WIB')"
-CONFIG_CONTENT="// SobatSerabut v6.2.0 — Auto-generated config — $BUILD_TS
-window.SOBATSERABUT_CONFIG = {
-  DEFAULT_API_URL: \"$PUBLIC_URL\",
-  VERSION: \"6.2.0\",
-  BUILD_DATE: \"$BUILD_TS\",
-  APP_NAME: \"SobatSerabut\",
-  VPS_IP: \"$VPS_IP\",
-  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
-};"
 
-echo "$CONFIG_CONTENT" > "$PROJECT_DIR/driver-app/js/config.js"
-for MOD in client-app mitra-app; do
-  cp "$PROJECT_DIR/driver-app/js/config.js" "$PROJECT_DIR/$MOD/js/config.js"
-done
+# Config Driver App (v8.19.1)
+cat > "$PROJECT_DIR/driver-app/js/config.js" <<EOF
+// SobatSerabut Driver v8.19.1 — Auto-generated config — $BUILD_TS
+window.SOBATSERABUT_CONFIG = {
+  DEFAULT_API_URL: "$PUBLIC_URL",
+  VERSION: "8.19.1",
+  BUILD_DATE: "$BUILD_TS",
+  APP_NAME: "SobatSerabut Driver",
+  VPS_IP: "$VPS_IP",
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
+};
+EOF
+
+# Config Mitra App (Kompatibilitas)
+cp "$PROJECT_DIR/driver-app/js/config.js" "$PROJECT_DIR/mitra-app/js/config.js"
+
+# Config Client App
+cat > "$PROJECT_DIR/client-app/js/config.js" <<EOF
+// SobatSerabut Klien — Auto-generated config — $BUILD_TS
+window.SOBATSERABUT_CONFIG = {
+  DEFAULT_API_URL: "$PUBLIC_URL",
+  VERSION: "6.2.0",
+  BUILD_DATE: "$BUILD_TS",
+  APP_NAME: "SobatSerabut",
+  VPS_IP: "$VPS_IP",
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
+};
+EOF
+
 mkdir -p "$PROJECT_DIR/android-app/app/src/main/assets/www/js"
 cp "$PROJECT_DIR/driver-app/js/config.js" "$PROJECT_DIR/android-app/app/src/main/assets/www/js/config.js"
 # Sinkronkan assets client-app ke android-app assets
 cp "$PROJECT_DIR/client-app/index.html" "$PROJECT_DIR/android-app/app/src/main/assets/www/index.html" 2>/dev/null || true
 cp "$PROJECT_DIR/client-app/js/app.js" "$PROJECT_DIR/android-app/app/src/main/assets/www/js/app.js" 2>/dev/null || true
-ok "config.js tersinkronisasi ke semua modul → $PUBLIC_URL (v6.2.0)"
+ok "config.js tersinkronisasi (Driver v8.19.1 & Klien v6.2.0) → $PUBLIC_URL"
 
 # ── STEP 2b: Update Branding Strings ─────────────────────────────────
 echo -e "${BOLD}${CYAN}🎨 2b. Memperbarui branding SobatSerabut...${RESET}"
@@ -141,14 +157,8 @@ fi
 # ── STEP 3: Jalankan Backend Lokal via PM2 ────────────────────────────
 echo -e "${BOLD}${CYAN}💻 3. Memastikan backend lokal berjalan via PM2...${RESET}"
 if command -v pm2 > /dev/null 2>&1; then
-  pm2 delete sobat-backend 2>/dev/null || true
-  pm2 start app.js \
-    --name "sobat-backend" \
-    --log "$LOG_DIR/server.log" \
-    --time \
-    -- > /dev/null 2>&1 && \
-  ok "Backend lokal aktif: http://localhost:4000 (PM2: sobat-backend)" || \
-  warn "PM2 gagal restart — periksa log: $LOG_DIR/server.log"
+  pm2 reload ecosystem.config.js --update-env 2>/dev/null || pm2 restart ecosystem.config.js 2>/dev/null || pm2 start ecosystem.config.js 2>/dev/null || true
+  ok "Backend lokal aktif: http://localhost:4000 (PM2: sobatserabut)"
 else
   info "PM2 tidak terinstal — skip backend lokal"
 fi
@@ -218,8 +228,9 @@ try:
         p = os.path.join(f'{proj}/android-app', apk)
         if os.path.exists(p):
             scp_send(p, f'{webroot}/android-app/{apk}', vps_ip, vps_usr, pwd)
+            scp_send(p, f'{webroot}/backend/uploads/{apk}', vps_ip, vps_usr, pwd)
 
-    print('   ✅ Seluruh update v6.2.0 berhasil disinkronkan ke Cloud DomaiNesia!')
+    print('   ✅ Seluruh update Driver v8.19.1 & Klien v6.2.0 berhasil disinkronkan ke Cloud DomaiNesia!')
 except Exception as e:
     print(f'   ⚠️  Sinkronisasi cloud gagal: {e}')
 PYEOF

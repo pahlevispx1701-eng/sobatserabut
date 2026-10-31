@@ -275,30 +275,18 @@ async function requestAllDevicePermissions() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Bersihkan data palsu/simulasi — hanya data nyata dari pendaftaran yang valid
-  const DATA_VERSION = 'sobatserabut_v7_pure_real_saldo';
-  if (localStorage.getItem('_data_version') !== DATA_VERSION) {
-    const savedUser = localStorage.getItem('sobatserabut_driver_user');
-    localStorage.clear();
-    sessionStorage.clear();
-    if (savedUser) {
-      try {
-        const u = JSON.parse(savedUser);
-        u.walletBalance = 0; // Hapus saldo palsu simulasi, murni 0
-        u.completedOrders = 0;
-        u.earnings = 0;
-        localStorage.setItem('sobatserabut_driver_user', JSON.stringify(u));
-      } catch(e) {}
-    }
-    localStorage.setItem('_data_version', DATA_VERSION);
-    localStorage.setItem('sobatserabut_driver_installed_v2', 'true');
-    driverOrders = [];
-    console.log('[Mitra] Cache lama & data saldo simulasi dihapus murni.');
-  } else if (!localStorage.getItem('sobatserabut_driver_installed_v2')) {
-    // First install check: Bersihkan riwayat tugas lama agar bersih saat pertama kali install
-    localStorage.removeItem('sobatserabut_driver_cached_orders');
-    localStorage.setItem('sobatserabut_driver_installed_v2', 'true');
-    driverOrders = [];
+  // Sesi login tersimpan abadi ditiap HP — tidak ada auto-clear atau simulasi
+  const savedUser = localStorage.getItem('sobatserabut_driver_user');
+  if (savedUser) {
+    try {
+      const u = JSON.parse(savedUser);
+      if (u && u.id && u.role === 'mitra') {
+        currentUser = u;
+        localStorage.setItem('sobatserabut_driver_onboarded_v8191', 'true');
+        localStorage.setItem('sobatserabut_driver_approved', 'true');
+        localStorage.setItem('sobatserabut_driver_registered', 'true');
+      }
+    } catch(e) {}
   }
 
   // Inisialisasi sesi auth driver langsung frame 0 (Anti-stuck)

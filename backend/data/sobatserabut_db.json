@@ -170,7 +170,25 @@
     }
   ],
   "orders": [],
-  "kycRequests": [],
+  "kycRequests": [
+    {
+      "id": "KYC-0001",
+      "mitraId": "MTR-0001",
+      "mitraName": "reza pahlevi",
+      "phone": "087735170386",
+      "nik": "-",
+      "ktpImageUrl": "",
+      "selfieImageUrl": "/uploads/avatar_mitra.svg",
+      "bankDetails": {
+        "bankName": "SeaBank",
+        "bankAccount": "901771223812",
+        "bankHolder": "Reza Pahlevi"
+      },
+      "status": "pending",
+      "submittedAt": "2026-10-13T15:19:10.004Z",
+      "reviewNotes": "Data pendaftaran identitas mitra driver resmi."
+    }
+  ],
   "withdrawals": [],
   "routeHistory": {},
   "transactions": [],

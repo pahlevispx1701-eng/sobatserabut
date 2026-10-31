@@ -1233,8 +1233,15 @@ app.post('/api/auth/profile/:id', (req, res) => {
   const idx = users.findIndex(u => u.id === req.params.id);
   if (idx === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
 
-  const { name, address, structuredAddress, addresses, avatarPhoto, bankName, bankAccount, bankHolder } = req.body;
+  const { name, phone, email, password, address, structuredAddress, addresses, avatarPhoto, bankName, bankAccount, bankHolder, nik, biometricEnabled, quickLogin, deleteAccountRequest } = req.body;
   if (name && name.trim()) users[idx].name = name.trim();
+  if (phone && phone.trim()) users[idx].phone = phone.trim();
+  if (email && email.trim()) users[idx].email = email.trim();
+  if (password && password.trim() && password.length >= 6) users[idx].password = password.trim();
+  if (nik && nik.trim()) users[idx].nik = nik.trim().replace(/[^0-9]/g, '').slice(0, 16);
+  if (typeof biometricEnabled !== 'undefined') users[idx].biometricEnabled = Boolean(biometricEnabled);
+  if (typeof quickLogin !== 'undefined') users[idx].quickLogin = Boolean(quickLogin);
+
   if (address && address.trim()) users[idx].address = address.trim();
   if (structuredAddress) {
     users[idx].structuredAddress = structuredAddress;
@@ -1256,8 +1263,22 @@ app.post('/api/auth/profile/:id', (req, res) => {
       bankHolder: bankHolder || users[idx].bankDetails?.bankHolder || users[idx].name
     };
   }
+  if (deleteAccountRequest) {
+    users[idx].deleteAccountRequest = {
+      requestedAt: new Date().toISOString(),
+      reason: deleteAccountRequest.reason || 'Permintaan penghapusan akun oleh driver mitra',
+      status: 'pending'
+    };
+    io.emit('driver:delete_account_requested', {
+      driverId: users[idx].id,
+      name: users[idx].name,
+      phone: users[idx].phone,
+      reason: users[idx].deleteAccountRequest.reason,
+      requestedAt: users[idx].deleteAccountRequest.requestedAt
+    });
+  }
   db.set('users', users);
-  res.json({ success: true, message: 'Profil dan alamat akun berhasil diperbarui!', data: users[idx] });
+  res.json({ success: true, message: 'Profil dan pengaturan akun berhasil diperbarui!', data: users[idx] });
 });
 
 // Top-Up Dompet Riil Klien (Melalui Rekening Resmi Admin: QRIS, SeaBank 901771223812, GoPay 087735170386)
@@ -3582,7 +3603,7 @@ app.post('/api/auth/driver/login', (req, res) => {
 
 // Driver register (Khusus Pendaftaran Driver)
 app.post('/api/auth/driver/register', (req, res) => {
-  const { name, phone, password, ktpPhoto, selfiePhoto, skills, vehicle, bankName, bankAccount, bankHolder } = req.body;
+  const { name, phone, password, ktpPhoto, selfiePhoto, selfieKtpPhoto, avatarPhoto, skills, vehicle, bankName, bankAccount, bankHolder, address, nik, referralSource, marketingSource } = req.body;
   if (!phone || !password) {
     return res.status(400).json({ success: false, message: 'Nomor HP dan kata sandi wajib diisi.' });
   }
@@ -3603,7 +3624,12 @@ app.post('/api/auth/driver/register', (req, res) => {
   }
 
   const processedKtp = saveBase64Image(ktpPhoto, 'ktp') || '';
-  const processedSelfie = saveBase64Image(selfiePhoto, 'selfie') || '';
+  const processedSelfie = saveBase64Image(selfiePhoto || selfieKtpPhoto, 'selfie') || '';
+  const processedAvatar = saveBase64Image(avatarPhoto, 'avatar') || processedSelfie || '/uploads/avatar_mitra.svg';
+  const driverAddress = (address || '').trim() || 'Indonesia';
+  const driverNik = nik ? nik.replace(/[^0-9]/g, '').slice(0, 16) : '';
+  const driverReferral = referralSource || marketingSource || 'Tidak disebutkan';
+
   const newDriver = {
     id: `MTR-${Date.now().toString().slice(-4)}`,
     name: (name && name.trim()) ? name.trim() : `Driver ${cleanPhone.slice(-4)}`,
@@ -3611,7 +3637,10 @@ app.post('/api/auth/driver/register', (req, res) => {
     email: `${cleanPhone}@sobatserabut.id`,
     password: password.trim(),
     role: 'mitra',
-    avatar: processedSelfie || '/uploads/avatar_mitra.svg',
+    avatar: processedAvatar,
+    address: driverAddress,
+    nik: driverNik,
+    referralSource: driverReferral,
     walletBalance: 0,
     status: 'ready',
     accountStatus: 'active',
@@ -3637,7 +3666,7 @@ app.post('/api/auth/driver/register', (req, res) => {
     bankDetails: {
       bankName: bankName || 'DANA',
       bankAccount: bankAccount || cleanPhone,
-      bankHolder: bankHolder || name
+      bankHolder: bankHolder || name || 'Driver SobatSerabut'
     },
     createdAt: new Date().toISOString()
   };
@@ -3651,12 +3680,15 @@ app.post('/api/auth/driver/register', (req, res) => {
     mitraId: newDriver.id,
     mitraName: newDriver.name,
     phone: newDriver.phone,
+    nik: newDriver.nik,
+    address: newDriver.address,
+    referralSource: newDriver.referralSource,
     ktpImageUrl: processedKtp,
     selfieImageUrl: processedSelfie,
     bankDetails: newDriver.bankDetails,
     status: 'pending',
     submittedAt: new Date().toISOString(),
-    reviewNotes: 'Pendaftaran driver baru, menunggu verifikasi dokumen admin.'
+    reviewNotes: 'Pendaftaran driver baru via aplikasi driver v8.19.1, menunggu verifikasi dokumen admin.'
   });
   db.set('kycRequests', kycRequests);
 
@@ -3664,7 +3696,7 @@ app.post('/api/auth/driver/register', (req, res) => {
   io.emit('mitra:online', newDriver);
   res.json({
     success: true,
-    message: 'Pendaftaran Driver berhasil! Akun Driver Anda telah aktif. Silakan masuk untuk mulai bekerja.',
+    message: 'Pendaftaran Driver berhasil! Akun Driver Anda telah disimpan dan menunggu verifikasi admin.',
     data: newDriver
   });
 });

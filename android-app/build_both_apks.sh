@@ -71,8 +71,9 @@ build_apk() {
     local APP_TAGLINE="$2"    # Tagline
     local SOURCE_DIR="$3"     # Folder web app (driver-app / client-app)
     local OUTPUT_APK="$4"     # Nama file output
-    local VERSION_CODE="$5"   # 1=driver, 2=client
+    local VERSION_CODE="$5"   # 81901=driver, 2=client
     local PKG="$6"            # Package ID unik (e.g. com.sobatserabut.driver)
+    local VERSION_NAME="${7:-8.19.1}" # Versi aplikasi resmi e.g. 8.19.1
 
     echo ""
     echo "----------------------------------------------------"
@@ -103,8 +104,10 @@ EOF
     cat > "$APP_DIR/src/main/assets/www/js/config.js" <<EOF
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: "$PUBLIC_URL",
-  VERSION: "1.0.$VERSION_CODE",
-  BUILD_DATE: "$(date '+%Y-%m-%d %H:%M:%S')"
+  VERSION: "$VERSION_NAME",
+  BUILD_DATE: "$(date '+%Y-%m-%d %H:%M:%S')",
+  APP_NAME: "$APP_LABEL",
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
 };
 EOF
 
@@ -133,7 +136,7 @@ EOF
         --min-sdk-version 24 \
         --target-sdk-version 34 \
         --version-code "$VERSION_CODE" \
-        --version-name "1.0.$VERSION_CODE" \
+        --version-name "$VERSION_NAME" \
         --java "$BUILD_DIR/gen" \
         -A "$APP_DIR/src/main/assets" \
         -o "$BUILD_DIR/apk_unaligned/res_base.apk" \
@@ -197,7 +200,7 @@ EOF
 
 # === BUILD APK 1: DRIVER / MITRA ===
 build_apk "Driver SobatSerabut" "Aplikasi Mitra Kerja & Pengemudi" \
-    "/home/jinny21/SobatSerabut/driver-app" "Driver-SobatSerabut.apk" "1" "com.sobatserabut.driver"
+    "/home/jinny21/SobatSerabut/driver-app" "Driver-SobatSerabut.apk" "81901" "com.sobatserabut.driver" "8.19.1"
 
 # Salin sebagai SobatSerabut-Mitra.apk juga (kompatibilitas nama lama)
 cp "$PROJECT_DIR/Driver-SobatSerabut.apk" "$PROJECT_DIR/SobatSerabut-Mitra.apk"
