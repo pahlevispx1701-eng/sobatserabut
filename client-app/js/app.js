@@ -322,6 +322,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Minta izin penyimpanan persisten ke OS Android agar kapasitas MB bertambah leluasa
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+
   // 2. Render UI & Kategori langsung (Frame 0, Instan tanpa tunggu jaringan)
   renderKlienCategoriesGrid();
   populatePostTaskCategorySelect();

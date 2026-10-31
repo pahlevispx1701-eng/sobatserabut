@@ -1041,8 +1041,39 @@
     const akunEmail = document.getElementById('setAkunEmailSubtext');
     if (akunEmail) akunEmail.innerText = u.email || `${u.phone || 'driver'}@sobatserabut.id`;
 
+    updateStorageCapacityDisplay();
+
     modal.classList.remove('hidden');
   };
+
+  async function updateStorageCapacityDisplay() {
+    const subtextEl = document.getElementById('setAppStorageSubtext');
+    if (!subtextEl) return;
+
+    let baseAppSize = 5.2; // Base APK package MB
+    if (navigator.storage && navigator.storage.estimate) {
+      try {
+        const est = await navigator.storage.estimate();
+        const dataUsedMb = est.usage ? (est.usage / (1024 * 1024)) : 0;
+        const totalMb = (baseAppSize + dataUsedMb).toFixed(2);
+        subtextEl.innerText = `${totalMb} MB (Data tersimpan: ${dataUsedMb.toFixed(2)} MB)`;
+        return;
+      } catch(e) {}
+    }
+
+    let totalBytes = 0;
+    try {
+      for (let k in localStorage) {
+        if (localStorage.hasOwnProperty(k)) {
+          totalBytes += (localStorage[k].length + k.length) * 2;
+        }
+      }
+    } catch(e) {}
+
+    const addedMb = totalBytes / (1024 * 1024);
+    const totalMb = (baseAppSize + addedMb).toFixed(2);
+    subtextEl.innerText = `${totalMb} MB (Menyesuaikan data tersimpan)`;
+  }
 
   window.closeDriverSettingsView = function() {
     const modal = document.getElementById('driverSettingsViewModal');
@@ -1374,6 +1405,11 @@
    * 17. ON DOM LOAD ENTRY POINT
    * ======================================================== */
   document.addEventListener('DOMContentLoaded', () => {
+    // Minta izin penyimpanan persisten ke OS Android agar kapasitas MB bertambah leluasa
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
+
     // Check if driver has completed download permissions onboarding
     const isOnboarded = localStorage.getItem('sobatserabut_driver_onboarded_v8191') === 'true';
 
