@@ -5930,11 +5930,12 @@ async function checkDriverAppUpdate() {
   try {
     const res = await fetch(`${API_BASE}/api/app-version`).then(r => r.json());
     if (!res.success || !res.data) return;
-    const { latestVersion, driverApkUrl, releaseNotes, forceUpdate, minRequiredVersion } = res.data;
-    if (!latestVersion) return;
+    const { latestVersion, driverVersion, driverApkUrl, releaseNotes, forceUpdate, minRequiredVersion } = res.data;
+    const targetVersion = driverVersion || latestVersion;
+    if (!targetVersion) return;
 
     // Bandingkan versi
-    const isOutdated = compareVersions(DRIVER_APP_VERSION, latestVersion) < 0;
+    const isOutdated = compareVersions(DRIVER_APP_VERSION, targetVersion) < 0;
     if (!isOutdated) return;
 
     // Tampilkan modal update

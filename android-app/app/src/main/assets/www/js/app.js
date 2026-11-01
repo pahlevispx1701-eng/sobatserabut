@@ -6412,9 +6412,10 @@ async function checkClientAppUpdate() {
   try {
     const res = await fetch(`${API_BASE}/api/app-version`).then(r => r.json());
     if (!res.success || !res.data) return;
-    const { latestVersion, clientApkUrl, releaseNotes, forceUpdate } = res.data;
-    if (!latestVersion) return;
-    const isOutdated = _compareVersions(CLIENT_APP_VERSION, latestVersion) < 0;
+    const { latestVersion, clientVersion, clientApkUrl, releaseNotes, forceUpdate } = res.data;
+    const targetVersion = clientVersion || latestVersion;
+    if (!targetVersion) return;
+    const isOutdated = _compareVersions(CLIENT_APP_VERSION, targetVersion) < 0;
     if (!isOutdated) return;
 
     const modal = document.getElementById('clientUpdateNotifModal');
@@ -6422,7 +6423,7 @@ async function checkClientAppUpdate() {
     const notesEl = document.getElementById('clientUpdateModalNotes');
     const dismissBtn = document.getElementById('clientUpdateDismissBtn');
 
-    if (versionEl) versionEl.textContent = `Versi ${latestVersion} siap diunduh`;
+    if (versionEl) versionEl.textContent = `Versi ${targetVersion} siap diunduh`;
     if (notesEl) notesEl.textContent = releaseNotes || 'Update terbaru tersedia dengan fitur dan perbaikan baru.';
     if (dismissBtn && forceUpdate) dismissBtn.classList.add('hidden');
     if (modal) {

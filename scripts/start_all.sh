@@ -207,7 +207,7 @@ tar_p   = '/tmp/sobat_v6_deploy.tar.gz'
 # 1. Buat arsip terbaru
 subprocess.run([
   'tar', '-czf', tar_p, '-C', proj,
-  'driver-app', 'client-app', 'admin-dashboard', 'backend', 'mitra-app', 'portal'
+  'driver-app', 'client-app', 'admin-dashboard', 'backend', 'mitra-app', 'portal', 'package.json'
 ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def ssh_run(host, user, password, cmd, timeout=45):
@@ -239,6 +239,7 @@ try:
         if os.path.exists(p):
             scp_send(p, f'{webroot}/android-app/{apk}', vps_ip, vps_usr, pwd)
             scp_send(p, f'{webroot}/backend/uploads/{apk}', vps_ip, vps_usr, pwd)
+            scp_send(p, f'{webroot}/{apk}', vps_ip, vps_usr, pwd)
 
     print('   ✅ Seluruh update Driver v8.19.1 & Klien v6.2.0 berhasil disinkronkan ke Cloud DomaiNesia!')
 except Exception as e:

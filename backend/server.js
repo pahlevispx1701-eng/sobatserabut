@@ -87,11 +87,13 @@ app.get('/api/app-version', (req, res) => {
   const origin = `${proto}://${host}`;
 
   const versionData = db.data.appVersion || {
-    latestVersion: '6.2.0',
-    minRequiredVersion: '6.1.0',
+    latestVersion: '8.19.1',
+    driverVersion: '8.19.1',
+    clientVersion: '6.2.0',
+    minRequiredVersion: '6.0.0',
     driverApkUrl: `${origin}/download/driver-apk`,
     clientApkUrl: `${origin}/download/client-apk`,
-    releaseNotes: 'Pembaruan resmi SobatSerabut: Pembaruan unduhan instan tanpa 404, Verifikasi Wajah Harian otomatis tanpa mode standby, Virtual Account resmi & transfer aman.',
+    releaseNotes: 'Pembaruan resmi SobatSerabut: Driver v8.19.1 & Client v6.2.0. Verifikasi KYC otomatis, navigasi rute radar, dan transfer instan.',
     forceUpdate: false,
     updatedAt: new Date().toISOString()
   };

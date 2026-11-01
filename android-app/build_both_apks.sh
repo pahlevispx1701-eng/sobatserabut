@@ -86,6 +86,7 @@ build_apk() {
 <resources>
     <string name="app_name">$APP_LABEL</string>
     <string name="app_tagline">$XML_TAGLINE</string>
+    <string name="app_version">v$VERSION_NAME</string>
 </resources>
 EOF
 
@@ -115,9 +116,11 @@ EOF
     rm -rf "$BUILD_DIR"
     mkdir -p "$BUILD_DIR"/{compiled_res,gen,classes,apk_unaligned}
 
-    # 5. Siapkan AndroidManifest dengan package ID unik
+    # 5. Siapkan AndroidManifest dengan package ID unik & versi APK Android resmi
     # Catatan: SplashActivity & MainActivity tetap fully qualified (com.sobatserabut.mitra.*)
-    sed "3s/package=\"[^\"]*\"/package=\"$PKG\"/" \
+    sed -e "s/package=\"[^\"]*\"/package=\"$PKG\"/g" \
+        -e "s/android:versionCode=\"[^\"]*\"/android:versionCode=\"$VERSION_CODE\"/g" \
+        -e "s/android:versionName=\"[^\"]*\"/android:versionName=\"$VERSION_NAME\"/g" \
         "$APP_DIR/src/main/AndroidManifest.xml" > "$BUILD_DIR/AndroidManifest.xml"
 
     # 6. Compile resources
@@ -210,7 +213,7 @@ cp "$PROJECT_DIR/Driver-SobatSerabut.apk" "/home/jinny21/SobatSerabut/backend/up
 
 # === BUILD APK 2: CLIENT / KLIEN ===
 build_apk "SobatSerabut" "Solusi Cepat Serabutan & Jasa Harian" \
-    "/home/jinny21/SobatSerabut/client-app" "SobatSerabut.apk" "2" "com.sobatserabut.client"
+    "/home/jinny21/SobatSerabut/client-app" "SobatSerabut.apk" "60200" "com.sobatserabut.client" "6.2.0"
 
 echo ""
 echo "========================================================"

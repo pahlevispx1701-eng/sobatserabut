@@ -64,11 +64,13 @@ const defaultState = {
     { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", durationMinutes: 60, estimatedMinutes: 60, active: true }
   ],
   appVersion: {
-    latestVersion: '6.1.0',
+    latestVersion: '8.19.1',
+    driverVersion: '8.19.1',
+    clientVersion: '6.2.0',
     minRequiredVersion: '6.0.0',
     driverApkUrl: '/download/driver-apk',
     clientApkUrl: '/download/client-apk',
-    releaseNotes: 'SobatSerabut v6.1.0 — Fitur baru: AI Asisten 🤖, Pusat Bantuan 📖, Notifikasi Update Otomatis 🔔, dan berbagai peningkatan performa.',
+    releaseNotes: 'SobatSerabut Driver v8.19.1 & Client v6.2.0 — Fitur baru: Verifikasi KYC otomatis, AI Asisten 🤖, Notifikasi Update HP 🔔, dan performa optimal.',
     forceUpdate: false,
     updatedAt: new Date().toISOString()
   },
@@ -98,6 +100,9 @@ class Database {
         this.data = JSON.parse(raw);
         if (!this.data.users) {
           this.data.users = JSON.parse(JSON.stringify(defaultState.users));
+        }
+        if (!this.data.appVersion || !this.data.appVersion.driverVersion) {
+          this.data.appVersion = JSON.parse(JSON.stringify(defaultState.appVersion));
         }
         // Hapus permanen semua data akun demo / palsu
         const demoUserIds = ['MTR-001', 'MTR-002', 'KLN-001', 'KLN-002', 'KLN-0171', 'MTR-2777'];

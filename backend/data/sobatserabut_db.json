@@ -50,7 +50,8 @@
       "description": "Cuci, tambah freon, dan perbaikan AC",
       "active": true,
       "image": "/uploads/service_ac.png",
-      "estimatedMinutes": 60
+      "estimatedMinutes": 60,
+      "durationMinutes": 60
     },
     {
       "id": "cat-2",
@@ -60,7 +61,8 @@
       "description": "Bersih-bersih kamar, toilet, dan dapur",
       "active": true,
       "image": "/uploads/service_clean.png",
-      "estimatedMinutes": 90
+      "estimatedMinutes": 90,
+      "durationMinutes": 90
     },
     {
       "id": "cat-3",
@@ -70,7 +72,8 @@
       "description": "Bantuan angkut mebel, kardus, dan pindahan",
       "active": true,
       "image": "/uploads/service_lifting.png",
-      "estimatedMinutes": 60
+      "estimatedMinutes": 60,
+      "durationMinutes": 60
     },
     {
       "id": "cat-4",
@@ -80,7 +83,8 @@
       "description": "Perbaikan pipa bocor, wastafel, dan pompa air",
       "active": true,
       "image": "/uploads/service_plumber.png",
-      "estimatedMinutes": 45
+      "estimatedMinutes": 45,
+      "durationMinutes": 45
     },
     {
       "id": "cat-5",
@@ -90,7 +94,8 @@
       "description": "Perbaikan korsleting, pasang lampu & saklar",
       "active": true,
       "image": "/uploads/service_electric.png",
-      "estimatedMinutes": 45
+      "estimatedMinutes": 45,
+      "durationMinutes": 45
     },
     {
       "id": "cat-6",
@@ -100,7 +105,8 @@
       "description": "Beli gas, galon, belanja pasar & titipan kilat",
       "active": true,
       "image": "/uploads/service_runner.png",
-      "estimatedMinutes": 30
+      "estimatedMinutes": 30,
+      "durationMinutes": 30
     },
     {
       "id": "cat-7",
@@ -110,7 +116,8 @@
       "description": "Cat dinding, perbaikan kusen, dan furnitur",
       "active": true,
       "image": "/uploads/service_carpentry.png",
-      "estimatedMinutes": 120
+      "estimatedMinutes": 120,
+      "durationMinutes": 120
     },
     {
       "id": "cat-8",
@@ -120,7 +127,8 @@
       "description": "Tambal ban tubeless, jumper aki di tempat",
       "active": true,
       "image": "/uploads/service_tire.png",
-      "estimatedMinutes": 25
+      "estimatedMinutes": 25,
+      "durationMinutes": 25
     },
     {
       "id": "cat-1792414138374",
@@ -130,7 +138,8 @@
       "description": "Perbaikan & perawatan langsung di rumah",
       "active": true,
       "image": "/uploads/service_washing.png",
-      "estimatedMinutes": 60
+      "estimatedMinutes": 60,
+      "durationMinutes": 60
     }
   ],
   "mitra": [
@@ -246,5 +255,16 @@
       "earnings": 0
     }
   ],
-  "broadcasts": []
+  "broadcasts": [],
+  "appVersion": {
+    "latestVersion": "8.19.1",
+    "driverVersion": "8.19.1",
+    "clientVersion": "6.2.0",
+    "minRequiredVersion": "6.0.0",
+    "driverApkUrl": "/download/driver-apk",
+    "clientApkUrl": "/download/client-apk",
+    "releaseNotes": "SobatSerabut Driver v8.19.1 & Client v6.2.0 — Fitur baru: Verifikasi KYC otomatis, AI Asisten 🤖, Notifikasi Update HP 🔔, dan performa optimal.",
+    "forceUpdate": false,
+    "updatedAt": "2026-11-01T16:00:13.837Z"
+  }
 }
