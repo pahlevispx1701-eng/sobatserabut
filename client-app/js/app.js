@@ -209,6 +209,10 @@ async function checkAppConnectivity(showFeedback = false) {
 }
 
 function dismissNetworkBlocker() {
+  if (!isNetworkOnline) {
+    // Ketika tidak ada internet dari data/wifi maka tidak akan bisa masuk
+    return false;
+  }
   const blocker = document.getElementById('networkOfflineBlocker');
   if (blocker) blocker.classList.add('hidden');
 }
@@ -217,19 +221,101 @@ function handleNetworkState(online, reason = '') {
   isNetworkOnline = online;
   const blocker = document.getElementById('networkOfflineBlocker');
   const statusDetail = document.getElementById('networkStatusDetail');
+  const bottomBar = document.getElementById('offlineBottomIndicator');
 
   if (!online) {
     if (blocker) blocker.classList.remove('hidden');
-    if (statusDetail && reason) statusDetail.innerText = `Status: ${reason}`;
+    if (statusDetail) statusDetail.innerText = 'tidak ada koneksi internet';
+    if (bottomBar) bottomBar.classList.remove('hidden');
   } else {
     if (blocker) blocker.classList.add('hidden');
     if (statusDetail) statusDetail.innerText = 'Status: Terhubung';
+    if (bottomBar) bottomBar.classList.add('hidden');
   }
 }
 
 // ----------------------------------------------------
-// DEVICE PERMISSIONS CONTROLLER (LOKASI, KAMERA, MIKROFON)
+// DEVICE PERMISSIONS CONTROLLER (NOTIFIKASI, LOKASI, KAMERA, MIKROFON)
 // ----------------------------------------------------
+/* ============================================================
+ * NOTIFIKASI HP TERHUBUNG LANGSUNG DARI PENGATURAN HP
+ * ============================================================ */
+window.triggerDeviceNotification = function(title, message) {
+  // 1. Android Native Bridge (langsung muncul di status bar HP)
+  if (window.Android && typeof window.Android.showNotification === 'function') {
+    try {
+      window.Android.showNotification(title, message);
+      return;
+    } catch(e) {
+      console.warn('Native Android showNotification error:', e);
+    }
+  }
+
+  // 2. Web Notification API (Browser / PWA)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body: message,
+        icon: 'img/logo_icon.svg',
+        badge: 'img/logo_icon.svg',
+        vibrate: [200, 100, 200]
+      });
+    } catch(e) {}
+  }
+};
+
+window.openDeviceNotificationSettings = function() {
+  // 1. Android WebView native bridge (APK) → langsung buka halaman notifikasi HP
+  if (window.Android && typeof window.Android.openNotificationSettings === 'function') {
+    try { window.Android.openNotificationSettings(); return; } catch(e) {}
+  }
+  // 2. Android intent URL (TWA / WebAPK)
+  try {
+    var pkg = (window.Android && window.Android.getPackageName)
+      ? window.Android.getPackageName()
+      : 'com.sobatserabut.client';
+    var intentUrl = 'intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS' +
+      ';B.android.provider.extra.APP_PACKAGE=' + pkg + ';end';
+    window.location.href = intentUrl;
+    return;
+  } catch(e) {}
+  // 3. Fallback: panduan manual
+  if (typeof showToast === 'function') {
+    showToast('Buka: Pengaturan HP \u2192 Aplikasi \u2192 SobatSerabut \u2192 Notifikasi untuk mengaktifkan', 'info', 4000);
+  } else {
+    alert('Buka: Pengaturan HP \u2192 Aplikasi \u2192 SobatSerabut \u2192 Notifikasi \u2192 Izinkan');
+  }
+};
+
+window.requestNotifPermission = function(onGranted) {
+  // 1. Jika via Android Native Bridge
+  if (window.Android && typeof window.Android.requestNotificationPermission === 'function') {
+    try {
+      window.Android.requestNotificationPermission();
+      if (typeof onGranted === 'function') onGranted();
+      return;
+    } catch(e) {}
+  }
+
+  // 2. Web Notification API
+  if (!('Notification' in window)) {
+    openDeviceNotificationSettings(); return;
+  }
+  if (Notification.permission === 'granted') {
+    if (typeof onGranted === 'function') onGranted(); return;
+  }
+  if (Notification.permission === 'denied') {
+    openDeviceNotificationSettings(); return;
+  }
+  Notification.requestPermission().then(function(result) {
+    if (result === 'granted') {
+      if (typeof onGranted === 'function') onGranted();
+    } else {
+      openDeviceNotificationSettings();
+    }
+  }).catch(function() { openDeviceNotificationSettings(); });
+};
+
 function checkDevicePermissionsOnLaunch() {
   const prompted = sessionStorage.getItem('sobatserabut_perm_prompted');
   if (!prompted) {
@@ -248,6 +334,11 @@ function closeDevicePermissionsModal() {
 
 async function requestAllDevicePermissions() {
   closeDevicePermissionsModal();
+
+  // 0. Izin Notifikasi (via native bridge jika APK)
+  requestNotifPermission(function() {
+    console.log('🔔 [Notifikasi Diizinkan]');
+  });
 
   // 1. Izin Lokasi GPS
   if (navigator.geolocation) {
@@ -535,6 +626,7 @@ function initSocket() {
     socket.on('broadcast:notification', (data) => {
       if (!data) return;
       if (data.target === 'all' || data.target === 'client') {
+        triggerDeviceNotification(data.title || 'Pengumuman Admin', data.message || '');
         showBroadcastModal(data);
       }
     });
@@ -543,6 +635,7 @@ function initSocket() {
       if (currentUser?.id === data.order.clientId) {
         playNotificationSound();
         speakVoiceNotification(`Mitra ${data.mitra.name} telah menerima pesanan Anda dan sedang menuju lokasi penjemputan!`);
+        triggerDeviceNotification('Mitra Ditugaskan! 🛵', `Mitra ${data.mitra.name} telah menerima pesanan Anda dan sedang menuju lokasi.`);
         showCustomDialog({
           title: 'Mitra Telah Ditugaskan!',
           message: `Mitra ${data.mitra.name} telah menerima tugas "${data.order.title}" dan sedang bersiap menuju lokasi penjemputan!`,
@@ -565,7 +658,14 @@ function initSocket() {
     });
 
     socket.on('order:step_change', (data) => {
-      if (currentUser?.role === 'klien') loadClientOrders();
+      if (currentUser?.role === 'klien') {
+        let stepDesc = 'Status pesanan Anda telah diperbarui.';
+        if (data.step === 'arrived') stepDesc = 'Mitra telah tiba di lokasi penjemputan!';
+        else if (data.step === 'working') stepDesc = 'Mitra sedang menyelesaikan tugas Anda.';
+        else if (data.step === 'completed') stepDesc = 'Pekerjaan Anda telah selesai!';
+        triggerDeviceNotification('Status Pesanan 📍', stepDesc);
+        loadClientOrders();
+      }
       if (activeOrder && activeOrder.id === data.orderId) {
         activeOrder.step = data.step;
         updateMitraActiveJobUI();
@@ -609,6 +709,7 @@ function initSocket() {
         loadNearbyTasksForMitra();
       }
       if (currentUser?.id === data.order.clientId) {
+        triggerDeviceNotification('Pesanan Selesai! ✅', `Tugas "${data.order.title}" telah diselesaikan mitra.`);
         showToast(`Tugas "${data.order.title}" telah selesai dikerjakan mitra dengan bukti foto terlampir.`, 'success');
         loadClientOrders();
       }
@@ -620,6 +721,9 @@ function initSocket() {
         activeOrder.chatMessages.push(data.message);
         renderChatMessages();
         playNotificationSound();
+        if (data.message && data.message.senderId !== currentUser?.id) {
+          triggerDeviceNotification('Pesan Baru 💬', (data.message.senderName || 'Mitra') + ': ' + (data.message.text || ''));
+        }
       }
     });
 
@@ -3182,6 +3286,7 @@ function renderKlienCategoriesGrid() {
   container.innerHTML = categoriesList.map(cat => {
     const imgSrc = getCategoryImage(cat);
     const fareFormatted = (cat.baseFare || 25000) >= 1000 ? `${Math.round((cat.baseFare || 25000)/1000)}rb` : (cat.baseFare || 25000);
+    const durMins = cat.durationMinutes || cat.estimatedMinutes || 60;
 
     return `
     <div onclick="selectCategoryForNewTask('${cat.name}', ${cat.baseFare})" class="p-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500/80 hover:bg-slate-800/80 flex flex-col items-center justify-center cursor-pointer transition-all group active:scale-95 shadow-sm">
@@ -3190,6 +3295,7 @@ function renderKlienCategoriesGrid() {
       </div>
       <span class="font-bold text-white text-[10.5px] truncate max-w-full block leading-tight text-center">${cat.name}</span>
       <span class="text-[9px] text-emerald-400 font-mono mt-0.5 font-bold">Mulai Rp ${fareFormatted}</span>
+      <span class="text-[8.5px] text-blue-300 font-semibold mt-0.5">⏱️ ${durMins} mnt</span>
     </div>
     `;
   }).join('');
@@ -3199,7 +3305,7 @@ function populatePostTaskCategorySelect() {
   const sel = document.getElementById('postTaskCategorySelect');
   if (!sel) return;
   sel.innerHTML = categoriesList.map(c => `
-    <option value="${c.name}" data-fare="${c.baseFare}">${c.name} (Tarif Resmi: Rp ${c.baseFare.toLocaleString('id-ID')})</option>
+    <option value="${c.name}" data-fare="${c.baseFare}">${c.name} - Rp ${c.baseFare.toLocaleString('id-ID')} (Timer: ${c.durationMinutes || c.estimatedMinutes || 60} Menit)</option>
   `).join('');
   sel.onchange = () => updateAutoFareDisplay();
   updateAutoFareDisplay();
@@ -3644,6 +3750,10 @@ async function confirmPayTaskOrder(orderId, totalAmount) {
       showToast('🎉 Pembayaran tugas berhasil ditransfer ke SeaBank Reza Pahlevi Admin via dompet! Saldo bersih mitra telah diteruskan.', 'success', 6000);
       playSuccessChime();
       loadClientOrders();
+      // Otomatis buka modal rating & tips untuk mitra driver
+      setTimeout(() => {
+        openReviewTipModal(orderId);
+      }, 700);
     } else {
       if (res.insufficientBalance) {
         showToast(res.message, 'warning', 8000);
@@ -3655,6 +3765,189 @@ async function confirmPayTaskOrder(orderId, totalAmount) {
   } catch (err) {
     showToast('Koneksi gagal: ' + err.message, 'error');
   }
+}
+
+/* ========================================================
+ * REVIEW, RATING (BINTANG) & TIPS FITUR (DARI CLIENT KE DRIVER)
+ * ======================================================== */
+let currentReviewOrderId = null;
+let currentReviewRating = 5;
+let currentReviewTipAmount = 5000;
+let clientOrderCountdownIntervals = {};
+
+function openReviewTipModal(orderId) {
+  const ord = clientOrders.find(o => o.id === orderId);
+  if (!ord) return;
+
+  currentReviewOrderId = orderId;
+  currentReviewRating = 5;
+  currentReviewTipAmount = 5000;
+
+  const modal = document.getElementById('modalOrderReviewAndTip');
+  const nameEl = document.getElementById('reviewDriverName');
+  const avatarEl = document.getElementById('reviewDriverAvatar');
+  const titleEl = document.getElementById('reviewOrderTitle');
+  const customTipInput = document.getElementById('reviewCustomTipInput');
+  const commentInput = document.getElementById('reviewCommentInput');
+
+  if (nameEl) nameEl.innerText = ord.assignedMitraName || 'Mitra SobatSerabut';
+  if (avatarEl) avatarEl.src = ord.assignedMitraAvatar || 'uploads/avatar_mitra.svg';
+  if (titleEl) titleEl.innerText = `${ord.title} (${ord.category})`;
+  if (customTipInput) customTipInput.value = '';
+  if (commentInput) commentInput.value = '';
+
+  setReviewStar(5);
+  setReviewTip(5000);
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeReviewTipModal() {
+  const modal = document.getElementById('modalOrderReviewAndTip');
+  if (modal) modal.classList.add('hidden');
+  currentReviewOrderId = null;
+}
+
+function setReviewStar(rating) {
+  currentReviewRating = rating;
+  const labels = {
+    1: '⭐ Sangat Kurang (1.0)',
+    2: '⭐⭐ Kurang (2.0)',
+    3: '⭐⭐⭐ Cukup (3.0)',
+    4: '⭐⭐⭐⭐ Bagus & Rapi (4.0)',
+    5: '⭐⭐⭐⭐⭐ Sangat Puas! (5.0)'
+  };
+  const labelEl = document.getElementById('starRatingLabel');
+  if (labelEl) labelEl.innerText = labels[rating] || `${rating}.0 Bintang`;
+
+  for (let i = 1; i <= 5; i++) {
+    const icon = document.getElementById(`starIcon_${i}`);
+    if (icon) {
+      if (i <= rating) {
+        icon.className = 'fa-solid fa-star text-amber-400';
+      } else {
+        icon.className = 'fa-regular fa-star text-slate-600';
+      }
+    }
+  }
+}
+
+function setReviewTip(amount) {
+  currentReviewTipAmount = Number(amount) || 0;
+  const chips = [0, 2000, 5000, 10000, 20000, 50000];
+  chips.forEach(val => {
+    const btn = document.getElementById(`tipBtn_${val}`);
+    if (btn) {
+      if (val === currentReviewTipAmount) {
+        btn.className = 'tip-chip py-2 rounded-xl bg-amber-500/20 text-amber-300 font-bold border border-amber-500/50 shadow';
+      } else {
+        btn.className = 'tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all';
+      }
+    }
+  });
+
+  const customInput = document.getElementById('reviewCustomTipInput');
+  if (customInput && !chips.includes(currentReviewTipAmount)) {
+    customInput.value = currentReviewTipAmount || '';
+  }
+}
+
+function onCustomTipInput(val) {
+  const parsed = Math.max(0, Number(val) || 0);
+  currentReviewTipAmount = parsed;
+  const chips = [0, 2000, 5000, 10000, 20000, 50000];
+  chips.forEach(c => {
+    const btn = document.getElementById(`tipBtn_${c}`);
+    if (btn) btn.className = 'tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all';
+  });
+}
+
+async function submitOrderReviewAndTip() {
+  if (!currentReviewOrderId) return;
+  const comment = document.getElementById('reviewCommentInput')?.value.trim() || 'Pelayanan sangat memuaskan, ramah, dan cepat!';
+  const tips = currentReviewTipAmount;
+  const curBal = currentUser?.walletBalance || 0;
+
+  // Jika memberi tips, pastikan saldo dompet klien mencukupi
+  if (tips > 0 && curBal < tips) {
+    alert(`Saldo dompet Anda (Rp ${curBal.toLocaleString('id-ID')}) tidak mencukupi untuk memberikan tip sebesar Rp ${tips.toLocaleString('id-ID')}.\n\nSilakan isi ulang dompet atau pilih nominal tip Rp 0.`);
+    return;
+  }
+
+  try {
+    showToast('Mengirimkan penilaian dan tips ke driver...', 'info');
+    const res = await fetch(`${API_BASE}/api/orders/${currentReviewOrderId}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rating: currentReviewRating,
+        comment,
+        tips,
+        clientId: currentUser?.id
+      })
+    }).then(r => r.json());
+
+    if (res.success) {
+      if (tips > 0 && currentUser) {
+        currentUser.walletBalance = Math.max(0, curBal - tips);
+        saveClientSession(currentUser);
+        updateProfileTabUI();
+        if (typeof updateWalletDisplay === 'function') updateWalletDisplay();
+      }
+
+      closeReviewTipModal();
+      showToast(res.message || 'Penilaian berhasil dikirimkan!', 'success', 5000);
+      playSuccessChime();
+
+      // Perbarui cache order klien
+      const idx = clientOrders.findIndex(o => o.id === currentReviewOrderId);
+      if (idx !== -1) {
+        clientOrders[idx].review = res.data;
+      }
+      renderClientOrdersList();
+    } else {
+      showToast(res.message || 'Gagal mengirimkan penilaian.', 'error');
+    }
+  } catch(err) {
+    showToast('Koneksi gagal: ' + err.message, 'error');
+  }
+}
+
+function startClientOrderCountdown(ord) {
+  if (!ord || !ord.id) return;
+  if (clientOrderCountdownIntervals[ord.id]) clearInterval(clientOrderCountdownIntervals[ord.id]);
+
+  const durationMins = Number(ord.durationMinutes || ord.estimatedMinutes || 60);
+  const totalSec = durationMins * 60;
+  const startTime = ord.startedWorkingAt 
+    ? new Date(ord.startedWorkingAt).getTime() 
+    : (ord.workingAt ? new Date(ord.workingAt).getTime() : (ord.assignedAt ? new Date(ord.assignedAt).getTime() : Date.now()));
+
+  const tick = () => {
+    const el = document.getElementById(`clientOrderCountdown_${ord.id}`);
+    const bar = document.getElementById(`clientOrderProgressBar_${ord.id}`);
+    if (!el) return;
+
+    const elapsed = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+    const remaining = totalSec - elapsed;
+
+    if (remaining > 0) {
+      const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+      const s = (remaining % 60).toString().padStart(2, '0');
+      el.innerText = `${m}:${s}`;
+      if (bar) {
+        const pct = Math.max(0, Math.min(100, Math.round((remaining / totalSec) * 100)));
+        bar.style.width = `${pct}%`;
+      }
+    } else {
+      el.innerText = '00:00 (Selesai)';
+      el.className = 'font-mono font-black text-rose-400 text-sm px-2.5 py-0.5 rounded-lg bg-rose-500/20 border border-rose-500/40 shadow-inner animate-pulse';
+      if (bar) bar.style.width = '0%';
+    }
+  };
+
+  tick();
+  clientOrderCountdownIntervals[ord.id] = setInterval(tick, 1000);
 }
 
 let currentOrdersSubTab = 'active';
@@ -3898,6 +4191,31 @@ function renderClientOrdersList(isCommunityFeed = false) {
               </div>
             </div>
 
+            <!-- Live Countdown Timer & Estimasi Durasi (Hitung Mundur) -->
+            ${isWorking ? `
+              <div class="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/50 space-y-2.5 shadow-lg">
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center space-x-2 text-amber-300 font-extrabold">
+                    <i class="fa-solid fa-hourglass-half animate-spin text-sm"></i>
+                    <span>Pekerjaan Sedang Berlangsung (Hitung Mundur)</span>
+                  </div>
+                  <span id="clientOrderCountdown_${ord.id}" class="font-mono font-black text-amber-300 text-sm px-2.5 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/40 shadow-inner">
+                    ${ord.durationMinutes || ord.estimatedMinutes || 60}:00
+                  </span>
+                </div>
+                <div class="text-[11px] text-slate-300 flex items-center justify-between">
+                  <span>Layanan: <strong>${ord.category}</strong></span>
+                  <span>Batas Waktu: <strong>${ord.durationMinutes || ord.estimatedMinutes || 60} Menit</strong></span>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                  <div id="clientOrderProgressBar_${ord.id}" class="bg-gradient-to-r from-amber-500 to-emerald-500 h-2 rounded-full transition-all duration-1000" style="width: 100%;"></div>
+                </div>
+                <p class="text-[10px] text-slate-400 italic">
+                  * Apabila selesai kurang dari ${ord.durationMinutes || ord.estimatedMinutes || 60} menit, driver akan langsung mengunggah foto tugas selesai dan client mentransfer ke SeaBank Reza Pahlevi Admin.
+                </p>
+              </div>
+            ` : ''}
+
             <!-- Foto Mulai Kerja & Estimasi Pengerjaan -->
             ${ord.startWorkPhoto ? `
               <div class="p-3 rounded-2xl bg-blue-950/40 border border-blue-500/40 space-y-2 text-xs">
@@ -3906,7 +4224,7 @@ function renderClientOrdersList(isCommunityFeed = false) {
                     <i class="fa-solid fa-camera"></i>
                     <span>Foto Bukti Driver Tiba &amp; Mulai Bekerja</span>
                   </span>
-                  <span class="text-[10px] text-slate-400">Estimasi: ${ord.estimatedMinutes || 60} Menit</span>
+                  <span class="text-[10px] text-slate-400">Estimasi: ${ord.durationMinutes || ord.estimatedMinutes || 60} Menit</span>
                 </div>
                 <img src="${ord.startWorkPhoto.startsWith('http') || ord.startWorkPhoto.startsWith('data:') ? ord.startWorkPhoto : API_BASE + ord.startWorkPhoto}" class="w-full h-36 object-cover rounded-xl border border-slate-700 shadow">
               </div>
@@ -3982,6 +4300,9 @@ function renderClientOrdersList(isCommunityFeed = false) {
       // Inisialisasi Peta & Radar untuk Tiap Pesanan Aktif
       activeOrders.forEach(ord => {
         setTimeout(() => initOrderRadarMap(ord), 150);
+        if (ord.status === 'working' || ord.step === 'working') {
+          setTimeout(() => startClientOrderCountdown(ord), 200);
+        }
       });
     }
   }
@@ -4035,6 +4356,20 @@ function renderClientOrdersList(isCommunityFeed = false) {
               </div>
             </div>
           ` : ''}
+          ${ord.review ? `
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-amber-400 font-black">⭐ ${Number(ord.review.rating || 5).toFixed(1)} Bintang</span>
+                ${ord.review.tips > 0 ? `<span class="text-emerald-400 font-mono font-bold">+ Tip Rp ${Number(ord.review.tips).toLocaleString('id-ID')}</span>` : ''}
+              </div>
+              ${ord.review.comment ? `<p class="text-slate-300 italic text-[10px]">"${ord.review.comment}"</p>` : ''}
+            </div>
+          ` : (ord.status === 'completed' ? `
+            <button onclick="openReviewTipModal('${ord.id}')" class="w-full mt-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 text-slate-950 font-black text-xs shadow-md flex items-center justify-center space-x-1.5 active:scale-95 transition-all">
+              <i class="fa-solid fa-star"></i>
+              <span>Beri Bintang &amp; Tips untuk Mitra Driver</span>
+            </button>
+          ` : '')}
         </div>
         `;
       }).join('');

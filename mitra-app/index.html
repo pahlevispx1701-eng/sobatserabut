@@ -2850,15 +2850,24 @@ input:focus, textarea:focus, select:focus {
           <span class="material-symbols-outlined text-base">refresh</span>
           <span>Periksa &amp; Hubungkan Kembali</span>
         </button>
-        <button type="button" onclick="dismissNetworkBlocker()" class="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all">
-          <span class="material-symbols-outlined text-sm">visibility_off</span>
-          <span>Tetap Buka Menu (Mode Mandiri)</span>
-        </button>
       </div>
-      <div id="networkStatusDetail" class="text-[10px] text-slate-500 font-mono">
-        Status: Menunggu Jaringan Aktif...
+      <div id="networkStatusDetail" class="text-xs text-rose-400 font-semibold tracking-wide">
+        tidak ada koneksi internet
       </div>
     </div>
+    <!-- Tulisan di bagian paling bawah jika tidak ada internet dari data/wifi -->
+    <div class="absolute bottom-6 left-0 right-0 flex justify-center items-center pointer-events-none">
+      <div class="px-4 py-2 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold flex items-center space-x-2 shadow-lg backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+        <span>tidak ada koneksi internet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indikator offline persisten di bagian paling bawah layar -->
+  <div id="offlineBottomIndicator" class="fixed bottom-0 left-0 right-0 z-[100000] bg-rose-600/95 text-white text-xs py-2 px-4 text-center font-bold flex items-center justify-center space-x-2 shadow-lg hidden backdrop-blur-sm pointer-events-none">
+    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+    <span>tidak ada koneksi internet</span>
   </div>
 
   <!-- ========================================================

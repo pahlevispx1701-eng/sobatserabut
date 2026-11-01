@@ -101,15 +101,54 @@
     showScreen('screenSplash');
   };
 
-  window.requestNotifPermission = function() {
-    // User clicks 'pengaturan' -> show native dialog prompt
-    const dlg = document.getElementById('notifPermDialog');
-    if (dlg) dlg.classList.remove('hidden');
+  /* Buka pengaturan notifikasi HP sungguhan */
+  window.openDeviceNotificationSettings = function() {
+    // 1. Android WebView bridge
+    if (window.Android && typeof window.Android.openNotificationSettings === 'function') {
+      try { window.Android.openNotificationSettings(); return; } catch(e) {}
+    }
+    // 2. Android intent URL (via TWA / WebAPK)
+    try {
+      const intentUrl = 'intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;B.android.provider.extra.APP_PACKAGE=' +
+        (window.location.hostname || 'com.sobatserabut.driver') + ';end';
+      window.location.href = intentUrl;
+    } catch(e) {}
+    // 3. Fallback: tampilkan panduan manual
+    setTimeout(function() {
+      const msg = '📱 Cara aktifkan Notifikasi:\n\n' +
+        'Android:\nPengaturan → Aplikasi → Driver SobatSerabut → Notifikasi → Izinkan\n\n' +
+        'iOS (Safari):\nPengaturan → Safari → Notifikasi → Izinkan';
+      if (confirm(msg + '\n\nTekan OK untuk lanjut.')) {
+        onNotifAllowed();
+      }
+    }, 300);
+  };
 
-    if ('Notification' in window && Notification.permission === 'default') {
-      try {
-        Notification.requestPermission().catch(() => {});
-      } catch(e) {}
+  window.requestNotifPermission = function() {
+    if ('Notification' in window) {
+      // Jika sudah ditolak, langsung buka pengaturan HP
+      if (Notification.permission === 'denied') {
+        openDeviceNotificationSettings();
+        return;
+      }
+      Notification.requestPermission().then(function(result) {
+        const dlg = document.getElementById('notifPermDialog');
+        if (result === 'granted') {
+          if (dlg) dlg.classList.add('hidden');
+          onNotifAllowed();
+        } else if (result === 'denied') {
+          if (dlg) dlg.classList.add('hidden');
+          openDeviceNotificationSettings();
+        } else {
+          // default — tampilkan dialog in-app
+          if (dlg) dlg.classList.remove('hidden');
+        }
+      }).catch(function() {
+        openDeviceNotificationSettings();
+      });
+    } else {
+      // Browser tidak support Notification — buka pengaturan
+      openDeviceNotificationSettings();
     }
   };
 
@@ -174,8 +213,19 @@
   window.goToLocationSettings = function() {
     const alwaysDlg = document.getElementById('locationAlwaysDialog');
     if (alwaysDlg) alwaysDlg.classList.add('hidden');
-    // Munculkan layar simulasi izin lokasi pengaturan HP
-    showScreen('screenDeviceLocationSettings');
+
+    // 1. Android WebView bridge
+    if (window.Android && typeof window.Android.openLocationSettings === 'function') {
+      try { window.Android.openLocationSettings(); return; } catch(e) {}
+    }
+    // 2. Android intent URL — Pengaturan Lokasi HP
+    try {
+      window.location.href = 'intent:#Intent;action=android.settings.LOCATION_SOURCE_SETTINGS;end';
+    } catch(e) {}
+    // 3. Fallback: tampilkan layar simulasi pengaturan lokasi
+    setTimeout(function() {
+      showScreen('screenDeviceLocationSettings');
+    }, 400);
   };
 
   window.selectLocationOption = function(opt) {
@@ -518,9 +568,21 @@
   };
 
   /* ========================================================
-   * 7. UPLOAD DOKUMEN & FOTO PROFIL
+   * 7. UPLOAD DOKUMEN & FOTO PROFIL (KAMERA LANGSUNG TERHUBUNG)
    * ======================================================== */
   window.triggerDocUpload = function(inputId) {
+    if (inputId === 'selfieFile' || inputId === 'profilePhotoFile') {
+      if (typeof openDirectCamera === 'function') {
+        openDirectCamera('avatar', 'user');
+        return;
+      }
+    }
+    if (inputId === 'ktpFile') {
+      if (typeof openDirectCamera === 'function') {
+        openDirectCamera('ktp', 'environment');
+        return;
+      }
+    }
     const el = document.getElementById(inputId);
     if (el) el.click();
   };
@@ -576,7 +638,7 @@
       window.ktpBase64 = '/uploads/avatar_driver.svg';
     }
     if (!window.selfieBase64) {
-      window.selfieBase64 = '/uploads/avatar_mitra.svg';
+      window.selfieBase64 = localStorage.getItem('driver_registered_selfie') || '/uploads/avatar_mitra.svg';
     }
 
     window.currentRegNik = nik;

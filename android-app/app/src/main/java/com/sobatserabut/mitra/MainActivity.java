@@ -2,6 +2,8 @@ package com.sobatserabut.mitra;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -13,6 +15,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity {
 
@@ -31,6 +34,7 @@ public class MainActivity extends Activity {
             webView = findViewById(R.id.webView);
             progressBar = findViewById(R.id.progressBar);
 
+            createNotificationChannel();
             requestAppPermissions();
             setupWebView();
 
@@ -40,28 +44,51 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                NotificationChannel channel = new NotificationChannel(
+                    AndroidBridge.CHANNEL_ID,
+                    "Notifikasi SobatSerabut",
+                    NotificationManager.IMPORTANCE_HIGH
+                );
+                channel.setDescription("Notifikasi pesanan, obrolan, dan informasi tugas");
+                channel.enableVibration(true);
+                channel.enableLights(true);
+                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                if (nm != null) {
+                    nm.createNotificationChannel(channel);
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }
+    }
+
     private void requestAppPermissions() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                String[] permissions = {
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                };
+                ArrayList<String> permList = new ArrayList<>();
+                permList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+                permList.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+                permList.add(Manifest.permission.CAMERA);
+                permList.add(Manifest.permission.RECORD_AUDIO);
+                permList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+                permList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-                boolean needRequest = false;
-                for (String perm : permissions) {
+                if (Build.VERSION.SDK_INT >= 33) {
+                    permList.add("android.permission.POST_NOTIFICATIONS");
+                }
+
+                ArrayList<String> needRequest = new ArrayList<>();
+                for (String perm : permList) {
                     if (checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
-                        needRequest = true;
-                        break;
+                        needRequest.add(perm);
                     }
                 }
 
-                if (needRequest) {
-                    requestPermissions(permissions, PERMISSION_REQUEST_CODE);
+                if (!needRequest.isEmpty()) {
+                    requestPermissions(needRequest.toArray(new String[0]), PERMISSION_REQUEST_CODE);
                 }
             }
         } catch (Throwable t) {
@@ -93,6 +120,9 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new AppWebViewClient(this));
         webView.setWebChromeClient(new AppWebChromeClient(this, progressBar));
+
+        // Daftarkan Android JS Bridge → dapat diakses via window.Android di JS
+        webView.addJavascriptInterface(new AndroidBridge(this), "Android");
 
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             try {

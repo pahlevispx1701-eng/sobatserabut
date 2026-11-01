@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SOBATSERABUT v6.2.0 — ULTRA PREMIUM CLOUD DOMAINESIA ECOSYSTEM
-# Update: Notifikasi Pembaruan Admin Terkendali, Banner Sambutan Resmi,
-#         Marker Motor Berhelm Real-time, Audio Suara Order Masuk,
-#         Tampilan Kompak Tanpa Scroll, Sinkronisasi Cloud DomaiNesia & APK
-#         Driver App: Dark Emerald Genesis v6.2.0 | Client App: Volcanic Ember Phoenix v6.2.0
-# Build Date: 2026-10-31
+# SOBATSERABUT — ULTRA PREMIUM CLOUD DOMAINESIA ECOSYSTEM
+# Driver App  : Dark Emerald Genesis Edition v8.19.1
+# Client App  : Volcanic Ember Phoenix Edition v6.2.0
+# Update: Native Android Bridge openNotificationSettings() — APK Driver & Client
+#         Buka Pengaturan Notifikasi HP Langsung (Tanpa Panduan Manual)
+#         AndroidBridge.java — window.Android.openNotificationSettings()
+#         window.Android.isNotificationEnabled() — Cek Status Notifikasi
+#         Client-app: requestNotifPermission() otomatis saat pertama launch
+#         KYC Admin Panel v2.0 — Panel Verifikasi Identitas Ketat:
+#         • Pendaftaran Driver & Klien langsung masuk antrian KYC admin
+#         • Tombol Perbarui Data + Auto-Refresh 30 detik
+#         • Socket real-time kyc:new, kyc:reviewed, kyc:deleted
+#         • Kolom Tipe (Mitra/Klien badge), filter All/Pending/Approved/Rejected
+#         • DELETE /api/admin/kyc/:id & DELETE /api/admin/users/:id
+#         Sinkronisasi Cloud DomaiNesia & APK Otomatis
+# Build Date: 2026-11-01 KYC-v2.0
 # VPS DomaiNesia: 160.19.166.231
 # Domain Resmi: https://sobatserabut.160.19.166.231.sslip.io
 # Domain Kustom: https://app.sobatserabut.id
@@ -40,10 +50,10 @@ PROD_IP_URL="http://160.19.166.231"
 clear 2>/dev/null || true
 echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║   🚀 SOBATSERABUT v6.2.0 — ULTRA PREMIUM LAUNCH             ║"
-echo "║   Driver App: Dark Emerald Genesis Edition v6.2.0            ║"
+echo "║   🚀 SOBATSERABUT — ULTRA PREMIUM LAUNCH                    ║"
+echo "║   Driver App: Dark Emerald Genesis Edition v8.19.1           ║"
 echo "║   Client App: Volcanic Ember Phoenix Edition v6.2.0          ║"
-echo "║   🆕  Notif Update Admin | Marker Motor Berhelm | Audio Alert║"
+echo "║   🆕  Full-Screen | Notif HP | Background SW | v8.19.1      ║"
 echo "║   Cloud VPS  : DomaiNesia ($VPS_IP)               ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${RESET}"
@@ -128,10 +138,10 @@ cat > "$PROJECT_DIR/android-app/app/src/main/res/values/strings.xml" << 'STREOF'
 <resources>
     <string name="app_name">SobatSerabut</string>
     <string name="app_tagline">Solusi Cepat Serabutan &amp; Jasa Harian</string>
-    <string name="app_version">v6.2.0</string>
+    <string name="app_version">v8.19.1</string>
 </resources>
 STREOF
-ok "Branding strings.xml diperbarui → SobatSerabut v6.2.0"
+ok "Branding strings.xml diperbarui → Driver SobatSerabut v8.19.1 | Client v6.2.0"
 
 # ── STEP 2c: Sinkronisasi Logo & Favicon ─────────────────────────────
 echo -e "${BOLD}${CYAN}🖼️  2c. Sinkronisasi logo & favicon premium...${RESET}"
@@ -254,7 +264,7 @@ done
 echo ""
 echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║   🎉 SOBATSERABUT v6.2.0 RESMI AKTIF 24 JAM — DOMAINESIA!    ║"
+echo "║   🎉 DRIVER v8.19.1 & CLIENT v6.2.0 AKTIF 24 JAM — DOMAINESIA! ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${RESET}"
 echo -e "${BOLD}🌐 VPS Cloud DomaiNesia : ${GREEN}$VPS_IP${RESET}"
@@ -262,7 +272,7 @@ echo -e "${BOLD}🔗 Domain Aktif         : ${GREEN}$PUBLIC_URL${RESET}"
 echo ""
 echo -e "${BOLD}${CYAN}🔗 LINK AKSES PRODUKSI (Aktif 24 Jam Walau Laptop Mati):${RESET}"
 echo ""
-echo -e "  ${BOLD}1️⃣  DRIVER MITRA${RESET} (Dark Emerald Genesis v6.2.0)"
+echo -e "  ${BOLD}1️⃣  DRIVER MITRA${RESET} (Dark Emerald Genesis v8.19.1)"
 echo -e "      👉 ${GREEN}$PUBLIC_URL/driver${RESET}"
 echo -e "      👉 Lokal: ${CYAN}http://localhost:4000/driver${RESET}"
 echo ""

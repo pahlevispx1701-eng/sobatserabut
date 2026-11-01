@@ -19,14 +19,27 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker -->
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v6.2.0 -->
   <script>
     try {
-      if ('caches' in window) {
-        caches.keys().then(function(keys) { keys.forEach(function(k) { caches.delete(k); }); });
-      }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) { regs.forEach(function(r) { r.unregister(); }); });
+        // Daftar Service Worker untuk background running & push notif
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
+          console.log('[SW] Client SW v6.2.0 terdaftar:', reg.scope);
+          // Periodic Background Sync (Android Chrome)
+          if ('periodicSync' in reg) {
+            reg.periodicSync.register('client-keepalive', { minInterval: 60000 }).catch(function() {});
+          }
+          if ('sync' in reg) {
+            reg.sync.register('client-keepalive').catch(function() {});
+          }
+        }).catch(function(err) { console.warn('[SW] Gagal daftar:', err); });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          keys.filter(function(k) { return k !== 'sobatserabut-client-v620'; })
+              .forEach(function(k) { caches.delete(k); });
+        });
       }
     } catch(e) {}
   </script>
@@ -532,9 +545,35 @@ input[class*="bg-white"], input.bg-white {
   background-size: 200% 100% !important;
   animation: shimmer 1.5s ease infinite !important;
 }
+
+/* ====================================================
+   FULL-SCREEN NO-SCROLL — Auth & Register Screens v6.2.0
+   ==================================================== */
+html, body {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+#stage2RegisterScreen,
+#stage3PuzzleScreen,
+#stage4OtpScreen,
+#stage5PasswordScreen,
+#loginFlowScreen {
+  height: 100dvh !important;
+  min-height: unset !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+/* Konten form panjang — scroll internal saja */
+#stage2RegisterScreen .flex-1,
+#stage2RegisterScreen form {
+  overflow-y: auto !important;
+  min-height: 0 !important;
+  flex: 1 1 0% !important;
+}
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden">
+<body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="height:100dvh;overflow:hidden">
 
 
 
@@ -548,7 +587,7 @@ input[class*="bg-white"], input.bg-white {
          ======================================================== -->
 
   <!-- TAHAP 2: LAYAR FORMULIR UTAMA (THE REGISTER SCREEN) -->
-  <div id="stage2RegisterScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-y-auto max-w-md mx-auto shadow-2xl">
+  <div id="stage2RegisterScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-hidden max-w-md mx-auto shadow-2xl">
     <!-- Header Navigasi -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center justify-between safe-top">
       <button type="button" onclick="closeRegisterFlow()" class="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all" title="Kembali">
@@ -767,7 +806,7 @@ input[class*="bg-white"], input.bg-white {
   </div>
 
   <!-- Layar Konfirmasi & OTP (Minimalist Full-Screen) -->
-  <div id="stage4OtpScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-y-auto max-w-md mx-auto shadow-2xl">
+  <div id="stage4OtpScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-hidden max-w-md mx-auto shadow-2xl">
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center justify-between safe-top">
       <button type="button" onclick="backToRegisterStep2()" class="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all" title="Kembali">
         <i class="fa-solid fa-arrow-left text-base"></i>
@@ -880,7 +919,7 @@ input[class*="bg-white"], input.bg-white {
 
 
   <!-- TAHAP 5: PEMBUATAN KATA SANDI & WAJIB PENGISIAN ALAMAT LENGKAP KLIEN -->
-  <div id="stage5PasswordScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-y-auto max-w-md mx-auto shadow-2xl">
+  <div id="stage5PasswordScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-hidden max-w-md mx-auto shadow-2xl">
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center justify-between safe-top">
       <button type="button" onclick="backToOtpStep4()" class="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all" title="Kembali">
         <i class="fa-solid fa-arrow-left text-base"></i>
@@ -987,7 +1026,7 @@ input[class*="bg-white"], input.bg-white {
 
 
   <!-- LAYAR LOGIN MINIMALIS TERPADU -->
-  <div id="loginFlowScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-y-auto max-w-md mx-auto shadow-2xl">
+  <div id="loginFlowScreen" class="fixed inset-0 w-full h-full bg-[#F8F9FA] text-slate-800 z-50 hidden flex-col justify-between overflow-hidden max-w-md mx-auto shadow-2xl">
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center justify-between safe-top">
       <button type="button" onclick="closeLoginFlow()" class="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all" title="Kembali">
         <i class="fa-solid fa-arrow-left text-base"></i>
@@ -1736,6 +1775,24 @@ input[class*="bg-white"], input.bg-white {
             <span class="material-symbols-outlined text-sm">send</span>
           </button>
         </div>
+      </div>
+
+      <!-- PENGATURAN NOTIFIKASI HP LANGSUNG TERHUBUNG -->
+      <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-blue-600 text-xl">notifications_active</span>
+            <div>
+              <h3 class="font-extrabold text-slate-800 text-xs">Notifikasi HP Terhubung</h3>
+              <p class="text-[10px] text-slate-500">Kirim &amp; terima notifikasi pesanan dan obrolan mitra</p>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold border border-blue-200">Aktif</span>
+        </div>
+        <button onclick="openDeviceNotificationSettings()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all active:scale-95 shadow">
+          <span class="material-symbols-outlined text-sm">settings</span>
+          <span>Buka Pengaturan Notifikasi HP</span>
+        </button>
       </div>
 
       <!-- Tombol Keluar dari Akun (Logout) -->
@@ -2533,6 +2590,83 @@ input[class*="bg-white"], input.bg-white {
   </div>
 
   <!-- ========================================================
+       MODAL: BERI BINTANG & TIPS DARI CLIENT KE DRIVER
+       ======================================================== -->
+  <div id="modalOrderReviewAndTip" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-center">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-left">
+        <div class="flex items-center space-x-2">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-white text-sm">Penilaian &amp; Tips Driver</h3>
+            <p class="text-[10px] text-slate-400">Apresiasi Kinerja Mitra SobatSerabut</p>
+          </div>
+        </div>
+        <button onclick="closeReviewTipModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Info Driver -->
+      <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center space-x-3 text-left">
+        <img id="reviewDriverAvatar" src="uploads/avatar_mitra.svg" class="w-12 h-12 rounded-xl object-cover border border-emerald-500/40 bg-slate-900" onerror="this.src='uploads/avatar_mitra.svg'">
+        <div class="flex-1 min-w-0">
+          <h4 id="reviewDriverName" class="font-extrabold text-white text-xs truncate">Mitra Driver</h4>
+          <p id="reviewOrderTitle" class="text-[10px] text-slate-400 truncate">Layanan Jasa Selesai</p>
+          <span class="text-[9px] text-emerald-400 font-bold">Pekerjaan Selesai &amp; Lunas Rekber</span>
+        </div>
+      </div>
+
+      <!-- Interactive 5 Stars -->
+      <div class="space-y-1.5 py-1">
+        <span class="text-[11px] font-bold text-slate-300 block">Beri Bintang Kepuasan:</span>
+        <div class="flex items-center justify-center space-x-2 text-2xl text-amber-400 cursor-pointer" id="starRatingContainer">
+          <button type="button" onclick="setReviewStar(1)" class="star-btn transition-transform hover:scale-125 focus:outline-none"><i id="starIcon_1" class="fa-solid fa-star"></i></button>
+          <button type="button" onclick="setReviewStar(2)" class="star-btn transition-transform hover:scale-125 focus:outline-none"><i id="starIcon_2" class="fa-solid fa-star"></i></button>
+          <button type="button" onclick="setReviewStar(3)" class="star-btn transition-transform hover:scale-125 focus:outline-none"><i id="starIcon_3" class="fa-solid fa-star"></i></button>
+          <button type="button" onclick="setReviewStar(4)" class="star-btn transition-transform hover:scale-125 focus:outline-none"><i id="starIcon_4" class="fa-solid fa-star"></i></button>
+          <button type="button" onclick="setReviewStar(5)" class="star-btn transition-transform hover:scale-125 focus:outline-none"><i id="starIcon_5" class="fa-solid fa-star"></i></button>
+        </div>
+        <p id="starRatingLabel" class="text-xs font-black text-amber-400">⭐⭐⭐⭐⭐ Sangat Puas (5.0)</p>
+      </div>
+
+      <!-- Tips Pilihan Cepat -->
+      <div class="space-y-2 text-left">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-300">Berikan Tips Tambahan (Opsional):</span>
+          <span class="text-[10px] text-emerald-400 font-mono">100% untuk driver</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <button type="button" onclick="setReviewTip(0)" id="tipBtn_0" class="tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all">Rp 0</button>
+          <button type="button" onclick="setReviewTip(2000)" id="tipBtn_2000" class="tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all">+2.000</button>
+          <button type="button" onclick="setReviewTip(5000)" id="tipBtn_5000" class="tip-chip py-2 rounded-xl bg-amber-500/20 text-amber-300 font-bold border border-amber-500/50 hover:border-amber-500 transition-all">+5.000</button>
+          <button type="button" onclick="setReviewTip(10000)" id="tipBtn_10000" class="tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all">+10.000</button>
+          <button type="button" onclick="setReviewTip(20000)" id="tipBtn_20000" class="tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all">+20.000</button>
+          <button type="button" onclick="setReviewTip(50000)" id="tipBtn_50000" class="tip-chip py-2 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700 hover:border-amber-500 transition-all">+50.000</button>
+        </div>
+        <div class="relative">
+          <span class="absolute left-3 top-2 text-slate-500 text-xs font-mono font-bold">Rp</span>
+          <input type="number" id="reviewCustomTipInput" min="0" step="1000" placeholder="Atau ketik nominal tip..." oninput="onCustomTipInput(this.value)" class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs focus:border-amber-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Comment Review Input -->
+      <div class="space-y-1 text-left">
+        <label class="text-[11px] font-bold text-slate-300">Ulasan &amp; Kesan Anda:</label>
+        <textarea id="reviewCommentInput" rows="2" placeholder="Pelayanan sangat cepat, ramah, dan hasil pengerjaan rapi!" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs resize-none focus:border-amber-500 focus:outline-none"></textarea>
+      </div>
+
+      <div class="flex space-x-2 pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeReviewTipModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">Nanti Saja</button>
+        <button type="button" onclick="submitOrderReviewAndTip()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 text-slate-950 text-xs font-black shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-1.5 active:scale-95 transition-all">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Kirim Penilaian &amp; Tip</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
        MODAL 8: UBAH FOTO PROFIL RESMI PENGGUNA (HANYA DITAMPILKAN SETELAH DIUNGGAH NYATA)
        ======================================================== -->
   <div id="modalChangeProfilePhoto" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
@@ -2666,6 +2800,10 @@ input[class*="bg-white"], input.bg-white {
           <div class="flex-1"><span class="font-bold text-white block text-[11px]">Lokasi GPS Presisi</span><span class="text-[10px] text-slate-400">Deteksi titik jemput &amp; pemantauan tugas real-time</span></div>
         </div>
         <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm flex-shrink-0"><i class="fa-solid fa-bell"></i></div>
+          <div class="flex-1"><span class="font-bold text-white block text-[11px]">Notifikasi HP Langsung</span><span class="text-[10px] text-slate-400">Pemberitahuan status pesanan &amp; pergerakan mitra langsung</span></div>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center space-x-3">
           <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm flex-shrink-0"><i class="fa-solid fa-camera"></i></div>
           <div class="flex-1"><span class="font-bold text-white block text-[11px]">Kamera HP</span><span class="text-[10px] text-slate-400">Verifikasi selfie, foto e-KTP &amp; bukti pengerjaan</span></div>
         </div>
@@ -2677,7 +2815,7 @@ input[class*="bg-white"], input.bg-white {
       <div class="pt-2 space-y-2">
         <button onclick="requestAllDevicePermissions()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
           <i class="fa-solid fa-check-circle"></i>
-          <span>Izinkan Lokasi, Kamera &amp; Mikrofon</span>
+          <span>Izinkan Notifikasi, Lokasi, Kamera &amp; Mic</span>
         </button>
         <button onclick="closeDevicePermissionsModal()" class="w-full py-2 text-slate-500 hover:text-slate-400 text-[11px] font-semibold">
           Nanti Saja
@@ -2728,15 +2866,24 @@ input[class*="bg-white"], input.bg-white {
           <span class="material-symbols-outlined text-base">refresh</span>
           <span>Periksa &amp; Hubungkan Kembali</span>
         </button>
-        <button type="button" onclick="dismissNetworkBlocker()" class="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all">
-          <span class="material-symbols-outlined text-sm">visibility_off</span>
-          <span>Tetap Buka Menu (Mode Mandiri)</span>
-        </button>
       </div>
-      <div id="networkStatusDetail" class="text-[10px] text-slate-500 font-mono">
-        Status: Menunggu Jaringan Aktif...
+      <div id="networkStatusDetail" class="text-xs text-rose-400 font-semibold tracking-wide">
+        tidak ada koneksi internet
       </div>
     </div>
+    <!-- Tulisan di bagian paling bawah jika tidak ada internet dari data/wifi -->
+    <div class="absolute bottom-6 left-0 right-0 flex justify-center items-center pointer-events-none">
+      <div class="px-4 py-2 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold flex items-center space-x-2 shadow-lg backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+        <span>tidak ada koneksi internet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indikator offline persisten di bagian paling bawah layar -->
+  <div id="offlineBottomIndicator" class="fixed bottom-0 left-0 right-0 z-[100000] bg-rose-600/95 text-white text-xs py-2 px-4 text-center font-bold flex items-center justify-center space-x-2 shadow-lg hidden backdrop-blur-sm pointer-events-none">
+    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+    <span>tidak ada koneksi internet</span>
   </div>
 
   <!-- FLOATING APP TOAST NOTIFICATIONS (NO UGLY FILE:// POPUPS) -->

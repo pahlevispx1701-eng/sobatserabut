@@ -591,12 +591,43 @@ app.post('/api/auth/register', (req, res) => {
   } else {
     // Akun Pemohon Jasa (Klien)
     newUser.totalOrdersPosted = 0;
+    newUser.kycStatus = 'pending';
+    newUser.nik = nik ? nik.replace(/[^0-9]/g, '').slice(0, 16) : '';
+    const processedKtpKlien = saveBase64Image(ktpPhoto, 'ktp') || '';
+    const processedSelfieKlien = saveBase64Image(selfieKtpPhoto || avatarPhoto, 'selfie') || '';
+    newUser.ktpPhoto = processedKtpKlien;
+    newUser.selfieKtpPhoto = processedSelfieKlien;
     newUser.paymentAccount = {
       type: clientPaymentType || 'ewallet',
       provider: clientPaymentProvider || 'DANA',
       accountNo: clientAccountNo || cleanPhone,
       accountName: clientAccountName || name
     };
+    // Masukkan ke antrian KYC admin untuk konfirmasi
+    const kycRequestsKlien = db.get('kycRequests') || [];
+    const newKycKlien = {
+      id: `KYC-${Date.now().toString().slice(-4)}`,
+      userId: newUser.id,
+      mitraId: newUser.id,
+      userType: 'Pemohon/Klien',
+      mitraName: newUser.name,
+      phone: newUser.phone,
+      nik: newUser.nik || '-',
+      address: newUser.address,
+      bankDetails: {
+        bankName: clientPaymentProvider || 'DANA',
+        bankAccount: clientAccountNo || cleanPhone,
+        bankHolder: clientAccountName || assignedName
+      },
+      ktpImageUrl: processedKtpKlien,
+      selfieImageUrl: processedSelfieKlien,
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      reviewNotes: 'Data pendaftaran Klien, menunggu konfirmasi identitas oleh admin.'
+    };
+    kycRequestsKlien.unshift(newKycKlien);
+    db.set('kycRequests', kycRequestsKlien);
+    io.emit('kyc:new', newKycKlien);
   }
 
   users.unshift(newUser);
@@ -1156,12 +1187,43 @@ app.post('/api/auth/verify-otp', (req, res) => {
       io.emit('mitra:online', newUser);
     } else {
       newUser.totalOrdersPosted = 0;
+      newUser.kycStatus = 'pending';
+      newUser.nik = nik ? nik.replace(/[^0-9]/g, '').slice(0, 16) : '';
+      const processedKtpOtp = saveBase64Image(ktpPhoto, 'ktp') || '';
+      const processedSelfieOtp = saveBase64Image(selfieKtpPhoto || avatarPhoto, 'selfie') || '';
+      newUser.ktpPhoto = processedKtpOtp;
+      newUser.selfieKtpPhoto = processedSelfieOtp;
       newUser.paymentAccount = {
         type: clientPaymentType || 'ewallet',
         provider: clientPaymentProvider || 'DANA',
         accountNo: clientAccountNo || cleanPhone,
         accountName: clientAccountName || name
       };
+      // Masukkan ke antrian KYC admin
+      const kycRequestsOtp = db.get('kycRequests') || [];
+      const newKycOtp = {
+        id: `KYC-${Date.now().toString().slice(-4)}`,
+        userId: newUser.id,
+        mitraId: newUser.id,
+        userType: 'Pemohon/Klien',
+        mitraName: newUser.name,
+        phone: newUser.phone,
+        nik: newUser.nik || '-',
+        address: newUser.address,
+        bankDetails: {
+          bankName: clientPaymentProvider || 'DANA',
+          bankAccount: clientAccountNo || cleanPhone,
+          bankHolder: clientAccountName || assignedName
+        },
+        ktpImageUrl: processedKtpOtp,
+        selfieImageUrl: processedSelfieOtp,
+        status: 'pending',
+        submittedAt: new Date().toISOString(),
+        reviewNotes: 'Data pendaftaran Klien via OTP, menunggu konfirmasi identitas admin.'
+      };
+      kycRequestsOtp.unshift(newKycOtp);
+      db.set('kycRequests', kycRequestsOtp);
+      io.emit('kyc:new', newKycOtp);
     }
 
     users.unshift(newUser);
@@ -1805,6 +1867,8 @@ app.post('/api/categories', requireAdminAuth, (req, res) => {
     icon: req.body.icon || 'screwdriver-wrench',
     image: req.body.image || defaultImg,
     baseFare: Number(req.body.baseFare) || 30000,
+    durationMinutes: Number(req.body.durationMinutes || req.body.estimatedMinutes || (cname.includes('ac') ? 60 : 45)),
+    estimatedMinutes: Number(req.body.durationMinutes || req.body.estimatedMinutes || (cname.includes('ac') ? 60 : 45)),
     description: req.body.description || '',
     active: req.body.active !== undefined ? req.body.active : true
   };
@@ -1820,12 +1884,22 @@ app.put('/api/categories/:id', requireAdminAuth, (req, res) => {
   const idx = categories.findIndex(c => c.id === req.params.id);
   if (idx === -1) return res.status(404).json({ success: false, message: 'Kategori tidak ditemukan' });
   
-  categories[idx] = { ...categories[idx], ...req.body };
-  if (req.body.baseFare) categories[idx].baseFare = Number(req.body.baseFare);
+  if (req.body.name) categories[idx].name = req.body.name;
+  if (req.body.baseFare !== undefined) categories[idx].baseFare = Number(req.body.baseFare);
+  if (req.body.durationMinutes !== undefined || req.body.estimatedMinutes !== undefined) {
+    const mins = Number(req.body.durationMinutes || req.body.estimatedMinutes || 60);
+    categories[idx].durationMinutes = mins;
+    categories[idx].estimatedMinutes = mins;
+  }
+  if (req.body.description !== undefined) categories[idx].description = req.body.description;
+  if (req.body.active !== undefined) categories[idx].active = req.body.active;
+  if (req.body.icon) categories[idx].icon = req.body.icon;
+  if (req.body.image) categories[idx].image = req.body.image;
+
   db.set('categories', categories);
   io.emit('categories:update', categories);
   io.emit('categories:updated', categories);
-  res.json({ success: true, message: 'Kategori berhasil diperbarui', data: categories[idx] });
+  res.json({ success: true, message: 'Kategori berhasil diperbarui oleh admin', data: categories[idx] });
 });
 
 app.delete('/api/categories/:id', requireAdminAuth, (req, res) => {
@@ -2477,6 +2551,8 @@ app.post('/api/orders', (req, res) => {
     totalPayment: totalPayment,
     platformCommission: commission, // 10% komisi
     mitraNetEarnings: mitraNetEarnings, // Pendapatan bersih driver
+    durationMinutes: estimatedMinutes, // Timer durasi pengerjaan dari kategori
+    estimatedMinutes: estimatedMinutes,
     escrowStatus: 'pending_payment',
     status: 'open',
     step: 'waiting_mitra',
@@ -2619,8 +2695,8 @@ app.post('/api/orders/:id/start-work', (req, res) => {
   }
 
   const categories = db.get('categories') || [];
-  const cat = categories.find(c => c.name === orders[oIndex].category);
-  const estimatedMins = (cat && cat.estimatedMinutes) ? cat.estimatedMinutes : (orders[oIndex].estimatedMinutes || 60);
+  const cat = categories.find(c => c.name === orders[oIndex].category || (orders[oIndex].category && c.name && c.name.toLowerCase() === orders[oIndex].category.toLowerCase()));
+  const estimatedMins = (cat && (cat.durationMinutes || cat.estimatedMinutes)) ? (cat.durationMinutes || cat.estimatedMinutes) : (orders[oIndex].durationMinutes || orders[oIndex].estimatedMinutes || 60);
 
   const nowIso = new Date().toISOString();
   orders[oIndex].startWorkPhoto = saveBase64Image(startWorkPhoto, 'start_work');
@@ -2628,7 +2704,9 @@ app.post('/api/orders/:id/start-work', (req, res) => {
   orders[oIndex].status = 'working';
   orders[oIndex].arrivedAt = orders[oIndex].arrivedAt || nowIso;
   orders[oIndex].workingAt = nowIso;
+  orders[oIndex].startedWorkingAt = nowIso;
   orders[oIndex].estimatedMinutes = estimatedMins;
+  orders[oIndex].durationMinutes = estimatedMins;
 
   db.set('orders', orders);
 
@@ -2636,9 +2714,17 @@ app.post('/api/orders/:id/start-work', (req, res) => {
     orderId: req.params.id,
     order: orders[oIndex],
     estimatedMinutes: estimatedMins,
-    workingAt: nowIso
+    durationMinutes: estimatedMins,
+    workingAt: nowIso,
+    startedWorkingAt: nowIso
   });
-  io.emit('order:step_change', { orderId: req.params.id, step: 'working', updatedAt: nowIso });
+  io.emit('order:step_change', {
+    orderId: req.params.id,
+    step: 'working',
+    updatedAt: nowIso,
+    durationMinutes: estimatedMins,
+    startedWorkingAt: nowIso
+  });
 
   res.json({
     success: true,
@@ -3074,21 +3160,59 @@ app.get('/api/admin/geofencing-logs', requireAdminAuth, (req, res) => {
   res.json({ success: true, data: activeTracking });
 });
 
-// Review Mitra oleh Klien
+// Review Mitra & Tips Tambahan oleh Klien
 app.post('/api/orders/:id/review', (req, res) => {
-  const { rating, comment } = req.body;
+  const { rating, comment, tips, clientId } = req.body;
   const orders = db.get('orders') || [];
   const oIndex = orders.findIndex(o => o.id === req.params.id);
   if (oIndex === -1) return res.status(404).json({ success: false, message: 'Order tidak ditemukan' });
 
   const numRating = Number(rating) || 5.0;
-  orders[oIndex].review = { rating: numRating, comment: comment || 'Sangat memuaskan dan cepat!', createdAt: new Date().toISOString() };
-  db.set('orders', orders);
+  const numTips = Math.max(0, Number(tips) || 0);
+  const nowIso = new Date().toISOString();
+
+  orders[oIndex].review = {
+    rating: numRating,
+    comment: comment || 'Pelayanan sangat memuaskan, ramah, dan cepat!',
+    tips: numTips,
+    createdAt: nowIso
+  };
+
+  const users = db.get('users') || [];
+  const mitraId = orders[oIndex].assignedMitraId;
+
+  // Jika client memberikan tips, tambahkan saldo tip 100% langsung ke dompet driver
+  if (numTips > 0 && mitraId) {
+    const mIndex = users.findIndex(u => u.id === mitraId);
+    if (mIndex !== -1) {
+      users[mIndex].walletBalance = (users[mIndex].walletBalance || 0) + numTips;
+      users[mIndex].tipsTotal = (users[mIndex].tipsTotal || 0) + numTips;
+      users[mIndex].earnings = (users[mIndex].earnings || 0) + numTips;
+
+      io.emit('user:balance_update', { userId: users[mIndex].id, newBalance: users[mIndex].walletBalance });
+      io.emit('driver:tips_received', {
+        driverId: users[mIndex].id,
+        orderId: orders[oIndex].id,
+        rating: numRating,
+        tips: numTips,
+        comment: comment || '',
+        clientName: orders[oIndex].clientName || 'Klien'
+      });
+    }
+
+    // Jika clientId dikirim dan ada saldo dompet, potong saldo client
+    const cId = clientId || orders[oIndex].clientId;
+    if (cId) {
+      const cIndex = users.findIndex(u => u.id === cId);
+      if (cIndex !== -1 && (users[cIndex].walletBalance || 0) >= numTips) {
+        users[cIndex].walletBalance -= numTips;
+        io.emit('user:balance_update', { userId: users[cIndex].id, newBalance: users[cIndex].walletBalance });
+      }
+    }
+  }
 
   // Update rating rata-rata mitra
-  const mitraId = orders[oIndex].assignedMitraId;
   if (mitraId) {
-    const users = db.get('users') || [];
     const mIndex = users.findIndex(u => u.id === mitraId);
     if (mIndex !== -1) {
       const currentRating = users[mIndex].rating || 0;
@@ -3098,11 +3222,66 @@ app.post('/api/orders/:id/review', (req, res) => {
       } else {
         users[mIndex].rating = Number(((currentRating * (totalCount - 1) + numRating) / totalCount).toFixed(1));
       }
-      db.set('users', users);
     }
   }
 
-  res.json({ success: true, message: 'Terima kasih atas ulasan dan rating yang diberikan!' });
+  db.set('users', users);
+  db.set('orders', orders);
+
+  io.emit('order:reviewed', {
+    orderId: orders[oIndex].id,
+    rating: numRating,
+    tips: numTips,
+    driverId: mitraId
+  });
+
+  res.json({
+    success: true,
+    message: numTips > 0 
+      ? `Terima kasih! Rating ${numRating} bintang dan tip sebesar Rp ${numTips.toLocaleString('id-ID')} berhasil dikirimkan langsung ke dompet driver.`
+      : `Terima kasih! Rating ${numRating} bintang berhasil dikirimkan ke mitra driver.`,
+    data: orders[oIndex].review
+  });
+});
+
+// Endpoint Verifikasi Selfie Wajah Harian Driver (Otomatis Diterima Jika Wajah Cocok)
+app.post('/api/driver/:id/daily-selfie', (req, res) => {
+  const { selfiePhoto, matchScore } = req.body;
+  const users = db.get('users') || [];
+  const uIndex = users.findIndex(u => u.id === req.params.id || u.phone === req.params.id);
+  if (uIndex === -1) return res.status(404).json({ success: false, message: 'Driver tidak ditemukan' });
+
+  const nowIso = new Date().toISOString();
+  let savedPhoto = '';
+  if (selfiePhoto && selfiePhoto.startsWith('data:image')) {
+    savedPhoto = saveBase64Image(selfiePhoto, 'daily_selfie');
+  }
+
+  users[uIndex].dailySelfieApproved = true;
+  users[uIndex].lastDailySelfieAt = nowIso;
+  if (savedPhoto) users[uIndex].lastDailySelfiePhoto = savedPhoto;
+  users[uIndex].status = 'ready'; // Otomatis aktif siap terima order
+
+  db.set('users', users);
+
+  io.emit('driver:daily_selfie_approved', {
+    driverId: users[uIndex].id,
+    name: users[uIndex].name,
+    verifiedAt: nowIso,
+    matchScore: matchScore || 98.5
+  });
+  io.emit('mitra:status_change', {
+    mitraId: users[uIndex].id,
+    status: 'ready',
+    name: users[uIndex].name
+  });
+
+  res.json({
+    success: true,
+    message: 'Wajah terverifikasi cocok dengan data pendaftaran! Selfie harian otomatis diterima.',
+    verifiedAt: nowIso,
+    driver: users[uIndex]
+  });
 });
 
 // Chat message
@@ -3283,15 +3462,18 @@ app.get('/api/admin/route-history/:mitraId', requireAdminAuth, (req, res) => {
 app.get('/api/admin/kyc', requireAdminAuth, (req, res) => {
   const kycRequests = db.get('kycRequests') || [];
   const users = db.get('users') || [];
-  const drivers = users.filter(u => u.role === 'mitra');
+  const drivers = users.filter(u => u.role === 'mitra' || u.role === 'klien');
 
   // Pastikan seluruh mitra pengemudi terdaftar tercatat dalam daftar permohonan KYC
   drivers.forEach(d => {
-    const exists = kycRequests.find(k => k.mitraId === d.id);
-    if (!exists) {
+    const exists = kycRequests.find(k => k.mitraId === d.id || k.userId === d.id);
+    // Hanya buat entry otomatis jika user punya data KTP/NIK atau role mitra
+    if (!exists && (d.role === 'mitra' || d.role === 'klien' || d.nik || d.ktpPhoto)) {
       kycRequests.push({
         id: `KYC-${d.id.replace(/[^0-9]/g, '') || Date.now().toString().slice(-4)}`,
         mitraId: d.id,
+        userId: d.id,
+        userType: d.role === 'mitra' ? 'Mitra/Jasa' : 'Pemohon/Klien',
         mitraName: d.name,
         phone: d.phone,
         nik: d.nik || '-',
@@ -3311,9 +3493,10 @@ app.get('/api/admin/kyc', requireAdminAuth, (req, res) => {
 
   // Sinkronkan data terbaru setiap mitra driver
   const enriched = kycRequests.map(k => {
-    const driver = drivers.find(d => d.id === k.mitraId);
+    const driver = drivers.find(d => d.id === (k.mitraId || k.userId));
     return {
       ...k,
+      userType: k.userType || (driver?.role === 'klien' ? 'Pemohon/Klien' : 'Mitra/Jasa'),
       mitraName: k.mitraName || (driver && driver.name) || 'Mitra Driver',
       phone: k.phone || (driver && driver.phone) || '-',
       nik: (driver && driver.nik) ? driver.nik : (k.nik || '-'),
@@ -3386,6 +3569,39 @@ app.post('/api/admin/mitra/:id/verify', requireAdminAuth, (req, res) => {
   io.emit('mitra:status_change', { mitraId: users[uIndex].id, status: users[uIndex].status, name: users[uIndex].name });
 
   res.json({ success: true, message: `Mitra ${users[uIndex].name} berhasil ${status === 'approved' ? 'diverifikasi dan disetujui (diterima)' : 'ditolak'}!`, data: users[uIndex] });
+});
+
+// DELETE KYC Request (hapus dari antrian KYC saja)
+app.delete('/api/admin/kyc/:id', requireAdminAuth, (req, res) => {
+  const kycRequests = db.get('kycRequests') || [];
+  const kIndex = kycRequests.findIndex(k => k.id === req.params.id);
+  if (kIndex === -1) return res.status(404).json({ success: false, message: 'Data KYC tidak ditemukan' });
+  
+  const deleted = kycRequests[kIndex];
+  kycRequests.splice(kIndex, 1);
+  db.set('kycRequests', kycRequests);
+  
+  io.emit('kyc:deleted', { id: req.params.id, mitraId: deleted.mitraId });
+  res.json({ success: true, message: `Data KYC ${deleted.mitraName || deleted.userId} berhasil dihapus` });
+});
+
+// DELETE User + KYC sekaligus (hapus total dari sistem)
+app.delete('/api/admin/users/:id', requireAdminAuth, (req, res) => {
+  const users = db.get('users') || [];
+  const uIndex = users.findIndex(u => u.id === req.params.id);
+  if (uIndex === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan' });
+  
+  const deleted = users[uIndex];
+  users.splice(uIndex, 1);
+  db.set('users', users);
+  
+  // Hapus dari kycRequests juga
+  const kycRequests = db.get('kycRequests') || [];
+  const filteredKyc = kycRequests.filter(k => k.mitraId !== req.params.id && k.userId !== req.params.id);
+  db.set('kycRequests', filteredKyc);
+  
+  io.emit('user:deleted', { userId: req.params.id, name: deleted.name, role: deleted.role });
+  res.json({ success: true, message: `Akun ${deleted.name} (${deleted.role}) beserta data KYC berhasil dihapus dari sistem` });
 });
 
 // Admin mentransfer dana / mengkredit saldo dompet Mitra ke rekening/ewallet terdaftar

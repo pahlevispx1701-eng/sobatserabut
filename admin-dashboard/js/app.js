@@ -133,6 +133,7 @@ async function handleAdminLogin(e) {
       }
       if (!revenueChartInstance) initCharts();
       await loadInitialData();
+      startKycAutoRefresh();
     } else {
       if (errorMsg) {
         errorMsg.innerText = res.message || 'Kata sandi admin salah!';
@@ -433,6 +434,28 @@ function initSocket() {
       kycList.unshift(kyc);
       renderKycTable();
       renderDashboardCounters();
+      showKycToast(`🔔 KYC baru: ${kyc.mitraName} (${kyc.userType || 'Mitra'})`, 'info');
+    });
+
+    socket.on('kyc:deleted', (data) => {
+      kycList = kycList.filter(k => k.id !== data.id);
+      renderKycTable();
+    });
+
+    socket.on('kyc:reviewed', (data) => {
+      const idx = kycList.findIndex(k => (k.mitraId || k.userId) === data.mitraId);
+      if (idx !== -1) {
+        kycList[idx].status = data.status;
+        kycList[idx].reviewNotes = data.notes;
+      }
+      renderKycTable();
+      const label = data.status === 'approved' ? '✅ Diterima' : '❌ Ditolak';
+      showKycToast(`${label}: Keputusan KYC telah disinkronkan`, data.status === 'approved' ? 'success' : 'error');
+    });
+
+    socket.on('user:deleted', (data) => {
+      kycList = kycList.filter(k => (k.mitraId || k.userId) !== data.userId);
+      renderKycTable();
     });
 
     socket.on('withdrawal:new', (wd) => {
@@ -453,7 +476,7 @@ async function loadInitialData() {
       fetch(`${API_BASE}/api/mitra`).then(r => r.json()),
       fetch(`${API_BASE}/api/orders`).then(r => r.json()),
       fetch(`${API_BASE}/api/categories`).then(r => r.json()),
-      fetch(`${API_BASE}/api/admin/kyc`).then(r => r.json()),
+      fetch(`${API_BASE}/api/admin/kyc`, { headers: adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {} }).then(r => r.json()),
       fetch(`${API_BASE}/api/admin/withdrawals`).then(r => r.json()),
       fetch(`${API_BASE}/api/admin/transactions`).then(r => r.json())
     ]);
@@ -2429,6 +2452,11 @@ function renderCategoriesGrid() {
       <div style="flex:1;">
         <h4 style="font-size:14px;font-weight:800;color:white;margin-bottom:4px;line-height:1.3;">${cat.name}</h4>
         <p style="font-size:11px;color:#94A3B8;line-height:1.5;min-height:32px;">${cat.description || 'Layanan profesional tersedia di ekosistem SobatSerabut'}</p>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;font-weight:700;color:#38BDF8;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;">
+            <i class="fa-solid fa-stopwatch"></i> Timer: ${cat.durationMinutes || cat.estimatedMinutes || 60} Menit
+          </span>
+        </div>
       </div>
 
       <!-- Footer: harga + aksi -->
@@ -2438,6 +2466,13 @@ function renderCategoriesGrid() {
           <span style="font-size:14px;font-weight:800;color:${pal.accent};">Rp ${(cat.baseFare||0).toLocaleString('id-ID')}</span>
         </div>
         <div style="display:flex;gap:6px;">
+          <button onclick="openEditCategoryModal('${cat.id}')" title="Ubah Nama, Tarif & Timer"
+                  style="height:30px;padding:0 8px;border-radius:8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60A5FA;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;"
+                  onmouseover="this.style.background='rgba(59,130,246,0.3)'"
+                  onmouseout="this.style.background='rgba(59,130,246,0.15)'">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Ubah</span>
+          </button>
           <button onclick="deleteCategory('${cat.id}')" 
                   style="width:30px;height:30px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#EF4444;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all 0.2s;"
                   onmouseover="this.style.background='rgba(239,68,68,0.25)'"
@@ -2448,6 +2483,62 @@ function renderCategoriesGrid() {
       </div>
     </div>`;
   }).join('');
+}
+
+function openEditCategoryModal(catId) {
+  const cat = categoriesList.find(c => c.id === catId);
+  if (!cat) return;
+  document.getElementById('editCatId').value = cat.id;
+  document.getElementById('editCatName').value = cat.name || '';
+  document.getElementById('editCatBaseFare').value = cat.baseFare || 30000;
+  document.getElementById('editCatDurationMinutes').value = cat.durationMinutes || cat.estimatedMinutes || 60;
+  document.getElementById('editCatDesc').value = cat.description || '';
+  const modal = document.getElementById('editCategoryModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditCategoryModal() {
+  const modal = document.getElementById('editCategoryModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function saveEditCategory(e) {
+  if (e) e.preventDefault();
+  const id = document.getElementById('editCatId').value;
+  const name = document.getElementById('editCatName').value.trim();
+  const baseFare = Number(document.getElementById('editCatBaseFare').value) || 30000;
+  const durationMinutes = Number(document.getElementById('editCatDurationMinutes').value) || 60;
+  const description = document.getElementById('editCatDesc').value.trim();
+
+  if (!id || !name) {
+    alert('Nama kategori tidak boleh kosong!');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/categories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, baseFare, durationMinutes, estimatedMinutes: durationMinutes, description })
+    }).then(r => r.json());
+
+    if (res.success) {
+      closeEditCategoryModal();
+      const idx = categoriesList.findIndex(c => c.id === id);
+      if (idx !== -1) categoriesList[idx] = res.data;
+      renderCategoriesGrid();
+      if (typeof showToast === 'function') {
+        showToast('✅ Kategori & Timer Berhasil Diperbarui!', 'success');
+      } else {
+        alert('Kategori & Timer berhasil diperbarui!');
+      }
+    } else {
+      alert(res.message || 'Gagal menyimpan perubahan kategori');
+    }
+  } catch(err) {
+    console.error('Error saving category:', err);
+    alert('Gagal menghubungi server.');
+  }
 }
 
 async function toggleCategory(catId, active) {
@@ -2465,18 +2556,26 @@ async function deleteCategory(catId) {
 }
 
 function openAddCategoryModal() {
-  const name = prompt('Nama Kategori Jasa Baru: (misal: "Servis Mesin Cuci")');
+  const name = prompt('Nama Kategori Jasa Baru: (misal: "Cuci AC")');
   if (!name) return;
-  const baseFare = prompt('Tarif Dasar (Rp):', '60000');
-  const desc = prompt('Deskripsi Layanan:', 'Perbaikan & perawatan langsung di rumah');
+  const baseFare = prompt('Tarif Dasar (Rp):', '75000');
+  const durationMinutes = prompt('Timer Waktu Pengerjaan (Menit):', '60');
+  const desc = prompt('Deskripsi Layanan:', 'Pembersihan & servis berkala');
 
   fetch(`${API_BASE}/api/categories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, baseFare, description: desc, icon: 'wrench' })
+    body: JSON.stringify({
+      name,
+      baseFare: Number(baseFare) || 30000,
+      durationMinutes: Number(durationMinutes) || 60,
+      estimatedMinutes: Number(durationMinutes) || 60,
+      description: desc,
+      icon: 'wrench'
+    })
   }).then(r => r.json()).then(res => {
     if (res.success) {
-      alert('Kategori berhasil ditambahkan!');
+      if (typeof showToast === 'function') showToast('✅ Kategori baru berhasil ditambahkan!', 'success');
       loadInitialData();
     }
   });
@@ -2490,74 +2589,236 @@ function populateCategorySelects() {
   `).join('');
 }
 
-// 10. KYC Management
+// 10. KYC Management — Panel Verifikasi Identitas Ketat (v2 — Mitra & Klien)
+let kycFilter = 'all'; // all | pending | approved | rejected
+
+async function refreshKycData() {
+  try {
+    const btn = document.getElementById('kycRefreshBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Memuat...'; }
+    const res = await fetch(`${API_BASE}/api/admin/kyc`, {
+      headers: adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}
+    }).then(r => r.json());
+    if (res.success) {
+      kycList = res.data;
+      renderKycTable();
+      showKycToast(`✅ Data KYC diperbarui — ${kycList.length} entri`, 'success');
+    } else {
+      showKycToast('❌ Gagal memuat data KYC', 'error');
+    }
+  } catch(e) {
+    showKycToast('❌ Gagal koneksi server', 'error');
+  } finally {
+    const btn = document.getElementById('kycRefreshBtn');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-sm">refresh</span> Perbarui Data'; }
+  }
+}
+
+// Auto-refresh KYC setiap 30 detik sebagai fallback polling
+let kycAutoRefreshInterval = null;
+function startKycAutoRefresh() {
+  if (kycAutoRefreshInterval) clearInterval(kycAutoRefreshInterval);
+  kycAutoRefreshInterval = setInterval(async () => {
+    if (!adminToken) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/kyc`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      }).then(r => r.json());
+      if (res.success && JSON.stringify(res.data) !== JSON.stringify(kycList)) {
+        kycList = res.data;
+        renderKycTable();
+        console.log('[KYC Auto-Refresh] Data diperbarui:', kycList.length, 'entri');
+      }
+    } catch(e) { /* silent fail */ }
+  }, 30000);
+}
+function stopKycAutoRefresh() {
+  if (kycAutoRefreshInterval) { clearInterval(kycAutoRefreshInterval); kycAutoRefreshInterval = null; }
+}
+
+function setKycFilter(filter) {
+  kycFilter = filter;
+  ['all','pending','approved','rejected'].forEach(f => {
+    const btn = document.getElementById(`kycFilter-${f}`);
+    if (btn) {
+      if (f === filter) {
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white border border-indigo-500 transition-all';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition-all';
+      }
+    }
+  });
+  renderKycTable();
+}
+
 function renderKycTable() {
   const tbody = document.getElementById('kycTbody');
   if (!tbody) return;
 
-  if (kycList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500 italic">Belum ada permohonan KYC pendaftaran mitra baru.</td></tr>';
+  let filtered = kycList;
+  if (kycFilter === 'pending')  filtered = kycList.filter(k => k.status === 'pending');
+  if (kycFilter === 'approved') filtered = kycList.filter(k => k.status === 'approved');
+  if (kycFilter === 'rejected') filtered = kycList.filter(k => k.status === 'rejected');
+
+  // Update counter badges
+  document.getElementById('kycCount-all')?.innerText && (document.getElementById('kycCount-all').innerText = kycList.length);
+  document.getElementById('kycCount-pending')?.innerText !== undefined && (document.getElementById('kycCount-pending').innerText = kycList.filter(k=>k.status==='pending').length);
+  document.getElementById('kycCount-approved')?.innerText !== undefined && (document.getElementById('kycCount-approved').innerText = kycList.filter(k=>k.status==='approved').length);
+  document.getElementById('kycCount-rejected')?.innerText !== undefined && (document.getElementById('kycCount-rejected').innerText = kycList.filter(k=>k.status==='rejected').length);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 italic text-sm">
+      <span class="material-symbols-outlined text-4xl block mb-2 text-slate-600">manage_search</span>
+      Belum ada data verifikasi identitas ${kycFilter !== 'all' ? `(${kycFilter === 'pending' ? 'menunggu' : kycFilter === 'approved' ? 'diterima' : 'ditolak'})` : ''}.
+    </td></tr>`;
     return;
   }
 
-  tbody.innerHTML = kycList.map(k => {
-    const statusBadge = k.status === 'approved' 
-      ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">Terverifikasi</span>'
+  tbody.innerHTML = filtered.map(k => {
+    const statusBadge = k.status === 'approved'
+      ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/30 flex items-center gap-1"><span class="material-symbols-outlined text-[11px]">verified</span>Diterima</span>'
       : k.status === 'rejected'
-      ? '<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">Ditolak</span>'
-      : '<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">Menunggu Tinjauan</span>';
+      ? '<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold text-[10px] border border-rose-500/30 flex items-center gap-1"><span class="material-symbols-outlined text-[11px]">cancel</span>Ditolak</span>'
+      : '<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold text-[10px] border border-amber-500/30 flex items-center gap-1 animate-pulse"><span class="material-symbols-outlined text-[11px]">hourglass_empty</span>Menunggu</span>';
 
-    const ktpThumb = k.ktpImageUrl?.startsWith('http') ? k.ktpImageUrl : `${API_BASE}${k.ktpImageUrl}`;
-    const selfieThumb = k.selfieImageUrl?.startsWith('http') ? k.selfieImageUrl : `${API_BASE}${k.selfieImageUrl}`;
+    const typeBadge = (k.userType === 'Pemohon/Klien')
+      ? '<span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-bold text-[9px] border border-sky-500/30 ml-1">Klien</span>'
+      : '<span class="px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-400 font-bold text-[9px] border border-violet-500/30 ml-1">Mitra</span>';
 
-    const actions = k.status === 'pending' ? `
-      <div class="flex justify-end space-x-2">
-        <button onclick="reviewKyc('${k.id}', 'approved')" class="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow">Setujui</button>
-        <button onclick="reviewKyc('${k.id}', 'rejected')" class="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] shadow">Tolak</button>
-      </div>
-    ` : `<span class="text-[11px] text-slate-500 text-right block">Selesai diperiksa</span>`;
+    const baseUrl = typeof API_BASE !== 'undefined' ? API_BASE : '';
+    const ktpUrl = k.ktpImageUrl ? (k.ktpImageUrl.startsWith('http') ? k.ktpImageUrl : `${baseUrl}${k.ktpImageUrl}`) : '';
+    const selfieUrl = k.selfieImageUrl ? (k.selfieImageUrl.startsWith('http') ? k.selfieImageUrl : `${baseUrl}${k.selfieImageUrl}`) : '';
+
+    const ktpThumb = ktpUrl
+      ? `<img src="${ktpUrl}" onclick="openKycPreview('${ktpUrl}', 'Foto KTP - ${k.mitraName}')" class="w-14 h-9 rounded-lg border-2 border-slate-600 object-cover cursor-zoom-in hover:border-indigo-500 hover:scale-110 transition-all shadow-md" title="Klik untuk zoom">`
+      : '<span class="text-[10px] text-slate-500 italic">Belum ada</span>';
+    const selfieThumb = selfieUrl
+      ? `<img src="${selfieUrl}" onclick="openKycPreview('${selfieUrl}', 'Foto Selfie KTP - ${k.mitraName}')" class="w-14 h-9 rounded-lg border-2 border-slate-600 object-cover cursor-zoom-in hover:border-indigo-500 hover:scale-110 transition-all shadow-md" title="Klik untuk zoom">`
+      : '<span class="text-[10px] text-slate-500 italic">Belum ada</span>';
+
+    const bank = k.bankDetails || {};
+    const bankInfo = (bank.bankAccount && bank.bankAccount !== '-')
+      ? `<div class="font-mono text-[11px] leading-tight">
+           <span class="font-bold text-emerald-400">${bank.bankName || 'BANK'}</span><br>
+           <span class="text-white">${bank.bankAccount}</span><br>
+           <span class="text-slate-400 text-[10px]">a.n. ${bank.bankHolder || k.mitraName || '-'}</span>
+         </div>`
+      : `<span class="text-slate-500 italic text-[10px]">Belum diisi</span>`;
+
+    const userId = k.mitraId || k.userId || '';
+    const actions = `
+      <div class="flex flex-col gap-1.5 min-w-[90px]">
+        ${k.status === 'pending' ? `
+          <button onclick="reviewKyc('${k.id}', 'approved')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow flex items-center justify-center gap-1 transition-all active:scale-95">
+            <span class="material-symbols-outlined text-[12px]">check_circle</span> Terima
+          </button>
+          <button onclick="reviewKyc('${k.id}', 'rejected')" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] shadow flex items-center justify-center gap-1 transition-all active:scale-95">
+            <span class="material-symbols-outlined text-[12px]">cancel</span> Tolak
+          </button>
+        ` : `
+          <button onclick="reviewKyc('${k.id}', '${k.status === 'approved' ? 'rejected' : 'approved'}')" class="px-2.5 py-1 rounded-lg bg-slate-600 hover:bg-slate-500 text-white font-bold text-[10px] shadow flex items-center justify-center gap-1 transition-all active:scale-95">
+            <span class="material-symbols-outlined text-[12px]">refresh</span> Ubah
+          </button>
+        `}
+        <button onclick="deleteKycUser('${k.id}', '${userId}', '${(k.mitraName||'').replace(/'/g,'')}')" class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-red-800 border border-red-700/50 text-red-400 hover:text-white font-bold text-[10px] shadow flex items-center justify-center gap-1 transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[12px]">delete_forever</span> Hapus
+        </button>
+      </div>`;
+
+    const reviewNoteHtml = k.reviewNotes
+      ? `<div class="text-[9px] text-slate-500 mt-0.5 max-w-[80px] truncate" title="${k.reviewNotes}">${k.reviewNotes}</div>`
+      : '';
 
     return `
-      <tr class="hover:bg-slate-800/60 transition-all">
-        <td class="p-3 font-mono text-[11px] text-slate-400">${k.id}<br><span class="text-[10px] text-slate-500">${new Date(k.submittedAt).toLocaleDateString('id-ID')}</span></td>
-        <td class="p-3 font-bold text-white">${k.mitraName}</td>
-        <td class="p-3 font-mono text-slate-400">${k.phone || '-'}</td>
-        <td class="p-3 font-mono text-slate-300 font-semibold">${k.nik}</td>
-        <td class="p-3">
-          <img src="${ktpThumb}" onclick="openKycPreview('${ktpThumb}', 'Foto KTP - ${k.mitraName}')" class="w-12 h-8 rounded border border-slate-600 object-cover cursor-pointer hover:scale-110 transition-transform">
+      <tr class="hover:bg-slate-800/60 transition-all border-b border-slate-700/50">
+        <td class="p-3 min-w-[100px]">
+          <div class="font-mono text-[10px] text-indigo-400 font-bold">${k.id}</div>
+          <div class="text-[9px] text-slate-500 mt-0.5">${k.submittedAt ? new Date(k.submittedAt).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '-'}</div>
         </td>
-        <td class="p-3">
-          <img src="${selfieThumb}" onclick="openKycPreview('${selfieThumb}', 'Foto Selfie KTP - ${k.mitraName}')" class="w-12 h-8 rounded border border-slate-600 object-cover cursor-pointer hover:scale-110 transition-transform">
+        <td class="p-3">${typeBadge}</td>
+        <td class="p-3 min-w-[120px]">
+          <div class="font-bold text-white text-sm">${k.mitraName || '-'}</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">ID: ${(k.mitraId||k.userId||'').slice(0,8)}...</div>
         </td>
-        <td class="p-3">
-          ${(k.bankAccount || k.bankDetails?.bankAccount) ? `
-            <div class="font-mono text-xs">
-              <span class="font-bold text-emerald-400">${k.bankDetails?.bankName || k.bankName || 'BANK'}:</span> ${k.bankDetails?.bankAccount || k.bankAccount}
-              <span class="text-[10px] text-slate-400 block font-sans">${k.bankDetails?.bankHolder || k.bankHolder || ''}</span>
-            </div>
-          ` : '<span class="text-slate-500 font-mono text-[11px]">-</span>'}
+        <td class="p-3 min-w-[110px]">
+          <div class="font-mono text-slate-300 text-xs">${k.phone || '-'}</div>
         </td>
-        <td class="p-3">${statusBadge}</td>
+        <td class="p-3 min-w-[130px]">
+          <div class="font-mono text-amber-300 text-xs font-bold tracking-wider">${k.nik && k.nik !== '-' ? k.nik : '<span class="text-slate-500 italic font-normal text-[10px]">Belum diisi</span>'}</div>
+        </td>
+        <td class="p-3">${ktpThumb}</td>
+        <td class="p-3">${selfieThumb}</td>
+        <td class="p-3 min-w-[130px]">${bankInfo}</td>
+        <td class="p-3">${statusBadge}${reviewNoteHtml}</td>
         <td class="p-3 text-right">${actions}</td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
 }
 
 async function reviewKyc(kycId, status) {
-  const notes = status === 'approved' ? 'Dokumen KTP & Selfie valid.' : prompt('Alasan penolakan:', 'Foto KTP buram / tidak terbaca');
-  if (status === 'rejected' && notes === null) return;
+  let notes = '';
+  if (status === 'approved') {
+    notes = 'Dokumen KTP & Selfie valid, identitas terverifikasi oleh admin SobatSerabut.';
+  } else {
+    notes = prompt('📝 Alasan penolakan (wajib diisi):', 'Foto KTP buram / tidak terbaca / tidak sesuai');
+    if (notes === null || notes.trim() === '') return;
+  }
 
   const res = await fetch(`${API_BASE}/api/admin/kyc/${kycId}/review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, reviewNotes: notes })
-  }).then(r => r.json());
+  }).then(r => r.json()).catch(() => ({ success: false, message: 'Gagal koneksi ke server' }));
 
   if (res.success) {
-    alert(res.message);
-    loadInitialData();
+    const idx = kycList.findIndex(k => k.id === kycId);
+    if (idx !== -1) { kycList[idx].status = status; kycList[idx].reviewNotes = notes; }
+    renderKycTable();
+    showKycToast(status === 'approved' ? `✅ KYC Diterima: ${res.message}` : `❌ KYC Ditolak: ${res.message}`, status === 'approved' ? 'success' : 'error');
+  } else {
+    alert('❌ ' + (res.message || 'Gagal memperbarui status KYC'));
   }
+}
+
+async function deleteKycUser(kycId, userId, userName) {
+  const confirmed = confirm(`⚠️ HAPUS DATA KYC & AKUN\n\nNama: ${userName}\n\nTindakan ini akan:\n• Menghapus data KYC dari antrian verifikasi\n• Menghapus akun pengguna dari sistem\n• Tidak dapat dibatalkan\n\nLanjutkan?`);
+  if (!confirmed) return;
+
+  let msg = '';
+  
+  // Hapus akun user (sekaligus hapus KYC)
+  if (userId) {
+    const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+      method: 'DELETE'
+    }).then(r => r.json()).catch(() => ({ success: false }));
+    if (res.success) {
+      kycList = kycList.filter(k => k.id !== kycId && (k.mitraId || k.userId) !== userId);
+      msg = res.message;
+    } else {
+      // Fallback: hapus KYC saja
+      const r2 = await fetch(`${API_BASE}/api/admin/kyc/${kycId}`, { method: 'DELETE' })
+        .then(r => r.json()).catch(() => ({ success: false }));
+      if (r2.success) { kycList = kycList.filter(k => k.id !== kycId); msg = r2.message; }
+      else { alert('❌ Gagal menghapus data'); return; }
+    }
+  } else {
+    const res = await fetch(`${API_BASE}/api/admin/kyc/${kycId}`, { method: 'DELETE' })
+      .then(r => r.json()).catch(() => ({ success: false, message: 'Gagal koneksi' }));
+    if (res.success) { kycList = kycList.filter(k => k.id !== kycId); msg = res.message; }
+    else { alert('❌ ' + res.message); return; }
+  }
+
+  renderKycTable();
+  showKycToast(`🗑️ ${msg}`, 'info');
+}
+
+function showKycToast(message, type = 'info') {
+  const colors = { success: 'bg-emerald-600', error: 'bg-rose-600', info: 'bg-slate-600' };
+  const toast = document.createElement('div');
+  toast.className = `fixed top-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-2xl text-white text-sm font-bold max-w-xs ${colors[type] || colors.info} transition-all`;
+  toast.innerText = message;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
 
 function openKycPreview(imgUrl, title) {

@@ -19,14 +19,33 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker -->
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v8.19.1 -->
   <script>
     try {
-      if ('caches' in window) {
-        caches.keys().then(function(keys) { keys.forEach(function(k) { caches.delete(k); }); });
-      }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) { regs.forEach(function(r) { r.unregister(); }); });
+        // Daftar Service Worker baru untuk background running & push notif
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
+          console.log('[SW] Driver SW v8.19.1 terdaftar:', reg.scope);
+          // Periodic Background Sync (Android Chrome)
+          if ('periodicSync' in reg) {
+            reg.periodicSync.register('driver-keepalive', { minInterval: 60000 }).catch(function() {});
+          }
+          // Background Sync saat online kembali
+          if ('sync' in reg) {
+            reg.sync.register('driver-keepalive').catch(function() {});
+          }
+          // Request notifikasi otomatis saat SW aktif
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().catch(function() {});
+          }
+        }).catch(function(err) { console.warn('[SW] Gagal daftar:', err); });
+      }
+      if ('caches' in window) {
+        // Bersihkan cache lama (non v8.19.1)
+        caches.keys().then(function(keys) {
+          keys.filter(function(k) { return k !== 'sobatserabut-driver-v8191'; })
+              .forEach(function(k) { caches.delete(k); });
+        });
       }
     } catch(e) {}
   </script>
@@ -527,9 +546,72 @@ input:focus, textarea:focus, select:focus {
 [id*="Screen"]:not(.hidden), [id*="Tab"]:not(.hidden) {
   animation: fadeInUp 0.2s ease forwards;
 }
+
+/* ====================================================
+   FULL-SCREEN NO-SCROLL — Auth Screens v8.19.1
+   ==================================================== */
+html, body {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+#authContainer {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+#authContainer > div {
+  height: 100dvh !important;
+  min-height: unset !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+#screenPermissionNotif,
+#screenDeviceLocationSettings,
+#screenSplash,
+#screenPhoneInput,
+#screenSliderCaptcha,
+#screenOtp,
+#screenCreatePassword,
+#screenProfileSetup,
+#screenWelcomeDocs,
+#screenUploadDocs,
+#screenUploadPhoto,
+#screenPending,
+#screenLoginPassword {
+  height: 100dvh !important;
+  min-height: unset !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  display: none;
+}
+#screenPermissionNotif.flex,
+#screenDeviceLocationSettings.flex,
+#screenSplash.flex,
+#screenPhoneInput.flex,
+#screenSliderCaptcha.flex,
+#screenOtp.flex,
+#screenCreatePassword.flex,
+#screenProfileSetup.flex,
+#screenWelcomeDocs.flex,
+#screenUploadDocs.flex,
+#screenUploadPhoto.flex,
+#screenPending.flex,
+#screenLoginPassword.flex {
+  display: flex !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+/* Konten dalam screen yg perlu scroll internal */
+#screenProfileSetup .flex-1.overflow-y-auto,
+#screenUploadDocs .flex-1.overflow-y-auto {
+  overflow-y: auto !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+}
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden">
+<body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="height:100dvh;overflow:hidden">
 
 
 
@@ -540,13 +622,13 @@ input:focus, textarea:focus, select:focus {
        - Screen 3: Masuk Akun (Tampilan untuk pengguna terdaftar)
        - Screen 4: Lupa Kata Sandi (Tampil saat salah berulang / lupa sandi)
        ======================================================== -->
-    <div id="authContainer" class="fixed inset-0 w-full h-full bg-slate-950 z-50 flex justify-center overflow-y-auto">
-    <div class="w-full max-w-md min-h-screen flex flex-col relative" style="background:linear-gradient(160deg,#020810 0%,#050D1A 50%,#0D1F38 100%)">
+    <div id="authContainer" class="fixed inset-0 w-full h-full bg-slate-950 z-50 flex justify-center overflow-hidden">
+    <div class="w-full max-w-md h-full flex flex-col relative" style="background:linear-gradient(160deg,#020810 0%,#050D1A 50%,#0D1F38 100%);overflow:hidden">
 
     <!-- ====================================================
          SCREEN P: IZIN NOTIFIKASI (Pertama kali buka / download)
          ==================================================== -->
-    <div id="screenPermissionNotif" class="hidden flex-col min-h-screen">
+    <div id="screenPermissionNotif" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
         <!-- Icon -->
@@ -679,7 +761,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN S-OS: PENGATURAN IZIN LOKASI HP (AKSES LOKASI)
          ==================================================== -->
-    <div id="screenDeviceLocationSettings" class="hidden flex-col min-h-screen" style="background:#090F1C">
+    <div id="screenDeviceLocationSettings" class="hidden flex-col" style="height:100dvh;overflow:hidden;background:#090F1C">
       <div class="safe-top"></div>
       <!-- Panah kembali sebelah kiri -->
       <div class="flex items-center px-4 pt-4 pb-3 border-b border-slate-800/80">
@@ -751,7 +833,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN S: TAMPILAN PERTAMA APLIKASI
          ==================================================== -->
-    <div id="screenSplash" class="hidden flex-col min-h-screen">
+    <div id="screenSplash" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8">
         <!-- Logo glow -->
@@ -785,7 +867,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN PH: INPUT NOMOR HP (BUAT AKUN)
          ==================================================== -->
-    <div id="screenPhoneInput" class="hidden flex-col min-h-screen">
+    <div id="screenPhoneInput" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <!-- Header: Tulisan atas nya 'buat akun' yg tidak bisa di klik + tanda panah untuk balik ke tampilan sebelumnya -->
       <div class="flex items-center px-4 pt-4 pb-2">
@@ -833,7 +915,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN CP: SLIDER PUZZLE CAPTCHA (GESER TEKA-TEKI)
          ==================================================== -->
-    <div id="screenSliderCaptcha" class="hidden flex-col min-h-screen">
+    <div id="screenSliderCaptcha" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="backToPhoneInput()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors" style="background:rgba(30,41,59,0.6)">
@@ -906,7 +988,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN OTP: MASUKKAN KODE OTP WA
          ==================================================== -->
-    <div id="screenOtp" class="hidden flex-col min-h-screen">
+    <div id="screenOtp" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="backToPhoneInput()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
@@ -970,7 +1052,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN PW: BUAT PASSWORD
          ==================================================== -->
-    <div id="screenCreatePassword" class="hidden flex-col min-h-screen">
+    <div id="screenCreatePassword" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="navigateNewAuth('otp')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
@@ -1014,7 +1096,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN PROF: PENDAFTARAN PROFIL
          ==================================================== -->
-    <div id="screenProfileSetup" class="hidden flex-col min-h-screen">
+    <div id="screenProfileSetup" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="navigateNewAuth('createPassword')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
@@ -1090,7 +1172,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN WELC: SELAMAT DATANG! + 2 LANGKAH DOKUMEN
          ==================================================== -->
-    <div id="screenWelcomeDocs" class="hidden flex-col min-h-screen">
+    <div id="screenWelcomeDocs" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex-1 flex flex-col p-6 items-center justify-center space-y-8">
         <!-- Welcome icon -->
@@ -1134,7 +1216,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN DOCS: UPLOAD DOKUMEN TERKAIT
          ==================================================== -->
-    <div id="screenUploadDocs" class="hidden flex-col min-h-screen">
+    <div id="screenUploadDocs" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="navigateNewAuth('welcomeDocs')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
@@ -1170,10 +1252,15 @@ input:focus, textarea:focus, select:focus {
             </div>
             <span class="text-[10px] px-2 py-0.5 rounded-full text-rose-300 font-bold" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3)">Wajib</span>
           </div>
-          <div id="selfiePreview" onclick="triggerDocUpload('selfieFile')" class="h-32 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative" style="background:rgba(2,8,16,0.6);border:2px dashed rgba(71,85,105,0.5)">
-            <span class="material-symbols-outlined text-3xl text-slate-500 mb-1">camera_front</span>
-            <span class="text-xs text-slate-400">Ketuk untuk ambil foto selfi</span>
+          <div id="selfiePreview" onclick="openDirectCamera('avatar','user')" class="h-32 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative" style="background:rgba(2,8,16,0.6);border:2px dashed rgba(16,185,129,0.5)">
+            <span class="material-symbols-outlined text-3xl text-emerald-400 mb-1">camera_front</span>
+            <span class="text-xs text-emerald-300 font-bold">Kamera Langsung Terhubung</span>
+            <span class="text-[10px] text-slate-400">Ketuk untuk buka kamera selfie &amp; simpan otomatis</span>
           </div>
+          <button type="button" onclick="openDirectCamera('avatar','user')" class="w-full py-2.5 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-camera"></i>
+            <span>Buka Kamera Langsung Sekarang</span>
+          </button>
           <input type="file" id="selfieFile" accept="image/*" capture="user" class="hidden" onchange="previewDocUpload(this,'selfiePreview','selfieBase64')">
         </div>
 
@@ -1219,7 +1306,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN PHOTO: UPLOAD FOTO PROFIL
          ==================================================== -->
-    <div id="screenUploadPhoto" class="hidden flex-col min-h-screen">
+    <div id="screenUploadPhoto" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="navigateNewAuth('uploadDocs')" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
@@ -1259,7 +1346,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN PEND: MENUNGGU VERIFIKASI ADMIN
          ==================================================== -->
-    <div id="screenPending" class="hidden flex-col min-h-screen">
+    <div id="screenPending" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex-1 flex flex-col p-6 items-center justify-center space-y-8">
         <!-- Pending animation graphic -->
@@ -1301,7 +1388,7 @@ input:focus, textarea:focus, select:focus {
     <!-- ====================================================
          SCREEN LOGIN: SOBATSERABUT DRIVER LOG IN
          ==================================================== -->
-    <div id="screenLoginPassword" class="hidden flex-col min-h-screen">
+    <div id="screenLoginPassword" class="hidden flex-col" style="height:100dvh;overflow:hidden">
       <div class="safe-top"></div>
       <div class="flex items-center px-4 pt-4 pb-2">
         <button onclick="backToSplash()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white" style="background:rgba(30,41,59,0.6)">
@@ -1714,9 +1801,9 @@ input:focus, textarea:focus, select:focus {
               <div class="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-900">
                 <span class="text-slate-400 flex items-center space-x-1">
                   <i class="fa-solid fa-stopwatch text-amber-400"></i>
-                  <span>Audit Durasi Tugas:</span>
+                  <span id="mitraJobTimerLabel">Sisa Waktu Pengerjaan:</span>
                 </span>
-                <span id="mitraJobDurationTimer" class="font-mono font-bold text-amber-300 text-xs">00:00:00</span>
+                <span id="mitraJobDurationTimer" class="font-mono font-black text-amber-300 text-sm">60:00</span>
               </div>
             </div>
 
@@ -1736,11 +1823,20 @@ input:focus, textarea:focus, select:focus {
                 </button>
               </div>
 
-              <!-- TAHAP 2: SEDANG DIKERJAKAN - WAJIB FOTO SELESAI TUGAS -->
-              <div id="mitraActionFinishSection" class="hidden">
-                <button onclick="openProofPhotoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
-                  <i class="fa-solid fa-circle-check text-sm"></i>
-                  <span>📸 Selesai Mengerjakan - Wajib Foto Tugas Selesai</span>
+              <!-- TAHAP 2: SEDANG DIKERJAKAN - HITUNG MUNDUR & SELESAIKAN PENGERJAAN -->
+              <div id="mitraActionFinishSection" class="hidden space-y-2.5">
+                <div class="p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 to-emerald-500/15 border border-amber-500/30 text-center space-y-1">
+                  <div class="flex items-center justify-center space-x-1.5 text-amber-300 font-extrabold text-xs">
+                    <i class="fa-solid fa-hourglass-half animate-spin text-sm"></i>
+                    <span id="mitraJobTimerStatusText">Timer Waktu Pengerjaan Sedang Berjalan</span>
+                  </div>
+                  <p id="mitraFinishDescriptionText" class="text-[11px] text-slate-300">
+                    Apabila pekerjaan telah selesai (bahkan kurang dari batas waktu estimasi), silakan klik <strong>Selesaikan Pengerjaan</strong> untuk mengambil foto hasil pekerjaan:
+                  </p>
+                </div>
+                <button onclick="handleFinishWorkClick()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-black text-xs shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+                  <i class="fa-solid fa-camera text-base"></i>
+                  <span>📸 Selesaikan Pengerjaan (Ambil Foto Selesai)</span>
                 </button>
               </div>
 
@@ -2854,6 +2950,79 @@ input:focus, textarea:focus, select:focus {
   </div>
 
   <!-- ========================================================
+       MODAL: VERIFIKASI WAJAH HARIAN (SELFIE OTOMATIS DITERIMA)
+       ======================================================== -->
+  <div id="modalDailySelfieVerification" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-center">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-left">
+        <div class="flex items-center space-x-2">
+          <div class="w-9 h-9 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-face-smile"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-white text-sm">Verifikasi Wajah Harian</h3>
+            <p class="text-[10px] text-slate-400">Pemeriksaan Biometrik Selfie Pengemudi</p>
+          </div>
+        </div>
+        <button onclick="closeDailySelfieModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center space-x-3 text-left">
+        <div class="w-14 h-14 rounded-2xl overflow-hidden border border-emerald-500/40 bg-slate-900 flex-shrink-0 flex items-center justify-center">
+          <img id="dailySelfieReferenceImg" src="uploads/avatar_mitra.svg" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[10px] text-emerald-400 font-extrabold block">Foto Saat Pendaftaran</span>
+          <span class="text-[11px] text-white font-bold block truncate" id="dailySelfieDriverName">Mitra SobatSerabut</span>
+          <span class="text-[10px] text-slate-400">Baseline wajah tersimpan otomatis</span>
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 text-[11px] text-slate-300 leading-relaxed text-left space-y-1">
+        <div class="flex items-center space-x-1.5 text-emerald-300 font-bold">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Verifikasi Otomatis Diterima</span>
+        </div>
+        <p>
+          Silakan ambil selfie langsung dengan kamera HP Anda. Jika wajah terdeteksi sama dengan foto saat pendaftaran, sistem akan <strong>otomatis menerima selfie harian</strong> dan akun langsung aktif siap bekerja!
+        </p>
+      </div>
+
+      <button onclick="startDailySelfieLiveCamera()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-black text-xs shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
+        <i class="fa-solid fa-camera text-base"></i>
+        <span>📸 Buka Kamera Langsung (Selfie Harian)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL ANIMASI PEMINDAIAN BIOMETRIK WAJAH -->
+  <div id="modalDailyFaceScanning" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[9999] hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl text-center">
+      <div class="relative w-28 h-28 mx-auto flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-4 border-emerald-500/20 animate-ping"></div>
+        <div class="absolute inset-2 rounded-full border-2 border-dashed border-emerald-400 animate-spin" style="animation-duration: 4s;"></div>
+        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-400 shadow-xl">
+          <img id="scanningSelfiePreview" src="uploads/avatar_mitra.svg" class="w-full h-full object-cover">
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h4 id="scanningStatusTitle" class="font-black text-white text-sm">Memindai Biometrik Wajah...</h4>
+        <p id="scanningStatusSub" class="text-[11px] text-slate-400">Mencocokkan dengan foto pendaftaran</p>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+        <div id="scanningProgressBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 20%;"></div>
+      </div>
+
+      <div id="scanningResultBadge" class="hidden text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+        ✅ 98.7% Cocok — Otomatis Diterima!
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
        MODAL 8: WAJIB FOTO HASIL TUGAS SELESAI
        ======================================================== -->
   <div id="modalProofPhotoUpload" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
@@ -3040,6 +3209,10 @@ input:focus, textarea:focus, select:focus {
           <div class="flex-1"><span class="font-bold text-white block text-[11px]">Lokasi GPS Presisi</span><span class="text-[10px] text-slate-400">Penyaluran order terdekat &amp; navigasi rute ke klien</span></div>
         </div>
         <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm flex-shrink-0"><i class="fa-solid fa-bell"></i></div>
+          <div class="flex-1"><span class="font-bold text-white block text-[11px]">Notifikasi HP Langsung</span><span class="text-[10px] text-slate-400">Peringatan pesanan baru &amp; pesan dari klien</span></div>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center space-x-3">
           <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm flex-shrink-0"><i class="fa-solid fa-camera"></i></div>
           <div class="flex-1"><span class="font-bold text-white block text-[11px]">Kamera HP</span><span class="text-[10px] text-slate-400">Verifikasi selfie, foto e-KTP KYC &amp; bukti pekerjaan</span></div>
         </div>
@@ -3051,7 +3224,7 @@ input:focus, textarea:focus, select:focus {
       <div class="pt-2 space-y-2">
         <button onclick="requestAllDevicePermissions()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
           <i class="fa-solid fa-check-circle"></i>
-          <span>Izinkan Lokasi, Kamera &amp; Mikrofon</span>
+          <span>Izinkan Notifikasi, Lokasi, Kamera &amp; Mic</span>
         </button>
         <button onclick="closeDevicePermissionsModal()" class="w-full py-2 text-slate-500 hover:text-slate-400 text-[11px] font-semibold">
           Nanti Saja
@@ -3151,15 +3324,24 @@ input:focus, textarea:focus, select:focus {
           <span class="material-symbols-outlined text-base">refresh</span>
           <span>Periksa &amp; Hubungkan Kembali</span>
         </button>
-        <button type="button" onclick="dismissNetworkBlocker()" class="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all">
-          <span class="material-symbols-outlined text-sm">visibility_off</span>
-          <span>Tetap Buka Menu (Mode Mandiri)</span>
-        </button>
       </div>
-      <div id="networkStatusDetail" class="text-[10px] text-slate-500 font-mono">
-        Status: Menunggu Jaringan Aktif...
+      <div id="networkStatusDetail" class="text-xs text-rose-400 font-semibold tracking-wide">
+        tidak ada koneksi internet
       </div>
     </div>
+    <!-- Tulisan di bagian paling bawah jika tidak ada internet dari data/wifi -->
+    <div class="absolute bottom-6 left-0 right-0 flex justify-center items-center pointer-events-none">
+      <div class="px-4 py-2 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold flex items-center space-x-2 shadow-lg backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+        <span>tidak ada koneksi internet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indikator offline persisten di bagian paling bawah layar -->
+  <div id="offlineBottomIndicator" class="fixed bottom-0 left-0 right-0 z-[100000] bg-rose-600/95 text-white text-xs py-2 px-4 text-center font-bold flex items-center justify-center space-x-2 shadow-lg hidden backdrop-blur-sm pointer-events-none">
+    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+    <span>tidak ada koneksi internet</span>
   </div>
 
   <!-- ========================================================
@@ -3398,6 +3580,20 @@ input:focus, textarea:focus, select:focus {
           </label>
         </div>
 
+        <!-- Menu Verifikasi Wajah Harian (Selfie Biometrik) -->
+        <div onclick="openDailySelfieModal()" class="p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all active:scale-[0.99]" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(16,185,129,0.35);">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4);">
+              <span class="material-symbols-outlined text-xl text-emerald-400">face</span>
+            </div>
+            <div>
+              <h4 class="font-black text-white text-xs">verifikasi wajah harian</h4>
+              <p id="drawerDailySelfieStatus" class="text-[10px] text-emerald-300 font-bold">Wajah otomatis diterima jika cocok</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-emerald-400 text-lg">camera_alt</span>
+        </div>
+
         <!-- Menu 2: saldo saya (isi saldo, tarik saldo, riwayat transaksi) -->
         <div onclick="openDrawerSaldoView()" class="p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all active:scale-[0.99]" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
           <div class="flex items-center space-x-3">
@@ -3585,6 +3781,20 @@ input:focus, textarea:focus, select:focus {
                 </div>
               </div>
               <span class="material-symbols-outlined text-slate-400 text-base">chevron_right</span>
+            </div>
+            <!-- notifikasi hp terhubung langsung ke pengaturan -->
+            <div onclick="openDeviceNotificationSettings()" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-colors">
+              <div class="flex items-center space-x-3">
+                <span class="material-symbols-outlined text-amber-400 text-lg">notifications_active</span>
+                <div>
+                  <span class="font-bold text-white text-xs block">notifikasi hp terhubung</span>
+                  <span class="text-[10px] text-emerald-400">Izinkan notifikasi langsung dari pengaturan HP</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Pengaturan HP</span>
+                <span class="material-symbols-outlined text-slate-400 text-base">chevron_right</span>
+              </div>
             </div>
             <!-- login cepat -->
             <div class="p-3.5 flex items-center justify-between">

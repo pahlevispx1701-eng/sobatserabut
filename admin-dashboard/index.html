@@ -1437,44 +1437,67 @@ input:focus, select:focus, textarea:focus {
       </div>
     </section>
 
-    <!-- ========================================================
-         TAB 6: VERIFIKASI IDENTITAS MITRA (KYC - KTP & SELFIE)
-         ======================================================== -->
-    <section id="tab-kyc" class="tab-content hidden space-y-6">
-      <div class="flex items-center justify-between">
+    <!-- TAB 6: VERIFIKASI IDENTITAS KETAT (KYC) — Mitra & Klien -->
+    <section id="tab-kyc" class="tab-content hidden space-y-4">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 class="text-xl font-extrabold text-white">Panel Verifikasi Identitas Ketat (KYC)</h2>
-          <p class="text-xs text-slate-400">Pemeriksaan foto e-KTP dan foto selfie memegang KTP untuk menjamin keamanan &amp; keaslian identitas mitra sebelum melayani klien.</p>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-indigo-400">shield_person</span>
+            Panel Verifikasi Identitas Ketat (KYC)
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Pemeriksaan e-KTP & selfie mitra/jasa dan pemohon/klien — Admin dapat menerima, menolak, atau menghapus data yang tidak sesuai.</p>
         </div>
-        <span class="text-xs px-3 py-1 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30 font-semibold">
-          SOP Keamanan Tingkat Tinggi
-        </span>
+        <button id="kycRefreshBtn" onclick="refreshKycData()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 border border-indigo-500 transition-all shadow-lg">
+          <span class="material-symbols-outlined text-sm">refresh</span> Perbarui Data
+        </button>
       </div>
 
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-        <div class="p-4 bg-slate-900/60 border-b border-slate-700 flex justify-between items-center text-xs font-bold text-slate-300">
-          <span>Daftar Permohonan Verifikasi Dokumen Mitra</span>
-          <span id="kycPendingCountLabel" class="text-amber-400">0 Menunggu Persetujuan</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] font-bold">
-              <tr>
-                <th class="p-3">ID &amp; Tanggal</th>
-                <th class="p-3">Nama Mitra</th>
-                <th class="p-3">No. Telepon</th>
-                <th class="p-3">Nomor NIK KTP</th>
-                <th class="p-3">Foto KTP</th>
-                <th class="p-3">Foto Selfie KTP</th>
-                <th class="p-3">Rekening Pencairan</th>
-                <th class="p-3">Status</th>
-                <th class="p-3 text-right">Aksi Tindakan</th>
-              </tr>
-            </thead>
-            <tbody id="kycTbody" class="divide-y divide-slate-700">
-              <!-- populated via JS -->
-            </tbody>
-          </table>
+      <!-- Filter Tabs -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <button id="kycFilter-all" onclick="setKycFilter('all')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white border border-indigo-500 transition-all">
+          Semua <span id="kycCount-all" class="ml-1 px-1.5 py-0.5 rounded-full bg-white/20 text-white text-[9px]">0</span>
+        </button>
+        <button id="kycFilter-pending" onclick="setKycFilter('pending')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition-all">
+          ⏳ Menunggu <span id="kycCount-pending" class="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/30 text-amber-300 text-[9px]">0</span>
+        </button>
+        <button id="kycFilter-approved" onclick="setKycFilter('approved')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition-all">
+          ✅ Diterima <span id="kycCount-approved" class="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 text-[9px]">0</span>
+        </button>
+        <button id="kycFilter-rejected" onclick="setKycFilter('rejected')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition-all">
+          ❌ Ditolak <span id="kycCount-rejected" class="ml-1 px-1.5 py-0.5 rounded-full bg-rose-500/30 text-rose-300 text-[9px]">0</span>
+        </button>
+        <span id="kycPendingCountLabel" class="text-amber-400 text-xs ml-2 font-semibold">0 Menunggu Persetujuan</span>
+      </div>
+
+      <!-- Tabel KYC -->
+      <div class="bg-slate-800/60 rounded-2xl border border-slate-700/50 overflow-x-auto shadow-xl">
+        <table class="w-full text-sm min-w-[900px]">
+          <thead class="bg-slate-900/80 border-b border-slate-700">
+            <tr class="text-slate-400 text-left text-xs uppercase tracking-wide">
+              <th class="p-3">ID & Tanggal</th>
+              <th class="p-3">Tipe</th>
+              <th class="p-3">Nama</th>
+              <th class="p-3">No. Telepon</th>
+              <th class="p-3">NIK KTP</th>
+              <th class="p-3">Foto KTP</th>
+              <th class="p-3">Foto Selfie KTP</th>
+              <th class="p-3">Rekening/Pembayaran</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Aksi Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="kycTbody" class="divide-y divide-slate-700/40">
+            <tr><td colspan="10" class="p-8 text-center text-slate-500 italic text-sm">Memuat data verifikasi...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Info Footer -->
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2">
+        <span class="material-symbols-outlined text-amber-400 text-base mt-0.5">info</span>
+        <div class="text-xs text-amber-300">
+          <span class="font-bold">Kebijakan KYC Ketat:</span> Mitra/Jasa <span class="text-violet-400 font-bold">wajib terverifikasi</span> sebelum bisa menerima order. Klien/Pemohon dengan data tidak sesuai dapat langsung dihapus. Tombol <span class="text-red-400 font-bold">Hapus</span> akan menghapus akun & semua data secara permanen.
         </div>
       </div>
     </section>
@@ -2037,6 +2060,74 @@ input:focus, select:focus, textarea:focus {
           <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 text-white font-black shadow-lg shadow-red-600/30 flex items-center space-x-1.5 active:scale-95 transition-all">
             <i class="fa-solid fa-paper-plane text-xs"></i>
             <span>Kirim Siaran Sekarang</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: UBAH KATEGORI LAYANAN JASA, HARGA & TIMER PENGERJAAN
+       ======================================================== -->
+  <div id="editCategoryModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl text-left">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-white text-base">Ubah Kategori &amp; Timer Waktu</h3>
+            <p class="text-[10px] text-slate-400">Atur nama jasa, harga dasar, dan timer durasi pengerjaan</p>
+          </div>
+        </div>
+        <button onclick="closeEditCategoryModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="formEditCategory" onsubmit="saveEditCategory(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="editCatId">
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Nama Kategori Jasa:</label>
+          <input type="text" id="editCatName" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-bold text-xs focus:border-blue-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Tarif Dasar Jasa (Rp):</label>
+            <input type="number" id="editCatBaseFare" min="5000" step="1000" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Timer Pengerjaan (Menit):</label>
+            <div class="relative">
+              <input type="number" id="editCatDurationMinutes" min="5" max="360" required placeholder="60" class="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold text-xs focus:border-blue-500 focus:outline-none">
+              <span class="absolute right-3 top-2.5 text-slate-400 font-bold text-[10px]">Menit</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Timer Presets -->
+        <div>
+          <span class="text-[10px] text-slate-400 font-semibold mb-1 block">Pilihan Cepat Timer Pengerjaan:</span>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="document.getElementById('editCatDurationMinutes').value = 30" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold border border-slate-700">30 Menit</button>
+            <button type="button" onclick="document.getElementById('editCatDurationMinutes').value = 45" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold border border-slate-700">45 Menit</button>
+            <button type="button" onclick="document.getElementById('editCatDurationMinutes').value = 60" class="px-2.5 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 text-[10px] font-bold border border-blue-500/40">60 Menit (AC)</button>
+            <button type="button" onclick="document.getElementById('editCatDurationMinutes').value = 90" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold border border-slate-700">90 Menit</button>
+            <button type="button" onclick="document.getElementById('editCatDurationMinutes').value = 120" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold border border-slate-700">120 Menit</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Deskripsi Layanan:</label>
+          <textarea id="editCatDesc" rows="2" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs leading-relaxed focus:border-blue-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeEditCategoryModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">Batal</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black shadow-lg shadow-blue-600/30 flex items-center space-x-1.5 active:scale-95 transition-all">
+            <i class="fa-solid fa-check"></i>
+            <span>Simpan Perubahan</span>
           </button>
         </div>
       </form>

@@ -190,6 +190,9 @@ async function checkAppConnectivity(showFeedback = false) {
 }
 
 function dismissNetworkBlocker() {
+  if (!isNetworkOnline) {
+    return false;
+  }
   const blocker = document.getElementById('networkOfflineBlocker');
   if (blocker) blocker.classList.add('hidden');
 }
@@ -198,13 +201,16 @@ function handleNetworkState(online, reason = '') {
   isNetworkOnline = online;
   const blocker = document.getElementById('networkOfflineBlocker');
   const statusDetail = document.getElementById('networkStatusDetail');
+  const bottomBar = document.getElementById('offlineBottomIndicator');
 
   if (!online) {
     if (blocker) blocker.classList.remove('hidden');
-    if (statusDetail && reason) statusDetail.innerText = `Status: ${reason}`;
+    if (statusDetail) statusDetail.innerText = 'tidak ada koneksi internet';
+    if (bottomBar) bottomBar.classList.remove('hidden');
   } else {
     if (blocker) blocker.classList.add('hidden');
     if (statusDetail) statusDetail.innerText = 'Status: Terhubung';
+    if (bottomBar) bottomBar.classList.add('hidden');
   }
 }
 

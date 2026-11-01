@@ -53,15 +53,15 @@ const defaultState = {
     updatedAt: new Date().toISOString()
   },
   categories: [
-    { id: "cat-1", name: "Servis AC", icon: "snowflake", image: "/uploads/service_ac.png", baseFare: 75000, description: "Cuci, tambah freon, dan perbaikan AC", estimatedMinutes: 60, active: true },
-    { id: "cat-2", name: "Pembersih Rumah", icon: "sparkles", image: "/uploads/service_clean.png", baseFare: 50000, description: "Bersih-bersih kamar, toilet, dan dapur", estimatedMinutes: 90, active: true },
-    { id: "cat-3", name: "Angkat Barang & Pindahan", icon: "truck", image: "/uploads/service_lifting.png", baseFare: 80000, description: "Bantuan angkut mebel, kardus, dan pindahan", estimatedMinutes: 60, active: true },
-    { id: "cat-4", name: "Tukang Ledeng & Pipa", icon: "wrench", image: "/uploads/service_plumber.png", baseFare: 60000, description: "Perbaikan pipa bocor, wastafel, dan pompa air", estimatedMinutes: 45, active: true },
-    { id: "cat-5", name: "Kelistrikan & Instalasi", icon: "zap", image: "/uploads/service_electric.png", baseFare: 65000, description: "Perbaikan korsleting, pasang lampu & saklar", estimatedMinutes: 45, active: true },
-    { id: "cat-6", name: "Runner / Belanja Kilat", icon: "shopping-bag", image: "/uploads/service_runner.png", baseFare: 25000, description: "Beli gas, galon, belanja pasar & titipan kilat", estimatedMinutes: 30, active: true },
-    { id: "cat-7", name: "Pertukangan Kayu & Cat", icon: "hammer", image: "/uploads/service_carpentry.png", baseFare: 90000, description: "Cat dinding, perbaikan kusen, dan furnitur", estimatedMinutes: 120, active: true },
-    { id: "cat-8", name: "Tambal Ban & Darurat", icon: "tool", image: "/uploads/service_tire.png", baseFare: 30000, description: "Tambal ban tubeless, jumper aki di tempat", estimatedMinutes: 25, active: true },
-    { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", estimatedMinutes: 60, active: true }
+    { id: "cat-1", name: "Servis AC", icon: "snowflake", image: "/uploads/service_ac.png", baseFare: 75000, description: "Cuci, tambah freon, dan perbaikan AC", durationMinutes: 60, estimatedMinutes: 60, active: true },
+    { id: "cat-2", name: "Pembersih Rumah", icon: "sparkles", image: "/uploads/service_clean.png", baseFare: 50000, description: "Bersih-bersih kamar, toilet, dan dapur", durationMinutes: 90, estimatedMinutes: 90, active: true },
+    { id: "cat-3", name: "Angkat Barang & Pindahan", icon: "truck", image: "/uploads/service_lifting.png", baseFare: 80000, description: "Bantuan angkut mebel, kardus, dan pindahan", durationMinutes: 60, estimatedMinutes: 60, active: true },
+    { id: "cat-4", name: "Tukang Ledeng & Pipa", icon: "wrench", image: "/uploads/service_plumber.png", baseFare: 60000, description: "Perbaikan pipa bocor, wastafel, dan pompa air", durationMinutes: 45, estimatedMinutes: 45, active: true },
+    { id: "cat-5", name: "Kelistrikan & Instalasi", icon: "zap", image: "/uploads/service_electric.png", baseFare: 65000, description: "Perbaikan korsleting, pasang lampu & saklar", durationMinutes: 45, estimatedMinutes: 45, active: true },
+    { id: "cat-6", name: "Runner / Belanja Kilat", icon: "shopping-bag", image: "/uploads/service_runner.png", baseFare: 25000, description: "Beli gas, galon, belanja pasar & titipan kilat", durationMinutes: 30, estimatedMinutes: 30, active: true },
+    { id: "cat-7", name: "Pertukangan Kayu & Cat", icon: "hammer", image: "/uploads/service_carpentry.png", baseFare: 90000, description: "Cat dinding, perbaikan kusen, dan furnitur", durationMinutes: 120, estimatedMinutes: 120, active: true },
+    { id: "cat-8", name: "Tambal Ban & Darurat", icon: "tool", image: "/uploads/service_tire.png", baseFare: 30000, description: "Tambal ban tubeless, jumper aki di tempat", durationMinutes: 25, estimatedMinutes: 25, active: true },
+    { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", durationMinutes: 60, estimatedMinutes: 60, active: true }
   ],
   appVersion: {
     latestVersion: '6.1.0',
@@ -180,11 +180,9 @@ class Database {
         if (this.data.categories && Array.isArray(this.data.categories)) {
           this.data.categories.forEach(c => {
             const defCat = defaultState.categories.find(dc => dc.id === c.id || dc.name === c.name);
-            if (defCat && (!c.estimatedMinutes || c.estimatedMinutes <= 0)) {
-              c.estimatedMinutes = defCat.estimatedMinutes;
-            } else if (!c.estimatedMinutes) {
-              c.estimatedMinutes = 60;
-            }
+            const defMins = defCat ? (defCat.durationMinutes || defCat.estimatedMinutes || 60) : 60;
+            c.durationMinutes = Number(c.durationMinutes || c.estimatedMinutes || defMins);
+            c.estimatedMinutes = c.durationMinutes;
           });
         }
       } else {
