@@ -144,19 +144,45 @@ ok "Branding strings.xml diperbarui → Driver SobatSerabut v8.20.0 | Client v6.
 echo -e "${BOLD}${CYAN}🖼️  2c. Sinkronisasi logo & favicon premium...${RESET}"
 LOGO_SRC="$PROJECT_DIR/backend/uploads/logo_icon.svg"
 LOGO_FULL_SRC="$PROJECT_DIR/backend/uploads/logo_sobatserabut.svg"
+LOGO_PNG_SRC="$PROJECT_DIR/backend/uploads/logo_icon.png"
 if [ -f "$LOGO_SRC" ]; then
   for DEST in \
     "$PROJECT_DIR/favicon.svg" \
     "$PROJECT_DIR/driver-app/img/logo_icon.svg" \
+    "$PROJECT_DIR/driver-app/uploads/logo_icon.svg" \
     "$PROJECT_DIR/client-app/img/logo_icon.svg" \
-    "$PROJECT_DIR/mitra-app/img/logo_icon.svg"; do
+    "$PROJECT_DIR/client-app/uploads/logo_icon.svg" \
+    "$PROJECT_DIR/mitra-app/img/logo_icon.svg" \
+    "$PROJECT_DIR/mitra-app/uploads/logo_icon.svg" \
+    "$PROJECT_DIR/admin-dashboard/img/logo_icon.svg" \
+    "$PROJECT_DIR/admin-dashboard/uploads/logo_icon.svg"; do
     mkdir -p "$(dirname "$DEST")"
     cp "$LOGO_SRC" "$DEST" 2>/dev/null || true
   done
-  mkdir -p "$PROJECT_DIR/admin-dashboard/img"
-  cp "$LOGO_SRC"      "$PROJECT_DIR/admin-dashboard/img/logo_icon.svg"      2>/dev/null || true
-  cp "$LOGO_FULL_SRC" "$PROJECT_DIR/admin-dashboard/img/logo_sobatserabut.svg" 2>/dev/null || true
-  ok "Logo premium tersinkronisasi ke seluruh modul"
+
+  for DEST in \
+    "$PROJECT_DIR/driver-app/uploads/logo_sobatserabut.svg" \
+    "$PROJECT_DIR/client-app/uploads/logo_sobatserabut.svg" \
+    "$PROJECT_DIR/mitra-app/uploads/logo_sobatserabut.svg" \
+    "$PROJECT_DIR/admin-dashboard/img/logo_sobatserabut.svg" \
+    "$PROJECT_DIR/admin-dashboard/uploads/logo_sobatserabut.svg"; do
+    mkdir -p "$(dirname "$DEST")"
+    cp "$LOGO_FULL_SRC" "$DEST" 2>/dev/null || true
+  done
+
+  if [ -f "$LOGO_PNG_SRC" ]; then
+    for DEST in \
+      "$PROJECT_DIR/driver-app/img/logo_icon.png" \
+      "$PROJECT_DIR/driver-app/uploads/logo_icon.png" \
+      "$PROJECT_DIR/client-app/img/logo_icon.png" \
+      "$PROJECT_DIR/client-app/uploads/logo_icon.png" \
+      "$PROJECT_DIR/admin-dashboard/img/logo_icon.png" \
+      "$PROJECT_DIR/admin-dashboard/uploads/logo_icon.png"; do
+      mkdir -p "$(dirname "$DEST")"
+      cp "$LOGO_PNG_SRC" "$DEST" 2>/dev/null || true
+    done
+  fi
+  ok "Logo premium tersinkronisasi ke seluruh modul (Driver, Client, Admin, Web)"
 else
   warn "Logo sumber tidak ditemukan di backend/uploads/"
 fi

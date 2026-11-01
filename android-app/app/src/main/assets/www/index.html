@@ -571,6 +571,17 @@ html, body {
   min-height: 0 !important;
   flex: 1 1 0% !important;
 }
+
+/* Pastikan semua elemen dengan class hidden benar-benar tersembunyi */
+.hidden {
+  display: none !important;
+}
+
+/* Pastikan bottom navigation selalu di lapisan teratas dan dapat diklik */
+nav.fixed.bottom-0, [id*="navBtn-"] {
+  z-index: 100 !important;
+  pointer-events: auto !important;
+}
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="height:100dvh;overflow:hidden">
@@ -1928,7 +1939,7 @@ html, body {
        BOTTOM NAVIGATION BAR: 4 MENU UTAMA
        1. Beranda | 2. Peta | 3. Pesanan | 4. Profil Saya
        ======================================================== -->
-  <nav class="bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 px-3 py-1.5 flex items-center justify-around safe-bottom shadow-2xl">
+  <nav class="bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-[100] px-3 py-1.5 flex items-center justify-around safe-bottom shadow-2xl" style="pointer-events: auto !important;">
     <button type="button" onclick="switchMainTab('home')" id="navBtn-home" class="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-blue-500 font-extrabold transition-all active:scale-90 cursor-pointer">
       <span class="material-symbols-outlined text-2xl pointer-events-none">home</span>
       <span class="text-[10px] mt-0.5 pointer-events-none">Beranda</span>

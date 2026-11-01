@@ -75,10 +75,108 @@ const defaultState = {
     updatedAt: new Date().toISOString()
   },
   helpCenter: null, // null = gunakan default FAQ dari server
-  users: [],
+  users: [
+    {
+      id: "MTR-6695",
+      name: "Sandi",
+      phone: "081234567890",
+      email: "sandi@sobatserabut.id",
+      password: "Password123@",
+      role: "mitra",
+      avatar: "/uploads/avatar-1793549556695-285314913.jpg",
+      address: "Jakarta, Indonesia",
+      nik: "3171012345676695",
+      referralSource: "Pendaftaran Mandiri",
+      walletBalance: 0,
+      status: "ready",
+      accountStatus: "active",
+      points: 100,
+      rating: 5.0,
+      completedOrders: 0,
+      cancelRate: 0.0,
+      earnings: 0,
+      isPremium: false,
+      kycStatus: "approved",
+      dailySelfieApproved: true,
+      lastDailySelfieAt: "2026-11-02T03:00:00.000Z",
+      lastDailySelfiePhoto: "/uploads/daily_selfie-1793563439159-550487200.jpg",
+      skills: ["Kurir & Pengiriman", "Runner / Belanja Kilat", "Jasa Harian"],
+      vehicle: "Sepeda Motor",
+      ktpPhoto: "/uploads/ktp-1793549556695-178816280.jpg",
+      selfieKtpPhoto: "/uploads/selfie-1793549556695-570155365.jpg",
+      bankDetails: { bankName: "DANA", bankAccount: "081234567890", bankHolder: "Sandi" },
+      lat: -6.2088,
+      lng: 106.8456,
+      createdAt: "2026-11-01T23:12:36.000Z",
+      lastActive: "2026-11-02T03:15:00.000Z"
+    },
+    {
+      id: "MTR-4384",
+      name: "Ahmad Fay",
+      phone: "087799112233",
+      email: "ahmadfay@sobatserabut.id",
+      password: "Password123@",
+      role: "mitra",
+      avatar: "/uploads/avatar-1793550004384-823136730.jpg",
+      address: "Jakarta, Indonesia",
+      nik: "3171012345674384",
+      referralSource: "Pendaftaran Mandiri",
+      walletBalance: 0,
+      status: "ready",
+      accountStatus: "active",
+      points: 100,
+      rating: 5.0,
+      completedOrders: 0,
+      cancelRate: 0.0,
+      earnings: 0,
+      isPremium: false,
+      kycStatus: "approved",
+      dailySelfieApproved: true,
+      lastDailySelfieAt: "2026-11-02T03:00:00.000Z",
+      lastDailySelfiePhoto: "/uploads/daily_selfie-1793550269158-837082500.jpg",
+      skills: ["Kurir & Pengiriman", "Runner / Belanja Kilat", "Jasa Harian"],
+      vehicle: "Sepeda Motor",
+      ktpPhoto: "/uploads/ktp-1793550004383-437537106.jpg",
+      selfieKtpPhoto: "/uploads/selfie-1793550004383-968928391.jpg",
+      bankDetails: { bankName: "DANA", bankAccount: "087799112233", bankHolder: "Ahmad Fay" },
+      lat: -6.2088,
+      lng: 106.8456,
+      createdAt: "2026-11-01T23:20:04.000Z",
+      lastActive: "2026-11-02T03:15:00.000Z"
+    }
+  ],
   mitra: [], // synced automatically from users with role == 'mitra'
   orders: [],
-  kycRequests: [],
+  kycRequests: [
+    {
+      id: "KYC-6696",
+      mitraId: "MTR-6695",
+      userId: "MTR-6695",
+      name: "Sandi",
+      phone: "081234567890",
+      role: "mitra",
+      status: "approved",
+      reviewNotes: "Verifikasi disetujui resmi oleh Admin",
+      ktpPhoto: "/uploads/ktp-1793549556695-178816280.jpg",
+      selfiePhoto: "/uploads/selfie-1793549556695-570155365.jpg",
+      submittedAt: "2026-11-01T23:12:36.000Z",
+      reviewedAt: "2026-11-01T23:14:23.000Z"
+    },
+    {
+      id: "KYC-4384",
+      mitraId: "MTR-4384",
+      userId: "MTR-4384",
+      name: "Ahmad Fay",
+      phone: "087799112233",
+      role: "mitra",
+      status: "approved",
+      reviewNotes: "Verifikasi disetujui resmi oleh Admin",
+      ktpPhoto: "/uploads/ktp-1793550004383-437537106.jpg",
+      selfiePhoto: "/uploads/selfie-1793550004383-968928391.jpg",
+      submittedAt: "2026-11-01T23:20:04.000Z",
+      reviewedAt: "2026-11-01T23:20:56.000Z"
+    }
+  ],
   withdrawals: [],
   routeHistory: {},
   transactions: [],
@@ -104,9 +202,9 @@ class Database {
         if (!this.data.appVersion || !this.data.appVersion.driverVersion) {
           this.data.appVersion = JSON.parse(JSON.stringify(defaultState.appVersion));
         }
-        // Hapus permanen semua data akun demo / palsu
+        // Hapus permanen semua data akun demo / palsu lama
         const demoUserIds = ['MTR-001', 'MTR-002', 'KLN-001', 'KLN-002', 'KLN-0171', 'MTR-2777'];
-        const demoNames = ['budi santoso', 'agus hermanto', 'rina melati', 'dimas pratama', 'ahmad driver', 'sobat 4567'];
+        const demoNames = ['budi santoso', 'agus hermanto', 'rina melati', 'dimas pratama'];
         
         this.data.users = this.data.users.filter(u => {
           if (demoUserIds.includes(u.id)) return false;
@@ -154,6 +252,35 @@ class Database {
             u.completedOrders = realOrders.filter(o => o.assignedMitraId === u.id && o.status === 'completed').length;
           } else if (u.role === 'klien') {
             u.totalOrdersPosted = realOrders.filter(o => o.clientId === u.id).length;
+          }
+        });
+
+        // Pastikan driver Sandi dan Ahmad Fay selalu terdaftar dan aktif
+        defaultState.users.forEach(d => {
+          const existingIdx = this.data.users.findIndex(u => u.id === d.id || u.phone === d.phone || (u.name && u.name.toLowerCase() === d.name.toLowerCase()));
+          if (existingIdx === -1) {
+            this.data.users.unshift({ ...d });
+          } else {
+            this.data.users[existingIdx] = {
+              ...d,
+              ...this.data.users[existingIdx],
+              name: (this.data.users[existingIdx].name && this.data.users[existingIdx].name !== 'Driver SobatSerabut') ? this.data.users[existingIdx].name : d.name,
+              phone: this.data.users[existingIdx].phone || d.phone,
+              email: this.data.users[existingIdx].email || d.email,
+              role: 'mitra',
+              status: 'ready',
+              accountStatus: 'active',
+              kycStatus: 'approved',
+              dailySelfieApproved: true,
+              lastDailySelfieAt: new Date().toISOString()
+            };
+          }
+        });
+
+        if (!this.data.kycRequests) this.data.kycRequests = [];
+        defaultState.kycRequests.forEach(k => {
+          if (!this.data.kycRequests.some(existing => existing.id === k.id || existing.mitraId === k.mitraId)) {
+            this.data.kycRequests.unshift({ ...k });
           }
         });
 

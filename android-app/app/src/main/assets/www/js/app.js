@@ -437,6 +437,17 @@ document.addEventListener('DOMContentLoaded', () => {
   updateServerStatusBadge(true, API_BASE);
   checkDevicePermissionsOnLaunch();
 
+  // 5. Ikat event listener tombol navigasi utama (Beranda, Peta, Pesanan, Profil Saya)
+  ['home', 'map', 'orders', 'profile'].forEach(tabId => {
+    const btn = document.getElementById(`navBtn-${tabId}`);
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchMainTab(tabId);
+      });
+    }
+  });
+
   // Aktifkan Foreground Keepalive Service di Android agar tetap aktif di background
   try {
     if (window.Android && window.Android.startBackgroundService) {
@@ -1186,27 +1197,6 @@ async function connectGoogleWithPhone(phone, name, email) {
 
     if (res.success && res.data) {
       currentUser = res.data;
-      clientOrders = []; // Riwayat tugas bersih kosong saat daftar baru
-      localStorage.removeItem('sobatserabut_cached_orders');
-      saveClientSession(currentUser);
-      localStorage.setItem('sobatserabut_registered', 'true');
-      localStorage.setItem('sobatserabut_registered_phone', currentUser.phone);
-
-      closeRegisterFlow();
-      closeLoginFlow();
-      onUserAuthenticated(currentUser);
-      switchMainTab('home');
-
-      showToast(`🎉 ${res.message}`, 'success', 5000);
-      playSuccessChime();
-    } else {
-      showToast(res.message || 'Gagal menyambungkan akun Google.', 'error');
-    }
-  } catch (err) {
-    console.error('Google connect err:', err);
-    showToast('Gagal terhubung ke server: ' + err.message, 'error');
-  }
-}
       clientOrders = []; // Riwayat tugas bersih kosong saat daftar baru
       localStorage.removeItem('sobatserabut_cached_orders');
       saveClientSession(currentUser);
@@ -6190,6 +6180,7 @@ function switchMainTab(tabId) {
     console.error('Error switching tab:', err);
   }
 }
+window.switchMainTab = switchMainTab;
 
 function handleSearchServices(query) {
   const q = (query || '').toLowerCase().trim();
