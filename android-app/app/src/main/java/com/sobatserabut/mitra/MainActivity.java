@@ -23,6 +23,7 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST_CODE = 1001;
+    private static final int GOOGLE_ACCOUNT_REQUEST_CODE = 1002;
     private static final int PERMISSION_REQUEST_CODE = 2001;
 
     @Override
@@ -36,9 +37,24 @@ public class MainActivity extends Activity {
 
             createNotificationChannel();
             requestAppPermissions();
+            startForegroundOrderService();
             setupWebView();
 
             webView.loadUrl("file:///android_asset/www/index.html");
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    private void startForegroundOrderService() {
+        try {
+            Intent serviceIntent = new Intent(this, ForegroundOrderService.class);
+            serviceIntent.setAction(ForegroundOrderService.ACTION_START);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -121,8 +137,10 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new AppWebViewClient(this));
         webView.setWebChromeClient(new AppWebChromeClient(this, progressBar));
 
-        // Daftarkan Android JS Bridge → dapat diakses via window.Android di JS
-        webView.addJavascriptInterface(new AndroidBridge(this), "Android");
+        // Daftarkan Android JS Bridge → dapat diakses via window.Android atau window.AndroidBridge di JS
+        AndroidBridge bridge = new AndroidBridge(this);
+        webView.addJavascriptInterface(bridge, "Android");
+        webView.addJavascriptInterface(bridge, "AndroidBridge");
 
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
             try {
@@ -133,6 +151,30 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, "Gagal mengunduh pembaruan berkas: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void pickGoogleAccount() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Intent intent = android.accounts.AccountManager.newChooseAccountIntent(
+                    null, null, new String[]{"com.google"}, false, null, null, null, null
+                );
+                startActivityForResult(intent, GOOGLE_ACCOUNT_REQUEST_CODE);
+            } else {
+                android.accounts.AccountManager am = android.accounts.AccountManager.get(this);
+                android.accounts.Account[] accounts = am.getAccountsByType("com.google");
+                if (accounts != null && accounts.length > 0) {
+                    final String acct = accounts[0].name;
+                    if (webView != null) {
+                        webView.post(() -> {
+                            webView.evaluateJavascript("if (typeof window.onGoogleAccountSelected === 'function') { window.onGoogleAccountSelected('" + acct.replace("'", "\\'") + "'); }", null);
+                        });
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     public boolean handleFileChooser(ValueCallback<Uri[]> callback, WebChromeClient.FileChooserParams fileChooserParams) {
@@ -154,7 +196,22 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+        if (requestCode == GOOGLE_ACCOUNT_REQUEST_CODE) {
+            if (resultCode == RESULT_OK && data != null) {
+                String accountName = data.getStringExtra(android.accounts.AccountManager.KEY_ACCOUNT_NAME);
+                if (accountName != null && !accountName.isEmpty()) {
+                    final String email = accountName;
+                    if (webView != null) {
+                        webView.post(() -> {
+                            webView.evaluateJavascript(
+                                "if (typeof window.onGoogleAccountSelected === 'function') { window.onGoogleAccountSelected('" + email.replace("'", "\\'") + "'); }",
+                                null
+                            );
+                        });
+                    }
+                }
+            }
+        } else if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
             if (filePathCallback != null) {
                 Uri[] results = null;
                 if (resultCode == RESULT_OK && data != null) {
@@ -181,7 +238,8 @@ public class MainActivity extends Activity {
         if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {
-            super.onBackPressed();
+            // Minimalkan ke latar belakang agar notifikasi & suara orderan tetap aktif
+            moveTaskToBack(true);
         }
     }
 }

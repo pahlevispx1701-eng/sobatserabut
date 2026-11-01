@@ -178,4 +178,64 @@ public class AndroidBridge {
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
         } catch (Exception e) { /* abaikan */ }
     }
+
+    /** Jalankan Foreground Service agar tetap aktif di latar belakang */
+    @JavascriptInterface
+    public void startBackgroundService() {
+        try {
+            Intent intent = new Intent(activity, ForegroundOrderService.class);
+            intent.setAction(ForegroundOrderService.ACTION_START);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                activity.startForegroundService(intent);
+            } else {
+                activity.startService(intent);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Hentikan Foreground Service */
+    @JavascriptInterface
+    public void stopBackgroundService() {
+        try {
+            Intent intent = new Intent(activity, ForegroundOrderService.class);
+            intent.setAction(ForegroundOrderService.ACTION_STOP);
+            activity.startService(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Bunyikan notifikasi order masuk: ringtone + getar + suara 'Kring.. ada orderan masuk ni!' */
+    @JavascriptInterface
+    public void playOrderAlertSound(String voiceText) {
+        try {
+            Intent intent = new Intent(activity, ForegroundOrderService.class);
+            intent.setAction(ForegroundOrderService.ACTION_PLAY_ORDER_SOUND);
+            intent.putExtra(ForegroundOrderService.EXTRA_SOUND_TEXT,
+                (voiceText != null && !voiceText.isEmpty()) ? voiceText : "Kring.. ada orderan masuk ni!");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                activity.startForegroundService(intent);
+            } else {
+                activity.startService(intent);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Pilih akun Google yang tersimpan di HP real pengguna */
+    @JavascriptInterface
+    public void pickGoogleAccount() {
+        try {
+            if (activity instanceof MainActivity) {
+                activity.runOnUiThread(() -> {
+                    ((MainActivity) activity).pickGoogleAccount();
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

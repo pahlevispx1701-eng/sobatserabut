@@ -591,12 +591,55 @@
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
       const base64 = e.target.result;
       window[storageVar] = base64;
       const preview = document.getElementById(previewId);
       if (preview) {
         preview.innerHTML = `<img src="${base64}" class="w-full h-full object-cover rounded-xl"><div class="absolute bottom-1 right-1 bg-emerald-500 text-slate-950 rounded-full px-2 py-0.5 text-[9px] font-black">✓ Terunggah</div>`;
+      }
+
+      // Deteksi OCR nomor NIK KTP otomatis saat memfoto / mengunggah e-KTP
+      if (storageVar === 'ktpBase64') {
+        const nikInput = document.getElementById('docsNikNumber');
+        const hintEl = document.getElementById('ktpOcrHint');
+        if (nikInput) {
+          nikInput.placeholder = '🔍 Memindai NIK KTP otomatis...';
+        }
+        if (hintEl) {
+          hintEl.innerText = '🔍 Memindai NIK KTP dari foto...';
+          hintEl.className = 'text-[11px] text-amber-300 mt-1 animate-pulse';
+        }
+        try {
+          const res = await fetch(`${API_ENDPOINT}/api/ocr/ktp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64: base64 })
+          }).then(r => r.json());
+
+          if (res && res.success && res.nik) {
+            if (nikInput) {
+              nikInput.value = res.nik;
+              nikInput.focus();
+            }
+            if (hintEl) {
+              hintEl.innerHTML = `<span class="text-emerald-400 font-bold">✨ NIK terbaca otomatis: ${res.nik}</span>. Silakan edit kolom ini jika ada angka yang keliru akibat foto blur.`;
+              hintEl.className = 'text-[11px] text-slate-300 mt-1';
+            }
+            if (typeof showToast === 'function') showToast(`✨ NIK e-KTP terbaca (${res.nik}). Dapat diedit bila ada keliru.`, 'success');
+          } else {
+            if (hintEl) {
+              hintEl.innerHTML = `<span class="text-amber-400">⚠️ Foto agak blur. Silakan ketik 16 digit NIK secara manual di kolom atas.</span>`;
+              hintEl.className = 'text-[11px] text-slate-300 mt-1';
+            }
+          }
+        } catch(err) {
+          console.warn('OCR error:', err);
+        } finally {
+          if (nikInput && !nikInput.value) {
+            nikInput.placeholder = 'Nomor NIK KTP (16 digit)';
+          }
+        }
       }
     };
     reader.readAsDataURL(file);
@@ -1059,11 +1102,26 @@
     const u = window.currentUser || {};
 
     // Data profil saya
+    const avatarEl = document.getElementById('setDriverActiveAvatar');
+    if (avatarEl) avatarEl.src = u.avatar || 'uploads/avatar_mitra.svg';
+
+    const avatarPendingBadge = document.getElementById('avatarRequestPendingBadge');
+    if (avatarPendingBadge) {
+      if (u.avatarChangeRequest && u.avatarChangeRequest.status === 'pending') {
+        avatarPendingBadge.classList.remove('hidden');
+      } else {
+        avatarPendingBadge.classList.add('hidden');
+      }
+    }
+
     const nameEl = document.getElementById('setProfileName');
     if (nameEl) nameEl.innerText = u.name || '-';
 
     const phoneEl = document.getElementById('setProfilePhone');
     if (phoneEl) phoneEl.innerText = u.phone || '-';
+
+    const emailEl = document.getElementById('setProfileEmail');
+    if (emailEl) emailEl.innerText = u.email || '-';
 
     const addrEl = document.getElementById('setProfileAddress');
     if (addrEl) addrEl.innerText = u.address || 'Indonesia';
@@ -1176,6 +1234,12 @@
         <label class="block text-xs font-semibold text-slate-300">Nama Lengkap Sesuai KTP</label>
         <input type="text" id="editProfileInputVal" value="${u.name || ''}" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
       `;
+    } else if (field === 'email') {
+      if (title) title.innerText = 'Ubah Alamat Email';
+      body.innerHTML = `
+        <label class="block text-xs font-semibold text-slate-300">Alamat Email Driver</label>
+        <input type="email" id="editProfileInputVal" value="${u.email || ''}" placeholder="contoh: driver@gmail.com" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+      `;
     } else if (field === 'address') {
       if (title) title.innerText = 'Ubah Alamat Lengkap';
       body.innerHTML = `
@@ -1222,6 +1286,10 @@
       const val = document.getElementById('editProfileInputVal')?.value.trim();
       if (!val) return;
       payload.name = val;
+    } else if (field === 'email') {
+      const val = document.getElementById('editProfileInputVal')?.value.trim();
+      if (!val) return;
+      payload.email = val;
     } else if (field === 'address') {
       const val = document.getElementById('editProfileInputVal')?.value.trim();
       if (!val) return;

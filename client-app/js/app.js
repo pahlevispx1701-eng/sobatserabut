@@ -433,6 +433,15 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCategories();
   updateServerStatusBadge(true, API_BASE);
   checkDevicePermissionsOnLaunch();
+
+  // Aktifkan Foreground Keepalive Service di Android agar tetap aktif di background
+  try {
+    if (window.Android && window.Android.startBackgroundService) {
+      window.Android.startBackgroundService();
+    } else if (window.AndroidBridge && window.AndroidBridge.startBackgroundService) {
+      window.AndroidBridge.startBackgroundService();
+    }
+  } catch(e) {}
 });
 
 /* ========================================================
@@ -989,39 +998,136 @@ function onRegisterNextClick() {
   openPuzzleModal();
 }
 
+/* ========================================================
+ * PENDAFTARAN CEPAT 1-KLIK KLIEN (EASY & PAINLESS REGISTRATION)
+ * ======================================================== */
+async function handleDirectRegisterClient(event) {
+  if (event) event.preventDefault();
+  const name = document.getElementById('regDirectNameInput')?.value.trim();
+  const phoneRaw = document.getElementById('regDirectPhoneInput')?.value.trim();
+  const password = document.getElementById('regDirectPasswordInput')?.value.trim();
+
+  if (!phoneRaw || !password) {
+    showToast('Harap isi nomor WhatsApp / HP dan kata sandi.', 'warning');
+    return;
+  }
+  const cleanPhone = phoneRaw.replace(/[^0-9]/g, '');
+  const formattedPhone = cleanPhone.startsWith('0') ? cleanPhone : ('0' + cleanPhone);
+
+  if (formattedPhone.length < 9) {
+    showToast('Nomor HP minimal 9 digit angka.', 'warning');
+    return;
+  }
+  if (password.length < 6) {
+    showToast('Kata sandi minimal 6 karakter.', 'warning');
+    return;
+  }
+
+  showToast('Mendaftarkan akun klien baru...', 'info');
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name || ('Klien ' + formattedPhone.slice(-4)),
+        phone: formattedPhone,
+        password: password,
+        role: 'klien'
+      })
+    }).then(r => r.json());
+
+    if (res.success && res.user) {
+      currentUser = res.user;
+      clientOrders = [];
+      saveClientSession(currentUser);
+      localStorage.setItem('sobatserabut_registered', 'true');
+      localStorage.setItem('sobatserabut_registered_phone', currentUser.phone);
+      closeRegisterFlow();
+      closeLoginFlow();
+      onUserAuthenticated(currentUser);
+      switchMainTab('home');
+      showToast('🎉 Selamat datang! Pendaftaran akun berhasil.', 'success');
+      playSuccessChime();
+    } else {
+      if (res.message && res.message.toLowerCase().includes('terdaftar')) {
+        showToast(res.message + ' Silakan masuk dengan kata sandi Anda.', 'info');
+        openLoginFlow();
+        const loginInput = document.getElementById('loginPhoneOrNameInput');
+        if (loginInput) loginInput.value = formattedPhone;
+      } else {
+        showToast(res.message || 'Gagal mendaftar', 'error');
+      }
+    }
+  } catch(e) {
+    showToast('Gagal terhubung ke server: ' + e.message, 'error');
+  }
+}
+
+// Callback otomatis saat akun Google real di HP dipilih via Android Native
+window.onGoogleAccountSelected = function(selectedEmail) {
+  if (!selectedEmail) return;
+  console.log('[Native Google] Akun Google terpilih dari HP:', selectedEmail);
+  connectGoogleWithPhone('', selectedEmail.split('@')[0], selectedEmail);
+};
+
 let pendingSocialProvider = 'Google';
 
 function handleSocialAuth(provider) {
   pendingSocialProvider = provider || 'Google';
-  
-  // 1. Cek apakah ada nomor HP nyata yang tersimpan di perangkat ini
+
+  if (pendingSocialProvider === 'Google') {
+    // 1. Prioritas Utama: Buka Account Picker Google bawaan HP jika berjalan di Android APK
+    try {
+      if (window.Android && typeof window.Android.pickGoogleAccount === 'function') {
+        window.Android.pickGoogleAccount();
+        return;
+      }
+      if (window.AndroidBridge && typeof window.AndroidBridge.pickGoogleAccount === 'function') {
+        window.AndroidBridge.pickGoogleAccount();
+        return;
+      }
+    } catch(e) {
+      console.warn('Gagal memanggil native Google Picker:', e);
+    }
+  }
+
+  // 2. Cek apakah ada nomor HP atau email nyata yang tersimpan di perangkat ini
   let detectedPhone = '';
+  let detectedEmail = '';
   try {
     const savedUser = JSON.parse(localStorage.getItem('sobatserabut_user') || '{}');
     if (savedUser && savedUser.phone) detectedPhone = savedUser.phone;
+    if (savedUser && savedUser.email) detectedEmail = savedUser.email;
   } catch(e) {}
-  
+
   if (!detectedPhone) {
     detectedPhone = localStorage.getItem('sobatserabut_registered_phone') || '';
   }
   if (!detectedPhone) {
-    const inputVal = document.getElementById('regSinglePhoneInput')?.value.trim();
+    const inputVal = document.getElementById('regDirectPhoneInput')?.value.trim();
     if (inputVal && inputVal.length >= 8) detectedPhone = (inputVal.startsWith('0') ? '' : '0') + inputVal;
   }
   if (!detectedPhone) {
     const loginVal = document.getElementById('loginPhoneOrNameInput')?.value.trim();
     if (loginVal && /^[0-9]+$/.test(loginVal) && loginVal.length >= 9) detectedPhone = loginVal;
+    else if (loginVal && loginVal.includes('@')) detectedEmail = loginVal;
   }
 
-  // Jika sudah terdeteksi nomor HP perangkat, langsung hubungkan ke backend
+  // Jika sudah terdeteksi di HP, langsung hubungkan ke backend
+  if (detectedEmail) {
+    connectGoogleWithPhone('', detectedEmail.split('@')[0], detectedEmail);
+    return;
+  }
   if (detectedPhone && detectedPhone.length >= 9) {
     connectGoogleWithPhone(detectedPhone, `${provider} User`);
     return;
   }
 
-  // Jika belum ada nomor HP di HP ini, buka modal agar pengguna memasukkan nomor HP nyata mereka
+  // Jika belum terdeteksi, buka modal agar pengguna memasukkan email Google atau nomor HP
   const phoneInput = document.getElementById('googleConnectPhoneInput');
+  const emailInput = document.getElementById('googleConnectEmailInput');
   if (phoneInput) phoneInput.value = '';
+  if (emailInput) emailInput.value = '';
   const modal = document.getElementById('googlePhoneConnectModal');
   if (modal) {
     modal.classList.remove('hidden');
@@ -1043,8 +1149,8 @@ async function confirmGooglePhoneConnect() {
   const phone = phoneInput ? phoneInput.value.trim() : '';
   const email = emailInput ? emailInput.value.trim() : '';
 
-  if (!phone || phone.replace(/[^0-9]/g, '').length < 9) {
-    showToast('Harap masukkan nomor WhatsApp / HP aktif Anda (minimal 9 digit).', 'warning');
+  if (!email && (!phone || phone.replace(/[^0-9]/g, '').length < 9)) {
+    showToast('Harap masukkan nomor HP atau alamat email Google Anda.', 'warning');
     return;
   }
 
@@ -1053,21 +1159,43 @@ async function confirmGooglePhoneConnect() {
 }
 
 async function connectGoogleWithPhone(phone, name, email) {
-  showToast(`Menghubungkan akun Google ke nomor HP ${phone}...`, 'info');
+  const targetLabel = email || phone || 'Google';
+  showToast(`Menghubungkan akun Google ${targetLabel}...`, 'info');
   try {
     const res = await fetch(`${API_BASE}/api/auth/google-connect`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        phone: phone,
-        name: name || 'Pengguna Google',
-        email: email || `${phone.replace(/[^0-9]/g, '')}@gmail.com`,
+        phone: phone || '',
+        email: email || '',
+        name: name || (email ? email.split('@')[0] : 'Pengguna Google'),
         role: 'klien'
       })
     }).then(r => r.json());
 
     if (res.success && res.data) {
       currentUser = res.data;
+      clientOrders = []; // Riwayat tugas bersih kosong saat daftar baru
+      localStorage.removeItem('sobatserabut_cached_orders');
+      saveClientSession(currentUser);
+      localStorage.setItem('sobatserabut_registered', 'true');
+      localStorage.setItem('sobatserabut_registered_phone', currentUser.phone);
+
+      closeRegisterFlow();
+      closeLoginFlow();
+      onUserAuthenticated(currentUser);
+      switchMainTab('home');
+
+      showToast(`🎉 ${res.message}`, 'success', 5000);
+      playSuccessChime();
+    } else {
+      showToast(res.message || 'Gagal menyambungkan akun Google.', 'error');
+    }
+  } catch (err) {
+    console.error('Google connect err:', err);
+    showToast('Gagal terhubung ke server: ' + err.message, 'error');
+  }
+}
       clientOrders = []; // Riwayat tugas bersih kosong saat daftar baru
       localStorage.removeItem('sobatserabut_cached_orders');
       saveClientSession(currentUser);
@@ -5610,26 +5738,29 @@ async function submitTopup() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/auth/topup`, {
+    const res = await fetch(`${API_BASE}/api/wallet/pay-va`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: currentUser.id,
         amount,
-        paymentMethod: selectedTopupAdminMethodVal,
-        proofPhoto: proofBase64,
-        senderAccountName: currentUser.name,
-        senderAccountNo: currentUser.phone
+        channel: selectedTopupAdminMethodVal || 'bca_va',
+        vaNumber: '88000' + (currentUser.phone ? currentUser.phone.replace(/[^0-9]/g, '').slice(-10) : '8123456789')
       })
     }).then(r => r.json());
 
     if (res.success) {
-      showToast(res.message, 'success', 5000);
-      currentUser.walletBalance = res.newBalance;
+      showToast(res.message || '🎉 Top-up Virtual Account berhasil! Saldo otomatis masuk ke dompet Anda.', 'success', 5000);
+      if (res.data && res.data.amount) {
+        currentUser.walletBalance = (currentUser.walletBalance || 0) + res.data.amount;
+      } else {
+        currentUser.walletBalance = (currentUser.walletBalance || 0) + amount;
+      }
       saveClientSession(currentUser);
       updateWalletDisplay();
       closeTopupModal();
       if (fileInput) fileInput.value = '';
+      playSuccessChime();
     } else {
       showToast(res.message || 'Gagal melakukan top-up', 'error');
     }
@@ -5658,13 +5789,187 @@ function openWithdrawModal() {
 
   modal.classList.remove('hidden');
 }
-function closeWithdrawModal() { document.getElementById('withdrawModal').classList.add('hidden'); }
+async function openWithdrawModal() {
+  const modal = document.getElementById('withdrawModal');
+  if (!modal) return;
+
+  // Cek apakah klien sudah mengatur PIN penarikan
+  try {
+    const pinRes = await fetch(`${API_BASE}/api/wallet/check-pin-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id })
+    }).then(r => r.json());
+
+    if (pinRes && pinRes.success && !pinRes.hasPin) {
+      openSetWithdrawPinModal();
+      return;
+    }
+  } catch(e) {}
+
+  // Muat rekening tersimpan dari localStorage atau profil klien
+  try {
+    const saved = JSON.parse(localStorage.getItem('sobat_saved_client_payout') || '{}');
+    if (saved.channelType && document.getElementById('wdChannelSelect')) {
+      document.getElementById('wdChannelSelect').value = saved.channelType;
+    }
+    if (saved.destination && document.getElementById('wdDestinationInput')) {
+      document.getElementById('wdDestinationInput').value = saved.destination;
+    }
+    if (saved.accountHolder && document.getElementById('wdAccountHolderInput')) {
+      document.getElementById('wdAccountHolderInput').value = saved.accountHolder;
+    }
+  } catch(e) {}
+
+  if (currentUser && !document.getElementById('wdDestinationInput')?.value) {
+    if (currentUser.bankDetails?.bankAccount) {
+      document.getElementById('wdDestinationInput').value = currentUser.bankDetails.bankAccount;
+      if (currentUser.bankDetails.bankName && document.getElementById('wdChannelSelect')) {
+        document.getElementById('wdChannelSelect').value = currentUser.bankDetails.bankName;
+      }
+    } else if (currentUser.phone) {
+      document.getElementById('wdDestinationInput').value = currentUser.phone;
+    }
+    if (document.getElementById('wdAccountHolderInput')) {
+      document.getElementById('wdAccountHolderInput').value = currentUser.bankDetails?.bankHolder || currentUser.name || '';
+    }
+  }
+  const pinInput = document.getElementById('wdPinInput');
+  if (pinInput) pinInput.value = '';
+  modal.classList.remove('hidden');
+}
+
+function closeWithdrawModal() {
+  const m = document.getElementById('withdrawModal');
+  if (m) m.classList.add('hidden');
+}
+
+function openSetWithdrawPinModal() {
+  closeWithdrawModal();
+  const m = document.getElementById('modalSetWithdrawalPin');
+  if (m) {
+    document.getElementById('newSetPinInput').value = '';
+    document.getElementById('confirmSetPinInput').value = '';
+    m.classList.remove('hidden');
+  }
+}
+
+function closeSetWithdrawPinModal() {
+  const m = document.getElementById('modalSetWithdrawalPin');
+  if (m) m.classList.add('hidden');
+}
+
+async function submitSetWithdrawPin() {
+  const pin = document.getElementById('newSetPinInput')?.value.trim();
+  const confirmPin = document.getElementById('confirmSetPinInput')?.value.trim();
+
+  if (!pin || pin.length < 4) {
+    showToast('PIN penarikan minimal 4-6 angka.', 'warning');
+    return;
+  }
+  if (pin !== confirmPin) {
+    showToast('Konfirmasi PIN penarikan tidak cocok!', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet/set-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id, pin })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('✅ Kata Sandi / PIN Penarikan berhasil disimpan!', 'success');
+      closeSetWithdrawPinModal();
+      openWithdrawModal();
+    } else {
+      showToast(res.message || 'Gagal menyimpan PIN', 'error');
+    }
+  } catch(e) {
+    showToast('Gagal koneksi server: ' + e.message, 'error');
+  }
+}
+
+async function openForgotWithdrawPinModal() {
+  closeWithdrawModal();
+  const m = document.getElementById('modalResetWithdrawalPin');
+  if (!m) return;
+
+  const targetEl = document.getElementById('resetPinPhoneTarget');
+  if (targetEl) targetEl.innerText = currentUser?.phone || 'Nomor HP Anda';
+
+  document.getElementById('resetPinOtpInput').value = '';
+  document.getElementById('resetPinNewInput').value = '';
+
+  showToast('Mengirimkan kode OTP verifikasi ke HP Anda...', 'info');
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet/request-pin-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id })
+    }).then(r => r.json());
+
+    if (res.success) {
+      m.classList.remove('hidden');
+      const qCard = document.getElementById('resetPinQuickCard');
+      const qCode = document.getElementById('resetPinQuickCode');
+      if (res.devOtp && qCard && qCode) {
+        qCode.innerText = res.devOtp;
+        qCard.classList.remove('hidden');
+      }
+      showToast('Kode OTP berhasil dikirim ke nomor HP Anda!', 'success');
+    } else {
+      showToast(res.message || 'Gagal mengirim OTP', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  }
+}
+
+function closeResetWithdrawPinModal() {
+  const m = document.getElementById('modalResetWithdrawalPin');
+  if (m) m.classList.add('hidden');
+}
+
+async function submitResetWithdrawPinWithOtp() {
+  const otp = document.getElementById('resetPinOtpInput')?.value.trim();
+  const newPin = document.getElementById('resetPinNewInput')?.value.trim();
+
+  if (!otp || otp.length < 4) {
+    showToast('Masukkan kode OTP dengan benar.', 'warning');
+    return;
+  }
+  if (!newPin || newPin.length < 4) {
+    showToast('PIN baru minimal 4-6 angka.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet/reset-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id, otp, newPin })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('🎉 Kata Sandi / PIN Penarikan berhasil direset!', 'success');
+      closeResetWithdrawPinModal();
+      openWithdrawModal();
+    } else {
+      showToast(res.message || 'Gagal mereset PIN', 'error');
+    }
+  } catch(e) {
+    showToast('Gagal koneksi: ' + e.message, 'error');
+  }
+}
 
 async function submitWithdrawForm() {
   const channelType = document.getElementById('wdChannelSelect').value;
   const destination = document.getElementById('wdDestinationInput').value.trim();
   const accountHolder = document.getElementById('wdAccountHolderInput')?.value.trim() || currentUser?.name || '';
   const amount = Number(document.getElementById('wdAmountInput').value);
+  const pin = document.getElementById('wdPinInput')?.value.trim();
   const saveCheck = document.getElementById('wdSaveAccountCheckbox')?.checked;
 
   if (!destination) {
@@ -5673,6 +5978,11 @@ async function submitWithdrawForm() {
   }
   if (!amount || amount < 20000) {
     showToast('Minimal penarikan saldo adalah Rp 20.000.', 'warning');
+    return;
+  }
+  if (!pin) {
+    showToast('Harap masukkan Kata Sandi / PIN Penarikan.', 'warning');
+    document.getElementById('wdPinInput')?.focus();
     return;
   }
   if (currentUser?.walletBalance && amount > currentUser.walletBalance) {
@@ -5685,20 +5995,35 @@ async function submitWithdrawForm() {
   }
 
   try {
+    showToast('Memproses penarikan saldo...', 'info');
     const res = await fetch(`${API_BASE}/api/client/withdraw`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: currentUser.id, amount, bankName: channelType, accountNumber: destination, accountHolder })
+      body: JSON.stringify({
+        clientId: currentUser.id,
+        amount,
+        bankName: channelType,
+        accountNumber: destination,
+        accountHolder,
+        withdrawalPin: pin
+      })
     }).then(r => r.json());
 
     if (res.success) {
-      showToast('Permintaan penarikan dana berhasil diajukan dan segera diproses.', 'success');
+      showToast('✅ Permintaan penarikan dana diajukan ke admin untuk diproses.', 'success');
       if (res.newBalance !== undefined) currentUser.walletBalance = res.newBalance;
       saveClientSession(currentUser);
       updateWalletDisplay();
       closeWithdrawModal();
     } else {
-      showToast(res.message || 'Gagal mengajukan penarikan.', 'error');
+      if (res.requireSetPin) {
+        showToast(res.message, 'warning');
+        openSetWithdrawPinModal();
+      } else if (res.invalidPin) {
+        showToast('❌ Kata Sandi / PIN Penarikan salah! Silakan coba lagi atau klik Lupa PIN.', 'error');
+      } else {
+        showToast(res.message || 'Gagal mengajukan penarikan.', 'error');
+      }
     }
   } catch(e) {
     showToast('Koneksi server gagal: ' + e.message, 'error');

@@ -1240,7 +1240,12 @@ html, body {
             <span class="text-xs text-slate-400">Ketuk untuk upload foto e-KTP</span>
           </div>
           <input type="file" id="ktpFile" accept="image/*" capture="environment" class="hidden" onchange="previewDocUpload(this,'ktpPreview','ktpBase64')">
-          <input type="text" id="docsNikNumber" placeholder="Nomor NIK KTP (16 digit)" maxlength="16" class="w-full px-3 py-2.5 rounded-xl text-white text-sm font-mono focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)">
+          <div>
+            <label class="block text-[11px] text-slate-400 font-semibold mb-1">Nomor Induk Kependudukan (NIK e-KTP)</label>
+            <input type="text" id="docsNikNumber" placeholder="Nomor NIK KTP (16 digit)" maxlength="16" class="w-full px-3 py-2.5 rounded-xl text-white text-sm font-mono focus:outline-none" style="background:rgba(2,8,16,0.8);border:1px solid rgba(16,185,129,0.2)">
+            <p id="ktpOcrHint" class="hidden text-[11px] text-slate-400 mt-1"></p>
+            <p class="text-[10px] text-slate-400 mt-1">💡 NIK terbaca otomatis saat memfoto e-KTP dan dapat diedit langsung jika ada kekeliruan akibat foto blur.</p>
+          </div>
         </div>
 
         <!-- foto selfi -->
@@ -2657,6 +2662,19 @@ html, body {
           <input type="number" id="wdAmountInput" value="50000" min="20000" step="10000" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-bold">
           <p class="text-[10px] text-slate-400 mt-0.5">Minimal penarikan Rp 20.000. Bebas biaya admin.</p>
         </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-300">Kata Sandi / PIN Penarikan:</label>
+            <button type="button" onclick="openForgotWithdrawPinModal()" class="text-[10px] text-emerald-400 hover:underline font-bold">Lupa PIN?</button>
+          </div>
+          <div class="relative flex items-center">
+            <input type="password" id="wdPinInput" maxlength="6" placeholder="Masukkan 6-digit PIN penarikan" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono font-bold tracking-widest focus:border-emerald-500 focus:outline-none">
+            <button type="button" onclick="togglePasswordVisibility('wdPinInput', this)" class="absolute right-2 text-slate-400 hover:text-white p-1">
+              <i class="fa-solid fa-eye text-xs"></i>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-0.5">PIN penarikan khusus dibuat demi keamanan saldo Anda.</p>
+        </div>
         <div class="flex items-center space-x-2 pt-1">
           <input type="checkbox" id="wdSaveAccountCheckbox" checked class="rounded bg-slate-950 border-slate-700 text-emerald-500">
           <label for="wdSaveAccountCheckbox" class="text-[11px] text-slate-300 select-none cursor-pointer">Simpan rekening ini untuk penarikan berikutnya</label>
@@ -2665,6 +2683,72 @@ html, body {
       <div class="flex space-x-2 pt-2 border-t border-slate-800">
         <button onclick="closeWithdrawModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
         <button onclick="submitWithdrawForm()" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow">Ajukan Penarikan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ATUR PIN PENARIKAN KHUSUS (DRIVER) -->
+  <div id="modalSetWithdrawalPin" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-emerald-400 text-lg">lock</span>
+          <h3 class="font-bold text-white text-sm">Atur Kata Sandi Penarikan</h3>
+        </div>
+        <button onclick="closeSetWithdrawPinModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-300">
+        Demi keamanan dompet dan pencairan saldo Anda, silakan buat kata sandi / PIN khusus penarikan (minimal 4-6 digit angka).
+      </p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">PIN Penarikan Baru (4-6 Angka):</label>
+          <input type="password" id="newSetPinInput" maxlength="6" placeholder="Contoh: 123456" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold tracking-widest text-center text-lg focus:border-emerald-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Konfirmasi PIN Penarikan:</label>
+          <input type="password" id="confirmSetPinInput" maxlength="6" placeholder="Ketik ulang PIN..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold tracking-widest text-center text-lg focus:border-emerald-500 focus:outline-none">
+        </div>
+      </div>
+      <div class="flex space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeSetWithdrawPinModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
+        <button onclick="submitSetWithdrawPin()" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow">Simpan PIN Penarikan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LUPA PIN PENARIKAN (RESET VIA OTP RESMI) -->
+  <div id="modalResetWithdrawalPin" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-amber-400 text-lg">pin</span>
+          <h3 class="font-bold text-white text-sm">Reset PIN Penarikan via OTP</h3>
+        </div>
+        <button onclick="closeResetWithdrawPinModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
+        <p>Kode OTP telah dikirimkan ke nomor HP terdaftar Anda:</p>
+        <p id="resetPinPhoneTarget" class="font-mono font-black text-white text-xs">08xxxxxxxxxx</p>
+      </div>
+      <!-- Quick card OTP simulation -->
+      <div id="resetPinQuickCard" class="hidden p-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-center animate-pulse">
+        <p class="text-[10px] text-emerald-300 font-bold">KODE OTP RESET PENARIKAN:</p>
+        <p id="resetPinQuickCode" class="text-xl font-black font-mono text-emerald-400 tracking-widest">------</p>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Masukkan 6-Digit Kode OTP:</label>
+          <input type="text" id="resetPinOtpInput" maxlength="6" placeholder="6-digit OTP" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold tracking-widest text-center text-base focus:border-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">PIN Penarikan Baru (4-6 Angka):</label>
+          <input type="password" id="resetPinNewInput" maxlength="6" placeholder="PIN baru" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono font-bold tracking-widest text-center text-base focus:border-amber-500 focus:outline-none">
+        </div>
+      </div>
+      <div class="flex space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeResetWithdrawPinModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
+        <button onclick="submitResetWithdrawPinWithOtp()" class="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow">Verifikasi &amp; Simpan</button>
       </div>
     </div>
   </div>
@@ -3682,6 +3766,27 @@ html, body {
             <h4 class="font-black text-white text-xs uppercase tracking-wider">data profil saya</h4>
           </div>
           <div class="p-4 rounded-2xl space-y-3.5" style="background: rgba(13,31,56,0.8); border: 1px solid rgba(71,85,105,0.4);">
+            <!-- Foto Profil Aktif & Ganti Foto Profil via Admin -->
+            <div class="flex items-center space-x-3.5 pb-3 border-b border-slate-800/60">
+              <div class="relative">
+                <img id="setDriverActiveAvatar" src="uploads/avatar_mitra.svg" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-400 shadow-md">
+                <button type="button" onclick="openProfilePhotoChangeModal()" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xs shadow-md" title="Ganti Foto Profil">
+                  <span class="material-symbols-outlined text-xs">photo_camera</span>
+                </button>
+              </div>
+              <div class="flex-1">
+                <p class="text-xs font-bold text-white">Foto Profil Driver</p>
+                <p class="text-[10px] text-slate-400">Sinkron otomatis dengan selfie verifikasi wajah.</p>
+                <button type="button" onclick="openProfilePhotoChangeModal()" class="mt-1 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center space-x-1">
+                  <span class="material-symbols-outlined text-xs">edit</span>
+                  <span>Ajukan Ganti Foto Profil</span>
+                </button>
+                <div id="avatarRequestPendingBadge" class="hidden mt-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold inline-block">
+                  ⏳ Menunggu Konfirmasi Admin
+                </div>
+              </div>
+            </div>
+
             <!-- Nama Lengkap -->
             <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
               <div>
@@ -3697,6 +3802,14 @@ html, body {
                 <p id="setProfilePhone" class="font-bold text-white text-xs font-mono mt-0.5">-</p>
               </div>
               <button onclick="openChangePhoneDialog()" class="text-xs text-emerald-400 font-bold hover:underline">Ubah</button>
+            </div>
+            <!-- Alamat Email -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div class="flex-1 pr-2">
+                <p class="text-[10px] text-slate-400">Alamat Email</p>
+                <p id="setProfileEmail" class="font-bold text-white text-xs mt-0.5 leading-snug">-</p>
+              </div>
+              <button onclick="openEditProfileDialog('email')" class="text-xs text-emerald-400 font-bold hover:underline">Ubah</button>
             </div>
             <!-- Alamat Lengkap -->
             <div class="flex items-center justify-between pb-2 border-b border-slate-800/60">

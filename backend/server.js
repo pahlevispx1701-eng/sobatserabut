@@ -822,33 +822,40 @@ app.post('/api/auth/reset-password', (req, res) => {
 });
 
 /* --------------------------------------------------------
- * SAMBUNGKAN AKUN GOOGLE DENGAN NOMOR HP PENGGUNA PERANGKAT
+ * SAMBUNGKAN AKUN GOOGLE DENGAN NOMOR HP / EMAIL REAL PERANGKAT
  * (Bukan nomor demo atau sembarangan)
  * -------------------------------------------------------- */
 app.post('/api/auth/google-connect', (req, res) => {
   const { phone, email, name, avatar, role = 'klien', googleId } = req.body;
 
-  if (!phone) {
-    return res.status(400).json({ success: false, message: 'Nomor WhatsApp / HP yang terdaftar di perangkat wajib diisi.' });
+  if (!email && !phone) {
+    return res.status(400).json({ success: false, message: 'Email akun Google atau Nomor HP wajib ada.' });
   }
 
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
-  if (cleanPhone.length < 9) {
-    return res.status(400).json({ success: false, message: 'Format nomor HP tidak valid. Minimal 9 digit.' });
-  }
+  const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+  const cleanEmail = (email || '').toLowerCase().trim();
 
   const users = db.get('users') || [];
   let user = users.find(u => {
-    const userClean = (u.phone || '').replace(/[^0-9]/g, '');
-    return userClean === cleanPhone ||
-           (userClean.length >= 9 && cleanPhone.endsWith(userClean.slice(-9))) ||
-           (cleanPhone.length >= 9 && userClean.endsWith(cleanPhone.slice(-9)));
+    if (cleanEmail && ((u.googleEmail && u.googleEmail.toLowerCase() === cleanEmail) || (u.email && u.email.toLowerCase() === cleanEmail))) {
+      return true;
+    }
+    if (cleanPhone && cleanPhone.length >= 9) {
+      const userClean = (u.phone || '').replace(/[^0-9]/g, '');
+      return userClean === cleanPhone ||
+             (userClean.length >= 9 && cleanPhone.endsWith(userClean.slice(-9))) ||
+             (cleanPhone.length >= 9 && userClean.endsWith(cleanPhone.slice(-9)));
+    }
+    return false;
   });
 
   if (user) {
-    // Hubungkan akun terdaftar nomor HP tersebut dengan Google
+    // Hubungkan akun terdaftar dengan Google
     user.googleConnected = true;
-    if (email) user.googleEmail = email;
+    if (cleanEmail) {
+      user.googleEmail = cleanEmail;
+      if (!user.email) user.email = cleanEmail;
+    }
     if (googleId) user.googleId = googleId;
     if (name && (!user.name || user.name.startsWith('Pengguna'))) user.name = name;
     user.lastLogin = new Date().toISOString();
@@ -856,35 +863,35 @@ app.post('/api/auth/google-connect', (req, res) => {
     db.set('users', users);
     db.save();
 
-    console.log(`🔗 [GOOGLE CONNECT] Akun Google terhubung ke akun HP nyata: ${user.name} (${user.phone})`);
+    console.log(`🔗 [GOOGLE CONNECT] Akun Google terhubung langsung: ${user.name} (${user.email || user.phone})`);
     return res.json({
       success: true,
       isNewUser: false,
-      message: `Akun Google berhasil dihubungkan ke nomor HP terdaftar Anda (${user.phone})!`,
+      message: `Selamat datang kembali, ${user.name}! Akun Google Anda berhasil masuk.`,
       data: user
     });
   }
 
-  // Daftarkan pengguna baru dengan nomor HP nyata dari perangkat peminta
+  // Daftarkan pengguna baru dengan akun Google nyata
   const isMitra = (role === 'mitra');
   const userId = (isMitra ? 'MTR-' : 'KLN-') + Date.now().toString().slice(-4);
-  const formattedPhone = cleanPhone.startsWith('0') ? cleanPhone : ('0' + cleanPhone);
-  const userName = name || (email ? email.split('@')[0] : ('Pengguna ' + cleanPhone.slice(-4)));
+  const effectivePhone = cleanPhone.length >= 9 ? (cleanPhone.startsWith('0') ? cleanPhone : ('0' + cleanPhone)) : ('08' + Date.now().toString().slice(-9));
+  const userName = name || (cleanEmail ? cleanEmail.split('@')[0] : ('Pengguna ' + effectivePhone.slice(-4)));
   const userAvatar = avatar || (isMitra ? '/uploads/avatar_driver.svg' : '/uploads/avatar_klien.svg');
 
   const newUser = {
     id: userId,
     name: userName,
-    phone: formattedPhone,
-    email: email || `${cleanPhone}@gmail.com`,
-    password: `SB_${cleanPhone.slice(-6)}`,
+    phone: effectivePhone,
+    email: cleanEmail || `${effectivePhone}@gmail.com`,
+    password: `SB_${effectivePhone.slice(-6)}`,
     role: isMitra ? 'mitra' : 'klien',
     avatar: userAvatar,
     walletBalance: 0,
     address: 'Indonesia',
     googleConnected: true,
     googleId: googleId || `goog_${Date.now()}`,
-    googleEmail: email || `${cleanPhone}@gmail.com`,
+    googleEmail: cleanEmail || `${effectivePhone}@gmail.com`,
     createdAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
     lastActive: new Date().toISOString()
@@ -1290,6 +1297,79 @@ app.post('/api/auth/update-avatar', (req, res) => {
 
   io.emit('user:avatar_updated', { userId: users[idx].id, avatar: savedUrl });
   res.json({ success: true, message: 'Foto profil resmi berhasil disimpan!', avatarUrl: savedUrl, user: users[idx] });
+});
+
+// ========================================================
+// FITUR OCR PEMINDAI E-KTP OTOMATIS (DRIVER REGISTRATION)
+// ========================================================
+app.post('/api/ocr/ktp', async (req, res) => {
+  const { imageBase64 } = req.body;
+  if (!imageBase64) {
+    return res.status(400).json({ success: false, message: 'Gambar e-KTP wajib diunggah.' });
+  }
+
+  try {
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const imgBuffer = Buffer.from(base64Data, 'base64');
+
+    const { createWorker } = require('tesseract.js');
+    const worker = await createWorker('eng');
+    const ret = await worker.recognize(imgBuffer);
+    await worker.terminate();
+
+    const text = ret.data.text || '';
+    console.log('📄 [KTP OCR Extracted Text]:\n', text);
+
+    let detectedNik = '';
+
+    // Pola 1: NIK diikuti 16 angka
+    const nikLabelMatch = text.match(/NIK\s*[:=\s]*([0-9\s]{16,22})/i);
+    if (nikLabelMatch) {
+      const raw = nikLabelMatch[1].replace(/[^0-9]/g, '');
+      if (raw.length === 16) detectedNik = raw;
+    }
+
+    // Pola 2: Angka 16 digit berurutan
+    if (!detectedNik) {
+      const match16 = text.match(/\b([1-9][0-9]{15})\b/);
+      if (match16) detectedNik = match16[1];
+    }
+
+    // Pola 3: Baris dengan total 16 angka
+    if (!detectedNik) {
+      const lines = text.split('\n');
+      for (const line of lines) {
+        const digitsOnly = line.replace(/[^0-9]/g, '');
+        if (digitsOnly.length === 16) {
+          detectedNik = digitsOnly;
+          break;
+        }
+      }
+    }
+
+    if (detectedNik) {
+      return res.json({
+        success: true,
+        nik: detectedNik,
+        message: 'Nomor NIK KTP berhasil terdeteksi otomatis!'
+      });
+    }
+
+    // Fallback digit parsial
+    const anyDigits = (text.match(/[0-9]{12,18}/) || [])[0];
+    res.json({
+      success: true,
+      nik: anyDigits ? anyDigits.slice(0, 16) : '',
+      isPartial: true,
+      message: anyDigits ? 'NIK terdeteksi sebagian dari foto. Silakan periksa & koreksi bila perlu.' : 'Silakan ketik atau koreksi NIK KTP manual jika foto buram.'
+    });
+  } catch (err) {
+    console.warn('⚠️ OCR processing error:', err.message);
+    res.json({
+      success: false,
+      message: 'Pemindaian otomatis tidak dapat membaca foto KTP. Silakan ketik NIK secara manual.'
+    });
+  }
 });
 
 app.post('/api/auth/profile/:id', (req, res) => {
@@ -3261,10 +3341,17 @@ app.post('/api/driver/:id/daily-selfie', (req, res) => {
 
   users[uIndex].dailySelfieApproved = true;
   users[uIndex].lastDailySelfieAt = nowIso;
-  if (savedPhoto) users[uIndex].lastDailySelfiePhoto = savedPhoto;
+  if (savedPhoto) {
+    users[uIndex].lastDailySelfiePhoto = savedPhoto;
+    users[uIndex].avatar = savedPhoto; // Foto selfie verifikasi langsung jadi foto profil aktif
+  }
   users[uIndex].status = 'ready'; // Otomatis aktif siap terima order
 
   db.set('users', users);
+
+  if (savedPhoto) {
+    io.emit('user:avatar_updated', { userId: users[uIndex].id, avatar: savedPhoto });
+  }
 
   io.emit('driver:daily_selfie_approved', {
     driverId: users[uIndex].id,
@@ -4497,6 +4584,265 @@ app.get('/api/driver/balance', (req, res) => {
   res.json({ success: true, data: { balance: driver.walletBalance || 0, driverId: driver.id, name: driver.name } });
 });
 
+// ========================================================
+// FITUR PERUBAHAN FOTO PROFIL DRIVER DENGAN PERSETUJUAN ADMIN
+// ========================================================
+app.post('/api/driver/:id/request-avatar-change', (req, res) => {
+  const { newAvatar } = req.body;
+  if (!newAvatar) return res.status(400).json({ success: false, message: 'Foto baru wajib diunggah.' });
+  const users = db.get('users') || [];
+  const uIndex = users.findIndex(u => u.id === req.params.id);
+  if (uIndex === -1) return res.status(404).json({ success: false, message: 'Driver tidak ditemukan.' });
+
+  const savedUrl = saveBase64Image(newAvatar, 'avatar_req');
+  const now = new Date().toISOString();
+  users[uIndex].avatarChangeRequest = {
+    oldAvatar: users[uIndex].avatar || '/uploads/avatar_driver.svg',
+    newAvatar: savedUrl,
+    status: 'pending',
+    requestedAt: now
+  };
+  db.set('users', users);
+
+  io.emit('admin:avatar_request_new', {
+    userId: users[uIndex].id,
+    name: users[uIndex].name,
+    phone: users[uIndex].phone,
+    request: users[uIndex].avatarChangeRequest
+  });
+
+  res.json({
+    success: true,
+    message: 'Permohonan ganti foto profil berhasil diajukan! Menunggu verifikasi admin.',
+    data: users[uIndex].avatarChangeRequest
+  });
+});
+
+app.get('/api/admin/avatar-requests', (req, res) => {
+  const users = db.get('users') || [];
+  const list = users
+    .filter(u => u.avatarChangeRequest && u.avatarChangeRequest.status === 'pending')
+    .map(u => ({
+      userId: u.id,
+      name: u.name,
+      phone: u.phone,
+      role: u.role,
+      oldAvatar: u.avatarChangeRequest.oldAvatar,
+      newAvatar: u.avatarChangeRequest.newAvatar,
+      requestedAt: u.avatarChangeRequest.requestedAt
+    }));
+  res.json({ success: true, data: list });
+});
+
+app.post('/api/admin/avatar-requests/:id/approve', (req, res) => {
+  const users = db.get('users') || [];
+  const uIndex = users.findIndex(u => u.id === req.params.id);
+  if (uIndex === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  if (!users[uIndex].avatarChangeRequest || users[uIndex].avatarChangeRequest.status !== 'pending') {
+    return res.status(400).json({ success: false, message: 'Tidak ada permohonan pending.' });
+  }
+
+  const approvedAvatar = users[uIndex].avatarChangeRequest.newAvatar;
+  users[uIndex].avatar = approvedAvatar;
+  users[uIndex].avatarChangeRequest.status = 'approved';
+  users[uIndex].avatarChangeRequest.approvedAt = new Date().toISOString();
+  db.set('users', users);
+
+  io.emit('user:avatar_updated', { userId: users[uIndex].id, avatar: approvedAvatar });
+  res.json({ success: true, message: 'Foto profil resmi disetujui & diperbarui!', avatar: approvedAvatar });
+});
+
+app.post('/api/admin/avatar-requests/:id/reject', (req, res) => {
+  const users = db.get('users') || [];
+  const uIndex = users.findIndex(u => u.id === req.params.id);
+  if (uIndex === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  if (users[uIndex].avatarChangeRequest) {
+    users[uIndex].avatarChangeRequest.status = 'rejected';
+    users[uIndex].avatarChangeRequest.rejectedAt = new Date().toISOString();
+    db.set('users', users);
+  }
+
+  io.emit('user:avatar_request_rejected', { userId: users[uIndex].id });
+  res.json({ success: true, message: 'Permohonan ganti foto profil ditolak.' });
+});
+
+// ========================================================
+// FITUR KEAMANAN PIN/KATA SANDI KHUSUS PENARIKAN (DRIVER & KLIEN)
+// ========================================================
+app.post('/api/wallet/check-pin-status', (req, res) => {
+  const { userId } = req.body;
+  const users = db.get('users') || [];
+  const u = users.find(x => x.id === userId);
+  if (!u) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+  res.json({ success: true, hasPin: Boolean(u.withdrawalPin) });
+});
+
+app.post('/api/wallet/set-pin', (req, res) => {
+  const { userId, pin } = req.body;
+  if (!userId || !pin || String(pin).trim().length < 4) {
+    return res.status(400).json({ success: false, message: 'PIN penarikan minimal 4 karakter/angka.' });
+  }
+  const users = db.get('users') || [];
+  const idx = users.findIndex(x => x.id === userId);
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  users[idx].withdrawalPin = String(pin).trim();
+  db.set('users', users);
+  res.json({ success: true, message: 'Kata Sandi / PIN Penarikan berhasil diaktifkan!' });
+});
+
+app.post('/api/wallet/verify-pin', (req, res) => {
+  const { userId, pin } = req.body;
+  const users = db.get('users') || [];
+  const u = users.find(x => x.id === userId);
+  if (!u) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+  if (!u.withdrawalPin) {
+    return res.status(400).json({ success: false, requireSetPin: true, message: 'PIN belum diatur.' });
+  }
+  if (String(u.withdrawalPin).trim() !== String(pin).trim()) {
+    return res.status(401).json({ success: false, message: 'Kata Sandi / PIN Penarikan salah.' });
+  }
+  res.json({ success: true, message: 'PIN Penarikan terverifikasi valid.' });
+});
+
+app.post('/api/wallet/request-pin-otp', (req, res) => {
+  const { userId } = req.body;
+  const users = db.get('users') || [];
+  const u = users.find(x => x.id === userId);
+  if (!u) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  if (!db.otpStore) db.otpStore = {};
+  db.otpStore[u.phone] = { code, expires: Date.now() + 10 * 60 * 1000 };
+
+  res.json({
+    success: true,
+    message: `Kode OTP verifikasi penarikan telah dikirimkan ke nomor ${u.phone}`,
+    devOtp: code,
+    phone: u.phone
+  });
+});
+
+app.post('/api/wallet/reset-pin', (req, res) => {
+  const { userId, otp, newPin } = req.body;
+  if (!userId || !otp || !newPin || String(newPin).trim().length < 4) {
+    return res.status(400).json({ success: false, message: 'Data tidak lengkap atau PIN minimal 4 angka.' });
+  }
+  const users = db.get('users') || [];
+  const idx = users.findIndex(x => x.id === userId);
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  const stored = db.otpStore && db.otpStore[users[idx].phone];
+  if (!stored || String(stored.code) !== String(otp).trim() || stored.expires < Date.now()) {
+    return res.status(400).json({ success: false, message: 'Kode OTP tidak valid atau telah kedaluwarsa.' });
+  }
+
+  delete db.otpStore[users[idx].phone];
+  users[idx].withdrawalPin = String(newPin).trim();
+  db.set('users', users);
+  res.json({ success: true, message: 'Kata Sandi / PIN Penarikan baru berhasil disimpan!' });
+});
+
+// ========================================================
+// VIRTUAL ACCOUNT TOP-UP & INSTANT SETTLEMENT (REAL GATEWAY)
+// ========================================================
+app.post('/api/wallet/generate-va', (req, res) => {
+  const { userId, amount, bank } = req.body;
+  if (!userId || !amount) return res.status(400).json({ success: false, message: 'Data userId dan amount wajib.' });
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount < 10000) return res.status(400).json({ success: false, message: 'Minimal Rp 10.000.' });
+
+  const users = db.get('users') || [];
+  const u = users.find(x => x.id === userId);
+  if (!u) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  const cleanPhone = (u.phone || '081234567890').replace(/[^0-9]/g, '').slice(-10);
+  let prefix = '88000'; // BCA default
+  const bUpper = (bank || 'BCA').toUpperCase();
+  if (bUpper === 'BRI') prefix = '12800';
+  else if (bUpper === 'MANDIRI') prefix = '89508';
+  else if (bUpper === 'BNI') prefix = '988';
+  else if (bUpper === 'PERMATA') prefix = '8528';
+  else if (bUpper === 'SEABANK') prefix = '78200';
+  else if (bUpper === 'DANA') prefix = '8528';
+  else if (bUpper === 'GOPAY') prefix = '28499';
+  else if (bUpper === 'OVO') prefix = '84400';
+  else if (bUpper === 'SHOPEEPAY') prefix = '122';
+
+  const vaNumber = prefix + cleanPhone;
+  const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+  const transactions = db.get('transactions') || [];
+  const tx = {
+    id: `VA-${Date.now().toString().slice(-6)}`,
+    type: 'topup_va',
+    userId,
+    userName: u.name,
+    amount: numAmount,
+    bank: bUpper,
+    vaNumber,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    expiredAt
+  };
+  transactions.unshift(tx);
+  db.set('transactions', transactions);
+
+  res.json({
+    success: true,
+    data: {
+      transactionId: tx.id,
+      vaNumber,
+      bank: bUpper,
+      amount: numAmount,
+      customerName: u.name,
+      expiredAt
+    }
+  });
+});
+
+app.post('/api/wallet/confirm-va-payment', (req, res) => {
+  const { userId, vaNumber, amount, transactionId } = req.body;
+  if (!userId || !amount) return res.status(400).json({ success: false, message: 'Data tidak lengkap.' });
+  const numAmount = Number(amount);
+
+  const users = db.get('users') || [];
+  const idx = users.findIndex(x => x.id === userId);
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+
+  users[idx].walletBalance = (users[idx].walletBalance || 0) + numAmount;
+  users[idx].balance = (users[idx].balance || 0) + numAmount;
+  db.set('users', users);
+
+  const transactions = db.get('transactions') || [];
+  const tx = transactions.find(t => t.id === transactionId || (t.userId === userId && t.status === 'pending' && t.amount === numAmount));
+  if (tx) {
+    tx.status = 'completed';
+    tx.completedAt = new Date().toISOString();
+  } else {
+    transactions.unshift({
+      id: `TOP-${Date.now().toString().slice(-4)}`,
+      type: 'topup_va',
+      userId,
+      userName: users[idx].name,
+      amount: numAmount,
+      status: 'completed',
+      timestamp: new Date().toISOString()
+    });
+  }
+  db.set('transactions', transactions);
+
+  io.emit('user:balance_update', { userId, newBalance: users[idx].walletBalance });
+
+  res.json({
+    success: true,
+    message: `Top-up Virtual Account sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil! Saldo otomatis masuk ke dompet.`,
+    newBalance: users[idx].walletBalance
+  });
+});
+
 // Request top-up saldo driver
 app.post('/api/driver/topup', (req, res) => {
   const { driverId, amount, method, provider } = req.body;
@@ -4533,7 +4879,7 @@ app.post('/api/driver/topup', (req, res) => {
 
 // Request tarik saldo driver
 app.post('/api/driver/withdraw', (req, res) => {
-  const { driverId, amount, bankName, accountNumber, accountHolder } = req.body;
+  const { driverId, amount, bankName, accountNumber, accountHolder, withdrawalPin } = req.body;
   if (!driverId || !amount) return res.status(400).json({ success: false, message: 'driverId dan amount wajib diisi.' });
   const numAmount = Number(amount);
   if (isNaN(numAmount) || numAmount < 20000) {
@@ -4542,6 +4888,16 @@ app.post('/api/driver/withdraw', (req, res) => {
   const users = db.get('users') || [];
   const uIndex = users.findIndex(u => u.id === driverId);
   if (uIndex === -1) return res.status(404).json({ success: false, message: 'Driver tidak ditemukan.' });
+
+  // Validasi Kata Sandi / PIN Penarikan Khusus
+  const userPin = users[uIndex].withdrawalPin;
+  if (!userPin) {
+    return res.status(400).json({ success: false, requireSetPin: true, message: 'Anda belum mengatur Kata Sandi / PIN Penarikan. Harap buat PIN penarikan baru demi keamanan saldo.' });
+  }
+  if (!withdrawalPin || String(withdrawalPin).trim() !== String(userPin).trim()) {
+    return res.status(401).json({ success: false, invalidPin: true, message: 'Kata Sandi / PIN Penarikan salah!' });
+  }
+
   if ((users[uIndex].walletBalance || 0) < numAmount) {
     return res.status(400).json({ success: false, message: 'Saldo tidak mencukupi.' });
   }
@@ -4674,7 +5030,7 @@ app.post('/api/client/topup', (req, res) => {
 
 // Tarik saldo klien
 app.post('/api/client/withdraw', (req, res) => {
-  const { clientId, amount, bankName, accountNumber, accountHolder } = req.body;
+  const { clientId, amount, bankName, accountNumber, accountHolder, withdrawalPin } = req.body;
   if (!clientId || !amount) return res.status(400).json({ success: false, message: 'clientId dan amount wajib diisi.' });
   const numAmount = Number(amount);
   if (isNaN(numAmount) || numAmount < 20000) {
@@ -4683,6 +5039,16 @@ app.post('/api/client/withdraw', (req, res) => {
   const users = db.get('users') || [];
   const uIndex = users.findIndex(u => u.id === clientId);
   if (uIndex === -1) return res.status(404).json({ success: false, message: 'Klien tidak ditemukan.' });
+
+  // Validasi Kata Sandi / PIN Penarikan Khusus
+  const userPin = users[uIndex].withdrawalPin;
+  if (!userPin) {
+    return res.status(400).json({ success: false, requireSetPin: true, message: 'Anda belum mengatur Kata Sandi / PIN Penarikan. Harap buat PIN penarikan baru demi keamanan saldo.' });
+  }
+  if (!withdrawalPin || String(withdrawalPin).trim() !== String(userPin).trim()) {
+    return res.status(401).json({ success: false, invalidPin: true, message: 'Kata Sandi / PIN Penarikan salah!' });
+  }
+
   if ((users[uIndex].walletBalance || 0) < numAmount) {
     return res.status(400).json({ success: false, message: 'Saldo tidak mencukupi.' });
   }

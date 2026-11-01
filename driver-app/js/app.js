@@ -406,6 +406,15 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTotalDriverCount();
   updateServerStatusBadge(true, API_BASE);
   checkDevicePermissionsOnLaunch();
+
+  // Aktifkan Foreground Keepalive Service di Android agar tetap siaga menerima orderan di background
+  try {
+    if (window.Android && window.Android.startBackgroundService) {
+      window.Android.startBackgroundService();
+    } else if (window.AndroidBridge && window.AndroidBridge.startBackgroundService) {
+      window.AndroidBridge.startBackgroundService();
+    }
+  } catch(e) {}
 });
 
 async function loadTotalDriverCount() {
@@ -573,8 +582,14 @@ function initSocket() {
     });
 
     socket.on('order:new', (newOrder) => {
+      const alertMsg = 'Kring.. ada orderan masuk ni!';
+      if (window.Android && window.Android.playOrderAlertSound) {
+        window.Android.playOrderAlertSound(alertMsg);
+      } else if (window.AndroidBridge && window.AndroidBridge.playOrderAlertSound) {
+        window.AndroidBridge.playOrderAlertSound(alertMsg);
+      }
       playAudioSound('order_chime');
-      speakVoiceNotification('Ada orderan masuk! Segera cek dan ambil pesanan Anda.');
+      speakVoiceNotification(alertMsg);
       triggerDeviceNotification('Pesanan Baru Masuk! 📦', (newOrder.title || 'Pesanan Baru') + (newOrder.price ? ' - Rp ' + Number(newOrder.price).toLocaleString('id-ID') : ''));
       if (currentUser?.role === 'mitra') {
         loadNearbyTasksForMitra();
@@ -584,6 +599,26 @@ function initSocket() {
         }
       } else if (currentUser?.role === 'klien' && newOrder.clientId === currentUser.id) {
         loadClientOrders();
+      }
+    });
+
+    socket.on('user:avatar_updated', (data) => {
+      if (currentUser && currentUser.id === data.userId) {
+        currentUser.avatar = data.avatar;
+        if (currentUser.avatarChangeRequest) currentUser.avatarChangeRequest.status = 'approved';
+        saveDriverSession(currentUser);
+        onUserAuthenticated(currentUser);
+        if (typeof openDriverSettingsView === 'function') openDriverSettingsView();
+        showToast('🎉 Foto profil resmi Anda telah disetujui Admin & diperbarui!', 'success');
+      }
+    });
+
+    socket.on('user:avatar_request_rejected', (data) => {
+      if (currentUser && currentUser.id === data.userId) {
+        if (currentUser.avatarChangeRequest) currentUser.avatarChangeRequest.status = 'rejected';
+        saveDriverSession(currentUser);
+        if (typeof openDriverSettingsView === 'function') openDriverSettingsView();
+        showToast('Permohonan ganti foto profil ditolak oleh Admin.', 'warning');
       }
     });
 
@@ -2522,6 +2557,25 @@ function onUserAuthenticated(user) {
   // Aktifkan sensor GPS HP presisi tinggi untuk memantau pergerakan driver
   startGpsTracker();
 
+  // Dengarkan penawaran order khusus untuk driver ini
+  if (socket && user && user.id) {
+    socket.off(`driver:order_offer:${user.id}`);
+    socket.on(`driver:order_offer:${user.id}`, (offer) => {
+      const alertMsg = 'Kring.. ada orderan masuk ni!';
+      if (window.Android && window.Android.playOrderAlertSound) {
+        window.Android.playOrderAlertSound(alertMsg);
+      } else if (window.AndroidBridge && window.AndroidBridge.playOrderAlertSound) {
+        window.AndroidBridge.playOrderAlertSound(alertMsg);
+      }
+      playAudioSound('order_chime');
+      speakVoiceNotification(alertMsg);
+      triggerDeviceNotification('Pesanan Ditawarkan Kepada Anda! 📦', (offer.title || 'Pesanan Baru') + (offer.price ? ' - Rp ' + Number(offer.price).toLocaleString('id-ID') : ''));
+      if (currentUser?.status === 'ready') {
+        showIncomingOrderModal(offer);
+      }
+    });
+  }
+
   // Request device permissions on login
   if (!localStorage.getItem('sobatserabut_permissions_granted')) {
     setTimeout(() => requestAllDevicePermissions(), 1000);
@@ -2613,24 +2667,25 @@ async function saveNewProfilePhoto() {
     return;
   }
 
-  showToast('Menyimpan foto profil asli driver...', 'info');
+  showToast('Mengirim permohonan ganti foto profil ke Admin...', 'info');
   try {
-    const res = await fetch(`${API_BASE}/api/auth/update-avatar`, {
+    const res = await fetch(`${API_BASE}/api/driver/${currentUser.id}/request-avatar-change`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser.id, avatarPhoto: photoToSave })
+      body: JSON.stringify({ newAvatar: photoToSave })
     }).then(r => r.json());
 
     if (res.success) {
-      currentUser.avatar = res.avatarUrl;
+      if (!currentUser.avatarChangeRequest) currentUser.avatarChangeRequest = {};
+      currentUser.avatarChangeRequest = res.data;
       saveDriverSession(currentUser);
-      onUserAuthenticated(currentUser);
       closeProfilePhotoChangeModal();
       newDriverAvatarBase64 = null;
       registeredAvatarBase64 = null;
-      showToast('✅ Foto profil resmi driver berhasil diperbarui!', 'success');
+      if (typeof openDriverSettingsView === 'function') openDriverSettingsView();
+      showToast('✅ Permohonan ganti foto profil berhasil diajukan! Menunggu persetujuan Admin.', 'success');
     } else {
-      showToast(res.message || 'Gagal menyimpan foto profil', 'error');
+      showToast(res.message || 'Gagal mengajukan ganti foto profil', 'error');
     }
   } catch(e) {
     showToast('Gagal koneksi server: ' + e.message, 'error');
@@ -5188,11 +5243,25 @@ async function submitTopup() {
 
 function handleWithdrawChannelChange(val) {}
 
-function openWithdrawModal() {
+async function openWithdrawModal() {
   const modal = document.getElementById('withdrawModal');
   if (!modal) return;
 
-  // Muat rekening tersimpan dari localStorage
+  // Cek apakah driver sudah mengatur PIN penarikan
+  try {
+    const pinRes = await fetch(`${API_BASE}/api/wallet/check-pin-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id })
+    }).then(r => r.json());
+
+    if (pinRes && pinRes.success && !pinRes.hasPin) {
+      openSetWithdrawPinModal();
+      return;
+    }
+  } catch(e) {}
+
+  // Muat rekening tersimpan dari localStorage atau profil driver
   try {
     const saved = JSON.parse(localStorage.getItem('sobat_saved_driver_payout') || '{}');
     if (saved.channelType && document.getElementById('wdChannelSelect')) {
@@ -5218,15 +5287,142 @@ function openWithdrawModal() {
       document.getElementById('wdAccountHolderInput').value = bank.bankHolder || currentUser.name || '';
     }
   }
+  const pinInput = document.getElementById('wdPinInput');
+  if (pinInput) pinInput.value = '';
   modal.classList.remove('hidden');
 }
-function closeWithdrawModal() { document.getElementById('withdrawModal').classList.add('hidden'); }
+
+function closeWithdrawModal() {
+  const m = document.getElementById('withdrawModal');
+  if (m) m.classList.add('hidden');
+}
+
+function openSetWithdrawPinModal() {
+  closeWithdrawModal();
+  const m = document.getElementById('modalSetWithdrawalPin');
+  if (m) {
+    document.getElementById('newSetPinInput').value = '';
+    document.getElementById('confirmSetPinInput').value = '';
+    m.classList.remove('hidden');
+  }
+}
+
+function closeSetWithdrawPinModal() {
+  const m = document.getElementById('modalSetWithdrawalPin');
+  if (m) m.classList.add('hidden');
+}
+
+async function submitSetWithdrawPin() {
+  const pin = document.getElementById('newSetPinInput')?.value.trim();
+  const confirmPin = document.getElementById('confirmSetPinInput')?.value.trim();
+
+  if (!pin || pin.length < 4) {
+    showToast('PIN penarikan minimal 4-6 angka.', 'warning');
+    return;
+  }
+  if (pin !== confirmPin) {
+    showToast('Konfirmasi PIN penarikan tidak cocok!', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet/set-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id, pin })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('✅ Kata Sandi / PIN Penarikan berhasil disimpan!', 'success');
+      closeSetWithdrawPinModal();
+      openWithdrawModal();
+    } else {
+      showToast(res.message || 'Gagal menyimpan PIN', 'error');
+    }
+  } catch(e) {
+    showToast('Gagal koneksi server: ' + e.message, 'error');
+  }
+}
+
+async function openForgotWithdrawPinModal() {
+  closeWithdrawModal();
+  const m = document.getElementById('modalResetWithdrawalPin');
+  if (!m) return;
+
+  const targetEl = document.getElementById('resetPinPhoneTarget');
+  if (targetEl) targetEl.innerText = currentUser?.phone || 'Nomor HP Anda';
+
+  document.getElementById('resetPinOtpInput').value = '';
+  document.getElementById('resetPinNewInput').value = '';
+
+  showToast('Mengirimkan kode OTP verifikasi ke HP Anda...', 'info');
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet/request-pin-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id })
+    }).then(r => r.json());
+
+    if (res.success) {
+      m.classList.remove('hidden');
+      const qCard = document.getElementById('resetPinQuickCard');
+      const qCode = document.getElementById('resetPinQuickCode');
+      if (res.devOtp && qCard && qCode) {
+        qCode.innerText = res.devOtp;
+        qCard.classList.remove('hidden');
+      }
+      showToast('Kode OTP berhasil dikirim ke nomor HP Anda!', 'success');
+    } else {
+      showToast(res.message || 'Gagal mengirim OTP', 'error');
+    }
+  } catch(e) {
+    showToast('Koneksi gagal: ' + e.message, 'error');
+  }
+}
+
+function closeResetWithdrawPinModal() {
+  const m = document.getElementById('modalResetWithdrawalPin');
+  if (m) m.classList.add('hidden');
+}
+
+async function submitResetWithdrawPinWithOtp() {
+  const otp = document.getElementById('resetPinOtpInput')?.value.trim();
+  const newPin = document.getElementById('resetPinNewInput')?.value.trim();
+
+  if (!otp || otp.length < 4) {
+    showToast('Masukkan kode OTP dengan benar.', 'warning');
+    return;
+  }
+  if (!newPin || newPin.length < 4) {
+    showToast('PIN baru minimal 4-6 angka.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet/reset-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser?.id, otp, newPin })
+    }).then(r => r.json());
+
+    if (res.success) {
+      showToast('🎉 Kata Sandi / PIN Penarikan berhasil direset!', 'success');
+      closeResetWithdrawPinModal();
+      openWithdrawModal();
+    } else {
+      showToast(res.message || 'Gagal mereset PIN', 'error');
+    }
+  } catch(e) {
+    showToast('Gagal koneksi: ' + e.message, 'error');
+  }
+}
 
 async function submitWithdrawForm() {
   const channelType = document.getElementById('wdChannelSelect').value;
   const destination = document.getElementById('wdDestinationInput').value.trim();
   const accountHolder = document.getElementById('wdAccountHolderInput')?.value.trim() || currentUser?.name || '';
   const amount = Number(document.getElementById('wdAmountInput').value);
+  const pin = document.getElementById('wdPinInput')?.value.trim();
   const saveCheck = document.getElementById('wdSaveAccountCheckbox')?.checked;
 
   if (!destination) {
@@ -5235,6 +5431,11 @@ async function submitWithdrawForm() {
   }
   if (!amount || amount < 20000) {
     showToast('Minimal penarikan saldo adalah Rp 20.000.', 'warning');
+    return;
+  }
+  if (!pin) {
+    showToast('Harap masukkan Kata Sandi / PIN Penarikan.', 'warning');
+    document.getElementById('wdPinInput')?.focus();
     return;
   }
   if (currentUser?.walletBalance && amount > currentUser.walletBalance) {
@@ -5247,20 +5448,35 @@ async function submitWithdrawForm() {
   }
 
   try {
+    showToast('Memproses penarikan saldo...', 'info');
     const res = await fetch(`${API_BASE}/api/driver/withdraw`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driverId: currentUser.id, amount, bankName: channelType, accountNumber: destination, accountHolder })
+      body: JSON.stringify({
+        driverId: currentUser.id,
+        amount,
+        bankName: channelType,
+        accountNumber: destination,
+        accountHolder,
+        withdrawalPin: pin
+      })
     }).then(r => r.json());
 
     if (res.success) {
-      showToast('Permintaan penarikan dana diajukan ke admin untuk diproses.', 'success');
+      showToast('✅ Permintaan penarikan dana diajukan ke admin untuk diproses.', 'success');
       if (res.newBalance !== undefined) currentUser.walletBalance = res.newBalance;
       saveDriverSession(currentUser);
       updateWalletDisplay();
       closeWithdrawModal();
     } else {
-      showToast(res.message || 'Gagal mengajukan penarikan.', 'error');
+      if (res.requireSetPin) {
+        showToast(res.message, 'warning');
+        openSetWithdrawPinModal();
+      } else if (res.invalidPin) {
+        showToast('❌ Kata Sandi / PIN Penarikan salah! Silakan coba lagi atau klik Lupa PIN.', 'error');
+      } else {
+        showToast(res.message || 'Gagal mengajukan penarikan.', 'error');
+      }
     }
   } catch(e) {
     showToast('Koneksi server gagal: ' + e.message, 'error');

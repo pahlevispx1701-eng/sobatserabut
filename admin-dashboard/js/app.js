@@ -391,6 +391,11 @@ function initSocket() {
       loadInitialData();
     });
 
+    socket.on('admin:avatar_request_new', (data) => {
+      refreshAvatarRequests();
+      showKycToast('🔔 Permohonan ganti foto profil baru dari: ' + (data?.name || 'Driver'), 'info');
+    });
+
     // New Order received
     socket.on('order:new', (newOrder) => {
       console.log('New order received:', newOrder);
@@ -2602,6 +2607,7 @@ async function refreshKycData() {
     if (res.success) {
       kycList = res.data;
       renderKycTable();
+      refreshAvatarRequests();
       showKycToast(`✅ Data KYC diperbarui — ${kycList.length} entri`, 'success');
     } else {
       showKycToast('❌ Gagal memuat data KYC', 'error');
@@ -2829,6 +2835,93 @@ function openKycPreview(imgUrl, title) {
 
 function closeKycPreviewModal() {
   document.getElementById('kycPreviewModal').classList.add('hidden');
+}
+
+// 10A. Manajemen Permohonan Ganti Foto Profil Driver
+let avatarRequestsList = [];
+async function refreshAvatarRequests() {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/avatar-requests`, {
+      headers: adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}
+    }).then(r => r.json());
+    if (res.success) {
+      avatarRequestsList = res.data || [];
+      renderAvatarRequestsTable();
+    }
+  } catch(e) {
+    console.warn('Gagal memuat permohonan avatar:', e);
+  }
+}
+
+function renderAvatarRequestsTable() {
+  const tbody = document.getElementById('avatarRequestsTbody');
+  if (!tbody) return;
+  if (!avatarRequestsList.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500 italic">Tidak ada permohonan ganti foto profil pending.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = avatarRequestsList.map(item => `
+    <tr class="hover:bg-slate-750 transition-colors">
+      <td class="p-2.5">
+        <p class="font-bold text-white">${item.name || 'Driver'}</p>
+        <p class="text-[10px] text-slate-400 font-mono">${item.phone || '-'}</p>
+      </td>
+      <td class="p-2.5 text-center">
+        <img src="${item.oldAvatar}" onclick="openKycPreview('${item.oldAvatar}', 'Foto Profil Lama')" class="w-10 h-10 rounded-full mx-auto object-cover border border-slate-700 cursor-pointer hover:border-blue-400">
+      </td>
+      <td class="p-2.5 text-center">
+        <img src="${item.newAvatar}" onclick="openKycPreview('${item.newAvatar}', 'Foto Profil Baru Diajukan')" class="w-10 h-10 rounded-full mx-auto object-cover border-2 border-indigo-500 cursor-pointer hover:scale-105 transition-all shadow-md">
+      </td>
+      <td class="p-2.5 text-center text-[10px] text-slate-400 font-mono">
+        ${new Date(item.requestedAt).toLocaleString('id-ID')}
+      </td>
+      <td class="p-2.5 text-right space-x-1.5 whitespace-nowrap">
+        <button onclick="approveAvatarRequest('${item.userId}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md active:scale-95 transition-all">
+          ✓ Setujui
+        </button>
+        <button onclick="rejectAvatarRequest('${item.userId}')" class="px-2.5 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs border border-rose-500/30 transition-all">
+          ✕ Tolak
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function approveAvatarRequest(userId) {
+  if (!confirm('Setujui dan ganti foto profil resmi driver ini?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/avatar-requests/${userId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.json());
+    if (res.success) {
+      showKycToast('✅ Foto profil driver berhasil disetujui & diperbarui!', 'success');
+      refreshAvatarRequests();
+    } else {
+      alert('❌ ' + (res.message || 'Gagal menyetujui'));
+    }
+  } catch(e) {
+    alert('❌ Gagal koneksi');
+  }
+}
+
+async function rejectAvatarRequest(userId) {
+  if (!confirm('Tolak permohonan ganti foto profil ini?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/avatar-requests/${userId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.json());
+    if (res.success) {
+      showKycToast('Permohonan ganti foto profil ditolak', 'info');
+      refreshAvatarRequests();
+    } else {
+      alert('❌ ' + (res.message || 'Gagal'));
+    }
+  } catch(e) {
+    alert('❌ Gagal koneksi');
+  }
 }
 
 // 10B. Verifikasi Detail Dokumen Mitra & Transfer Saldo oleh Admin
