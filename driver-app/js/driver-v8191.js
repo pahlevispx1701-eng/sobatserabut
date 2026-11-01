@@ -1,5 +1,5 @@
 /**
- * SobatSerabut Driver v8.19.1
+ * SobatSerabut Driver v8.20.0
  * Core Driver Engine: Permissions Onboarding, Sliding Captcha, Full Real Registration,
  * OTP Verification, Pending KYC Review, Drawer & Draggable Bottom Sheet Navigation,
  * Settings & Account Management, and Live Admin Sync.

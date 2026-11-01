@@ -87,13 +87,13 @@ app.get('/api/app-version', (req, res) => {
   const origin = `${proto}://${host}`;
 
   const versionData = db.data.appVersion || {
-    latestVersion: '8.19.1',
-    driverVersion: '8.19.1',
-    clientVersion: '6.2.0',
+    latestVersion: '8.20.0',
+    driverVersion: '8.20.0',
+    clientVersion: '6.3.0',
     minRequiredVersion: '6.0.0',
     driverApkUrl: `${origin}/download/driver-apk`,
     clientApkUrl: `${origin}/download/client-apk`,
-    releaseNotes: 'Pembaruan resmi SobatSerabut: Driver v8.19.1 & Client v6.2.0. Verifikasi KYC otomatis, navigasi rute radar, dan transfer instan.',
+    releaseNotes: 'Pembaruan resmi SobatSerabut: Driver v8.20.0 & Client v6.3.0. Radar Order 15s, Izin 1x perangkat, In-App Chat & Call terproteksi status order, dan performa optimal.',
     forceUpdate: false,
     updatedAt: new Date().toISOString()
   };
@@ -3993,7 +3993,7 @@ app.post('/api/auth/driver/register', (req, res) => {
     bankDetails: newDriver.bankDetails,
     status: 'pending',
     submittedAt: new Date().toISOString(),
-    reviewNotes: 'Pendaftaran driver baru via aplikasi driver v8.19.1, menunggu verifikasi dokumen admin.'
+    reviewNotes: 'Pendaftaran driver baru via aplikasi driver v8.20.0, menunggu verifikasi dokumen admin.'
   });
   db.set('kycRequests', kycRequests);
 
@@ -4296,7 +4296,7 @@ app.post('/api/admin/broadcast-notification', requireAdminAuth, (req, res) => {
     type: type || 'promo',   // 'promo', 'announcement', 'urgent', 'app_update'
     title: title.trim(),
     message: message.trim(),
-    version: version || '6.2.0',
+    version: version || '8.20.0',
     actionUrl: actionUrl || (target === 'client' ? `${origin}/download/client-apk` : `${origin}/download/driver-apk`),
     createdAt: new Date().toISOString(),
     createdBy: 'Admin SobatSerabut'
@@ -4309,7 +4309,7 @@ app.post('/api/admin/broadcast-notification', requireAdminAuth, (req, res) => {
   if (type === 'app_update') {
     // Update db appVersion jika tipe adalah pembaruan aplikasi
     db.data.appVersion = {
-      latestVersion: version || '6.2.0',
+      latestVersion: version || '8.20.0',
       minRequiredVersion: '6.1.0',
       driverApkUrl: `${origin}/download/driver-apk`,
       clientApkUrl: `${origin}/download/client-apk`,
@@ -5206,21 +5206,52 @@ app.get('/api/admin/drivers/live', requireAdminAuth, (req, res) => {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  // In-App Audio Voice Calling Signaling
+  // Join order room agar chat & call hanya diterima peserta order aktif
+  socket.on('join:order_room', (orderId) => {
+    if (orderId) {
+      socket.join(`order_${orderId}`);
+      console.log(`Socket ${socket.id} joined room order_${orderId}`);
+    }
+  });
+
+  socket.on('leave:order_room', (orderId) => {
+    if (orderId) {
+      socket.leave(`order_${orderId}`);
+      console.log(`Socket ${socket.id} left room order_${orderId}`);
+    }
+  });
+
+  // In-App Audio Voice Calling Signaling (hanya ke peserta room order)
   socket.on('call:initiate', (data) => {
-    socket.broadcast.emit('call:incoming', data);
+    if (data && data.orderId) {
+      socket.to(`order_${data.orderId}`).emit('call:incoming', data);
+    } else {
+      socket.broadcast.emit('call:incoming', data);
+    }
   });
 
   socket.on('call:answer', (data) => {
-    socket.broadcast.emit('call:connected', data);
+    if (data && data.orderId) {
+      socket.to(`order_${data.orderId}`).emit('call:connected', data);
+    } else {
+      socket.broadcast.emit('call:connected', data);
+    }
   });
 
   socket.on('call:end', (data) => {
-    socket.broadcast.emit('call:ended', data);
+    if (data && data.orderId) {
+      socket.to(`order_${data.orderId}`).emit('call:ended', data);
+    } else {
+      socket.broadcast.emit('call:ended', data);
+    }
   });
 
   socket.on('call:mute', (data) => {
-    socket.broadcast.emit('call:mute_status', data);
+    if (data && data.orderId) {
+      socket.to(`order_${data.orderId}`).emit('call:mute_status', data);
+    } else {
+      socket.broadcast.emit('call:mute_status', data);
+    }
   });
 
   // Driver location real-time update via socket

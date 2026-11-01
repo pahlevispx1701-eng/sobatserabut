@@ -317,7 +317,10 @@ window.requestNotifPermission = function(onGranted) {
 };
 
 function checkDevicePermissionsOnLaunch() {
-  const prompted = sessionStorage.getItem('sobatserabut_perm_prompted');
+  // Gunakan localStorage agar izin hanya diminta SEKALI per perangkat (tidak ulang tiap sesi)
+  const alreadyGranted = localStorage.getItem('sobatserabut_permissions_granted');
+  if (alreadyGranted) return; // Sudah pernah izinkan — tidak tampilkan lagi
+  const prompted = localStorage.getItem('sobatserabut_perm_prompted');
   if (!prompted) {
     setTimeout(() => {
       const modal = document.getElementById('devicePermissionsModal');
@@ -327,7 +330,7 @@ function checkDevicePermissionsOnLaunch() {
 }
 
 function closeDevicePermissionsModal() {
-  sessionStorage.setItem('sobatserabut_perm_prompted', 'true');
+  localStorage.setItem('sobatserabut_perm_prompted', 'true');
   const modal = document.getElementById('devicePermissionsModal');
   if (modal) modal.classList.add('hidden');
 }
@@ -650,6 +653,9 @@ function initSocket() {
           message: `Mitra ${data.mitra.name} telah menerima tugas "${data.order.title}" dan sedang bersiap menuju lokasi penjemputan!`,
           type: 'success'
         });
+        // Buka fitur chat & call karena order sudah diterima driver
+        activeOrder = data.order;
+        unlockChatAndCall();
         loadClientOrders();
       }
       if (currentUser?.id === data.mitra.id) {
@@ -710,6 +716,8 @@ function initSocket() {
           type: 'success'
         });
 
+        // Kunci fitur chat & call setelah tugas selesai
+        lockChatAndCall();
         activeOrder = null;
         currentUser.status = 'ready';
         updateMitraStatusUI('ready');
@@ -720,6 +728,9 @@ function initSocket() {
       if (currentUser?.id === data.order.clientId) {
         triggerDeviceNotification('Pesanan Selesai! ✅', `Tugas "${data.order.title}" telah diselesaikan mitra.`);
         showToast(`Tugas "${data.order.title}" telah selesai dikerjakan mitra dengan bukti foto terlampir.`, 'success');
+        // Kunci fitur chat & call setelah tugas selesai
+        lockChatAndCall();
+        activeOrder = null;
         loadClientOrders();
       }
     });
@@ -759,9 +770,9 @@ function initSocket() {
       if (!data.target || data.target === 'all' || data.target === 'client') {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.3.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '6.2.0',
+          version: data.latestVersion || '6.3.0',
           actionUrl: data.clientApkUrl || `${API_BASE}/download/client-apk`
         });
       }
@@ -3251,7 +3262,7 @@ function onUserAuthenticated(user) {
   // Start client location tracking
   startGpsTracker();
 
-  // Request device permissions on login
+  // Request device permissions on login — hanya jika belum pernah diizinkan di perangkat ini
   if (!localStorage.getItem('sobatserabut_permissions_granted')) {
     setTimeout(() => requestAllDevicePermissions(), 1000);
   }
@@ -5411,8 +5422,32 @@ async function saveNewProfilePhoto() {
 
 /* ========================================================
  * 8. IN-APP CHAT & IN-APP VOICE CALL
+ * Fitur chat & call hanya aktif saat ada pesanan aktif.
+ * Setelah pesanan selesai, fitur ini terkunci otomatis.
  * ======================================================== */
+
+// Kunci chat/call setelah order selesai
+let isChatCallLocked = false;
+
+function lockChatAndCall() {
+  isChatCallLocked = true;
+  // Tutup modal jika masih terbuka
+  const chatModal = document.getElementById('inAppChatModal');
+  if (chatModal && !chatModal.classList.contains('hidden')) {
+    chatModal.classList.add('hidden');
+  }
+  endInAppVoiceCall(false);
+}
+
+function unlockChatAndCall() {
+  isChatCallLocked = false;
+}
+
 function openChatForOrder(orderId) {
+  if (isChatCallLocked || !activeOrder) {
+    showToast('💬 Fitur chat hanya tersedia saat pesanan sedang aktif.', 'warning');
+    return;
+  }
   const ord = clientOrders.find(o => o.id === orderId) || activeOrder;
   if (!ord) return;
   activeOrder = ord;
@@ -5497,6 +5532,11 @@ function stopCallingTone() {
 }
 
 function startInAppVoiceCall(contactName) {
+  // Blokir call jika tidak ada order aktif atau sudah selesai
+  if (isChatCallLocked || !activeOrder) {
+    showToast('📞 Fitur telepon hanya tersedia saat pesanan sedang aktif.', 'warning');
+    return;
+  }
   document.getElementById('callContactName').innerText = contactName || 'Kontak SobatSerabut';
   const modal = document.getElementById('inAppCallModal');
   modal.classList.remove('hidden');
@@ -6802,7 +6842,7 @@ function showBroadcastModal(data) {
     const updateModal = document.getElementById('clientUpdateNotifModal');
     const versionEl = document.getElementById('clientUpdateModalVersion');
     const notesEl = document.getElementById('clientUpdateModalNotes');
-    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.3.0'} siap diunduh`;
     if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
     if (updateModal) {
       updateModal.dataset.apkUrl = data.actionUrl || data.clientApkUrl || `${API_BASE}/download/client-apk`;
@@ -6861,9 +6901,9 @@ if (typeof io !== 'undefined') {
       if (data && (!data.target || data.target === 'all' || data.target === 'client')) {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.3.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '6.2.0',
+          version: data.latestVersion || '6.3.0',
           actionUrl: data.clientApkUrl || `${API_BASE}/download/client-apk`
         });
       }

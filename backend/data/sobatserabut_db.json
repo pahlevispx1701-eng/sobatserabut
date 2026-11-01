@@ -257,14 +257,14 @@
   ],
   "broadcasts": [],
   "appVersion": {
-    "latestVersion": "8.19.1",
-    "driverVersion": "8.19.1",
-    "clientVersion": "6.2.0",
+    "latestVersion": "8.20.0",
+    "driverVersion": "8.20.0",
+    "clientVersion": "6.3.0",
     "minRequiredVersion": "6.0.0",
     "driverApkUrl": "/download/driver-apk",
     "clientApkUrl": "/download/client-apk",
-    "releaseNotes": "SobatSerabut Driver v8.19.1 & Client v6.2.0 — Fitur baru: Verifikasi KYC otomatis, AI Asisten 🤖, Notifikasi Update HP 🔔, dan performa optimal.",
+    "releaseNotes": "SobatSerabut Driver v8.20.0 & Client v6.3.0 — Fitur baru: Radar Order 15s, Izin 1x perangkat, In-App Chat & Call terproteksi status order, dan performa optimal.",
     "forceUpdate": false,
-    "updatedAt": "2026-11-01T16:00:13.837Z"
+    "updatedAt": "2026-11-02T02:30:00.000Z"
   }
 }

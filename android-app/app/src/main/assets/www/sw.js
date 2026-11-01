@@ -1,10 +1,10 @@
 /**
- * SobatSerabut Client — Service Worker v6.2.0
+ * SobatSerabut Client — Service Worker v6.3.0
  * Background Running: Push Notifications, Offline Cache, Keep-Alive
  */
 'use strict';
 
-const CACHE_NAME = 'sobatserabut-client-v620';
+const CACHE_NAME = 'sobatserabut-client-v630';
 const STATIC_ASSETS = [
   './',
   './index.html',

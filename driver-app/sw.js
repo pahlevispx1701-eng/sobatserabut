@@ -1,10 +1,10 @@
 /**
- * SobatSerabut Driver — Service Worker v8.19.1
+ * SobatSerabut Driver — Service Worker v8.20.0
  * Background Running: Push Notifications, Offline Cache, Keep-Alive
  */
 'use strict';
 
-const CACHE_NAME = 'sobatserabut-driver-v8191';
+const CACHE_NAME = 'sobatserabut-driver-v8200';
 const STATIC_ASSETS = [
   './',
   './index.html',

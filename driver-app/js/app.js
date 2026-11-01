@@ -61,6 +61,21 @@ function getCategoryImage(cat) {
 let clientOrders = [];
 let nearbyTasks = [];
 let activeOrder = null;
+// Kunci chat & call — hanya aktif saat ada order aktif, dikunci setelah selesai
+let isChatCallLocked = false;
+
+function lockChatAndCall() {
+  isChatCallLocked = true;
+  const chatModal = document.getElementById('inAppChatModal');
+  if (chatModal && !chatModal.classList.contains('hidden')) {
+    chatModal.classList.add('hidden');
+  }
+  if (typeof endInAppVoiceCall === 'function') endInAppVoiceCall(false);
+}
+
+function unlockChatAndCall() {
+  isChatCallLocked = false;
+}
 let currentTab = 'home';
 
 // Geolocation & GPS Tracking
@@ -307,7 +322,10 @@ window.requestNotifPermission = function(onGranted) {
 // DEVICE PERMISSIONS CONTROLLER (LOKASI, KAMERA, MIKROFON)
 // ----------------------------------------------------
 function checkDevicePermissionsOnLaunch() {
-  const prompted = sessionStorage.getItem('sobatserabut_driver_perm_prompted');
+  // Gunakan localStorage agar izin hanya diminta SEKALI per perangkat (tidak ulang tiap sesi)
+  const alreadyGranted = localStorage.getItem('sobatserabut_permissions_granted');
+  if (alreadyGranted) return; // Sudah pernah izinkan — tidak tampilkan lagi
+  const prompted = localStorage.getItem('sobatserabut_driver_perm_prompted');
   if (!prompted) {
     setTimeout(() => {
       const modal = document.getElementById('devicePermissionsModal');
@@ -317,7 +335,7 @@ function checkDevicePermissionsOnLaunch() {
 }
 
 function closeDevicePermissionsModal() {
-  sessionStorage.setItem('sobatserabut_driver_perm_prompted', 'true');
+  localStorage.setItem('sobatserabut_driver_perm_prompted', 'true');
   const modal = document.getElementById('devicePermissionsModal');
   if (modal) modal.classList.add('hidden');
 }
@@ -665,6 +683,8 @@ function initSocket() {
         });
         activeOrder = data.order;
         currentUser.status = 'working';
+        // Buka fitur chat & call karena order diterima
+        unlockChatAndCall();
         updateMitraStatusUI('working');
         updateMitraActiveJobUI();
         loadNearbyTasksForMitra();
@@ -726,6 +746,8 @@ function initSocket() {
           type: 'success'
         });
 
+        // Kunci fitur chat & call setelah tugas selesai
+        lockChatAndCall();
         activeOrder = null;
         currentUser.status = 'ready';
         updateMitraStatusUI('ready');
@@ -736,6 +758,7 @@ function initSocket() {
       }
       if (currentUser?.id === data.order.clientId) {
         showToast(`Tugas "${data.order.title}" telah selesai dikerjakan mitra dengan bukti foto terlampir.`, 'success');
+        lockChatAndCall();
         loadClientOrders();
       }
     });
@@ -830,9 +853,9 @@ function initSocket() {
       if (!data.target || data.target === 'all' || data.target === 'driver') {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '6.2.0',
+          version: data.latestVersion || '8.20.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }
@@ -2576,7 +2599,7 @@ function onUserAuthenticated(user) {
     });
   }
 
-  // Request device permissions on login
+  // Request device permissions on login — hanya jika belum pernah diizinkan di perangkat ini
   if (!localStorage.getItem('sobatserabut_permissions_granted')) {
     setTimeout(() => requestAllDevicePermissions(), 1000);
   }
@@ -3998,7 +4021,7 @@ async function captureDailyFaceVerification(isAutoBypass = false) {
 // -----------------------------------------------------------------------------
 let currentIncomingOrder = null;
 let incomingOrderTimer = null;
-let incomingOrderCountdown = 30;
+let incomingOrderCountdown = 15;
 
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5;
@@ -4042,16 +4065,25 @@ function showIncomingOrderModal(order) {
   }
   if (distEl) distEl.innerText = distStr;
 
-  incomingOrderCountdown = 30;
+  // Waktu mundur 15 detik sesuai permintaan: hilang untuk diterima / abaikan
+  incomingOrderCountdown = 15;
   const badge = document.getElementById('incomingOrderTimerBadge');
+  const pBar = document.getElementById('incomingOrderProgressBar');
   if (badge) badge.innerText = `${incomingOrderCountdown}s`;
+  if (pBar) pBar.style.width = '100%';
 
   if (incomingOrderTimer) clearInterval(incomingOrderTimer);
   incomingOrderTimer = setInterval(() => {
     incomingOrderCountdown--;
     if (badge) badge.innerText = `${incomingOrderCountdown}s`;
+    if (pBar) {
+      const pct = Math.max(0, (incomingOrderCountdown / 15) * 100);
+      pBar.style.width = `${pct}%`;
+    }
     if (incomingOrderCountdown <= 0) {
       clearInterval(incomingOrderTimer);
+      incomingOrderTimer = null;
+      // Hilang otomatis dalam waktu mundur 15 detik (diabaikan)
       rejectIncomingOrder(true);
     }
   }, 1000);
@@ -4060,7 +4092,10 @@ function showIncomingOrderModal(order) {
 }
 
 async function acceptIncomingOrder() {
-  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  if (incomingOrderTimer) {
+    clearInterval(incomingOrderTimer);
+    incomingOrderTimer = null;
+  }
   const modal = document.getElementById('incomingOrderModal');
   if (modal) modal.classList.add('hidden');
 
@@ -4079,6 +4114,9 @@ async function acceptIncomingOrder() {
       saveDriverSession(currentUser);
       updateMitraStatusUI('working');
       updateMitraActiveJobUI();
+
+      // Buka fitur chat & call karena order diterima
+      unlockChatAndCall();
 
       // Maps mengarahkan otomatis ke alamat tujuan live maps
       switchMainTab('map');
@@ -4099,7 +4137,10 @@ async function acceptIncomingOrder() {
 }
 
 async function rejectIncomingOrder(silent = false) {
-  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  if (incomingOrderTimer) {
+    clearInterval(incomingOrderTimer);
+    incomingOrderTimer = null;
+  }
   const modal = document.getElementById('incomingOrderModal');
   if (modal) modal.classList.add('hidden');
 
@@ -4107,10 +4148,17 @@ async function rejectIncomingOrder(silent = false) {
     fetch(`${API_BASE}/api/orders/${currentIncomingOrder.id}/reject`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driverId: currentUser.id, reason: 'Ditolak oleh driver' })
+      body: JSON.stringify({
+        driverId: currentUser.id,
+        reason: silent ? 'Waktu 15 detik habis' : 'Diabaikan oleh driver'
+      })
     }).catch(() => {});
   }
-  if (!silent) showToast('Pesanan dilewati.', 'info');
+  if (!silent) {
+    showToast('Pesanan diabaikan / dilewati.', 'info');
+  } else {
+    showToast('⏳ Waktu 15 detik habis. Pesanan dialihkan ke driver lain.', 'warning');
+  }
   currentIncomingOrder = null;
 }
 
@@ -4718,10 +4766,18 @@ function openGoogleMapsTurnByTurn() {
 }
 
 function openChatForActiveJob() {
+  if (isChatCallLocked || !activeOrder) {
+    showToast('💬 Fitur chat hanya tersedia saat pesanan sedang aktif.', 'warning');
+    return;
+  }
   if (activeOrder) openChatForOrder(activeOrder.id);
 }
 
 function callClientForActiveJob() {
+  if (isChatCallLocked || !activeOrder) {
+    showToast('📞 Fitur telepon hanya tersedia saat pesanan sedang aktif.', 'warning');
+    return;
+  }
   if (activeOrder) startInAppVoiceCall(activeOrder.clientName || 'Pemohon Jasa');
 }
 
@@ -4919,6 +4975,10 @@ async function submitCompletedTaskWithProof() {
  * 8. IN-APP CHAT & IN-APP VOICE CALL
  * ======================================================== */
 function openChatForOrder(orderId) {
+  if (isChatCallLocked || !activeOrder) {
+    showToast('💬 Fitur chat hanya tersedia saat pesanan sedang aktif.', 'warning');
+    return;
+  }
   const ord = clientOrders.find(o => o.id === orderId) || activeOrder;
   if (!ord) return;
   activeOrder = ord;
@@ -5003,6 +5063,11 @@ function stopCallingTone() {
 }
 
 function startInAppVoiceCall(contactName) {
+  // Blokir call jika tidak ada order aktif atau sudah selesai
+  if (isChatCallLocked || !activeOrder) {
+    showToast('📞 Fitur telepon hanya tersedia saat pesanan sedang aktif.', 'warning');
+    return;
+  }
   document.getElementById('callContactName').innerText = contactName || 'Kontak SobatSerabut';
   const modal = document.getElementById('inAppCallModal');
   modal.classList.remove('hidden');
@@ -6227,7 +6292,7 @@ function showBroadcastModal(data) {
     const updateModal = document.getElementById('updateNotifModal');
     const versionEl = document.getElementById('updateModalVersion');
     const notesEl = document.getElementById('updateModalNotes');
-    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '8.20.0'} siap diunduh`;
     if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
     if (updateModal) {
       updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
@@ -6291,9 +6356,9 @@ if (typeof io !== 'undefined') {
       if (data && (!data.target || data.target === 'all' || data.target === 'driver')) {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '6.2.0',
+          version: data.latestVersion || '8.20.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }

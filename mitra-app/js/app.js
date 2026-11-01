@@ -708,9 +708,9 @@ function initSocket() {
       if (!data.target || data.target === 'all' || data.target === 'driver') {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '6.2.0',
+          version: data.latestVersion || '8.20.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }
@@ -3694,7 +3694,7 @@ async function captureDailyFaceVerification(isAutoBypass = false) {
 // -----------------------------------------------------------------------------
 let currentIncomingOrder = null;
 let incomingOrderTimer = null;
-let incomingOrderCountdown = 30;
+let incomingOrderCountdown = 15;
 
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return 1.5;
@@ -3738,16 +3738,23 @@ function showIncomingOrderModal(order) {
   }
   if (distEl) distEl.innerText = distStr;
 
-  incomingOrderCountdown = 30;
+  incomingOrderCountdown = 15;
   const badge = document.getElementById('incomingOrderTimerBadge');
+  const pBar = document.getElementById('incomingOrderProgressBar');
   if (badge) badge.innerText = `${incomingOrderCountdown}s`;
+  if (pBar) pBar.style.width = '100%';
 
   if (incomingOrderTimer) clearInterval(incomingOrderTimer);
   incomingOrderTimer = setInterval(() => {
     incomingOrderCountdown--;
     if (badge) badge.innerText = `${incomingOrderCountdown}s`;
+    if (pBar) {
+      const pct = Math.max(0, (incomingOrderCountdown / 15) * 100);
+      pBar.style.width = `${pct}%`;
+    }
     if (incomingOrderCountdown <= 0) {
       clearInterval(incomingOrderTimer);
+      incomingOrderTimer = null;
       rejectIncomingOrder(true);
     }
   }, 1000);
@@ -3756,7 +3763,10 @@ function showIncomingOrderModal(order) {
 }
 
 async function acceptIncomingOrder() {
-  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  if (incomingOrderTimer) {
+    clearInterval(incomingOrderTimer);
+    incomingOrderTimer = null;
+  }
   const modal = document.getElementById('incomingOrderModal');
   if (modal) modal.classList.add('hidden');
 
@@ -3776,7 +3786,6 @@ async function acceptIncomingOrder() {
       updateMitraStatusUI('working');
       updateMitraActiveJobUI();
 
-      // Maps mengarahkan otomatis ke alamat tujuan live maps
       switchMainTab('map');
       if (activeOrder.lat && activeOrder.lng) {
         setTimeout(() => {
@@ -3785,7 +3794,7 @@ async function acceptIncomingOrder() {
           }
         }, 300);
       }
-      showToast('🎉 Pesanan diterima! Live maps otomatis mengarahkan ke rute alamat tujuan.', 'success');
+      showToast('🎉 Pesanan diterima!', 'success');
     } else {
       showToast(res.message || 'Pesanan sudah diambil driver lain.', 'warning');
     }
@@ -3795,7 +3804,10 @@ async function acceptIncomingOrder() {
 }
 
 async function rejectIncomingOrder(silent = false) {
-  if (incomingOrderTimer) clearInterval(incomingOrderTimer);
+  if (incomingOrderTimer) {
+    clearInterval(incomingOrderTimer);
+    incomingOrderTimer = null;
+  }
   const modal = document.getElementById('incomingOrderModal');
   if (modal) modal.classList.add('hidden');
 
@@ -3803,10 +3815,17 @@ async function rejectIncomingOrder(silent = false) {
     fetch(`${API_BASE}/api/orders/${currentIncomingOrder.id}/reject`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driverId: currentUser.id, reason: 'Ditolak oleh driver' })
+      body: JSON.stringify({
+        driverId: currentUser.id,
+        reason: silent ? 'Waktu 15 detik habis' : 'Diabaikan oleh driver'
+      })
     }).catch(() => {});
   }
-  if (!silent) showToast('Pesanan dilewati.', 'info');
+  if (!silent) {
+    showToast('Pesanan diabaikan / dilewati.', 'info');
+  } else {
+    showToast('⏳ Waktu 15 detik habis. Pesanan dialihkan ke driver lain.', 'warning');
+  }
   currentIncomingOrder = null;
 }
 
@@ -5706,7 +5725,7 @@ function showBroadcastModal(data) {
     const updateModal = document.getElementById('updateNotifModal');
     const versionEl = document.getElementById('updateModalVersion');
     const notesEl = document.getElementById('updateModalNotes');
-    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '6.2.0'} siap diunduh`;
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '8.20.0'} siap diunduh`;
     if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
     if (updateModal) {
       updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
@@ -5770,9 +5789,9 @@ if (typeof io !== 'undefined') {
       if (data && (!data.target || data.target === 'all' || data.target === 'driver')) {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '6.2.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '6.2.0',
+          version: data.latestVersion || '8.20.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }

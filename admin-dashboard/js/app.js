@@ -3574,7 +3574,7 @@ function handleBroadcastTypeChange(type) {
 
   if (type === 'app_update') {
     if (vContainer) vContainer.classList.remove('hidden');
-    if (titleInput) titleInput.value = '🚀 Pembaruan Aplikasi SobatSerabut v6.2.0 Siap!';
+    if (titleInput) titleInput.value = '🚀 Pembaruan Aplikasi SobatSerabut v8.20.0 Siap!';
     if (messageInput) messageInput.value = 'Versi terbaru SobatSerabut telah dirilis dengan performa lebih cepat, animasi halus tanpa lag, peta penjemputan motor real-time, dan fitur audio suara notifikasi orderan!';
   } else {
     if (vContainer) vContainer.classList.add('hidden');
@@ -3620,7 +3620,7 @@ async function handleSendBroadcastSubmit(e) {
   const type = document.getElementById('broadcastTypeSelect')?.value || 'promo';
   const title = document.getElementById('broadcastTitleInput')?.value.trim();
   const message = document.getElementById('broadcastMessageInput')?.value.trim();
-  const version = document.getElementById('broadcastVersionInput')?.value.trim() || '6.2.0';
+  const version = document.getElementById('broadcastVersionInput')?.value.trim() || '8.20.0';
   const forceReload = document.getElementById('broadcastForceReloadCheck')?.checked || false;
 
   if (!title || !message) {

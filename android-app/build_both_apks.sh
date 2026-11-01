@@ -73,7 +73,7 @@ build_apk() {
     local OUTPUT_APK="$4"     # Nama file output
     local VERSION_CODE="$5"   # 81901=driver, 2=client
     local PKG="$6"            # Package ID unik (e.g. com.sobatserabut.driver)
-    local VERSION_NAME="${7:-8.19.1}" # Versi aplikasi resmi e.g. 8.19.1
+    local VERSION_NAME="${7:-8.20.0}" # Versi aplikasi resmi e.g. 8.20.0
 
     echo ""
     echo "----------------------------------------------------"
@@ -203,7 +203,7 @@ EOF
 
 # === BUILD APK 1: DRIVER / MITRA ===
 build_apk "Driver SobatSerabut" "Aplikasi Mitra Kerja & Pengemudi" \
-    "/home/jinny21/SobatSerabut/driver-app" "Driver-SobatSerabut.apk" "81901" "com.sobatserabut.driver" "8.19.1"
+    "/home/jinny21/SobatSerabut/driver-app" "Driver-SobatSerabut.apk" "82000" "com.sobatserabut.driver" "8.20.0"
 
 # Salin sebagai SobatSerabut-Mitra.apk juga (kompatibilitas nama lama)
 cp "$PROJECT_DIR/Driver-SobatSerabut.apk" "$PROJECT_DIR/SobatSerabut-Mitra.apk"
@@ -213,7 +213,7 @@ cp "$PROJECT_DIR/Driver-SobatSerabut.apk" "/home/jinny21/SobatSerabut/backend/up
 
 # === BUILD APK 2: CLIENT / KLIEN ===
 build_apk "SobatSerabut" "Solusi Cepat Serabutan & Jasa Harian" \
-    "/home/jinny21/SobatSerabut/client-app" "SobatSerabut.apk" "60200" "com.sobatserabut.client" "6.2.0"
+    "/home/jinny21/SobatSerabut/client-app" "SobatSerabut.apk" "60300" "com.sobatserabut.client" "6.3.0"
 
 echo ""
 echo "========================================================"

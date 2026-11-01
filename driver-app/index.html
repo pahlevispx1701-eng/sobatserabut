@@ -19,13 +19,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v8.19.1 -->
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v8.20.0 -->
   <script>
     try {
       if ('serviceWorker' in navigator) {
         // Daftar Service Worker baru untuk background running & push notif
         navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
-          console.log('[SW] Driver SW v8.19.1 terdaftar:', reg.scope);
+          console.log('[SW] Driver SW v8.20.0 terdaftar:', reg.scope);
           // Periodic Background Sync (Android Chrome)
           if ('periodicSync' in reg) {
             reg.periodicSync.register('driver-keepalive', { minInterval: 60000 }).catch(function() {});
@@ -41,7 +41,7 @@
         }).catch(function(err) { console.warn('[SW] Gagal daftar:', err); });
       }
       if ('caches' in window) {
-        // Bersihkan cache lama (non v8.19.1)
+        // Bersihkan cache lama (non v8.20.0)
         caches.keys().then(function(keys) {
           keys.filter(function(k) { return k !== 'sobatserabut-driver-v8191'; })
               .forEach(function(k) { caches.delete(k); });
@@ -51,7 +51,7 @@
   </script>
 
   <!-- SobatSerabut Server Configuration -->
-  <script src="js/config.js?v=8.19.1"></script>
+  <script src="js/config.js?v=8.20.0"></script>
 
   <!-- Tailwind CSS Local + Fallback CDN -->
   <script src="vendor/tailwind/tailwind.min.js"></script>
@@ -548,7 +548,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ====================================================
-   FULL-SCREEN NO-SCROLL — Auth Screens v8.19.1
+   FULL-SCREEN NO-SCROLL — Auth Screens v8.20.0
    ==================================================== */
 html, body {
   height: 100dvh !important;
@@ -641,7 +641,7 @@ html, body {
             <img src="uploads/logo_icon.svg" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
             <span class="font-black text-xl text-white tracking-tight">sobatserabut driver</span>
           </div>
-          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.19.1</span>
+          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.20.0</span>
         </div>
         <!-- Message -->
         <div class="p-5 rounded-2xl text-left space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(16,185,129,0.2)">
@@ -779,7 +779,7 @@ html, body {
           </div>
           <div>
             <h3 class="font-black text-white text-sm">sobatserabut driver</h3>
-            <p class="text-xs text-slate-400">Versi 8.19.1</p>
+            <p class="text-xs text-slate-400">Versi 8.20.0</p>
           </div>
         </div>
 
@@ -847,7 +847,7 @@ html, body {
         <div class="space-y-2">
           <h1 id="splashAppName" class="font-black text-3xl tracking-tight capitalize" style="background:linear-gradient(90deg,#ffffff,#a7f3d0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">sobatserabut driver</h1>
           <p class="text-slate-400 text-sm font-medium">Driver &amp; Mitra Kerja Resmi</p>
-          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.19.1</span>
+          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.20.0</span>
         </div>
       </div>
       <!-- Bottom CTA: log in & Daftar di sini -->
@@ -2793,7 +2793,15 @@ html, body {
           <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
           <span class="text-xs uppercase font-extrabold tracking-wider text-amber-400">📢 PESANAN BARU MASUK!</span>
         </div>
-        <span id="incomingOrderTimerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">30s</span>
+        <div class="flex items-center space-x-1.5">
+          <span class="text-[10px] text-amber-300 font-bold">Waktu Terima:</span>
+          <span id="incomingOrderTimerBadge" class="text-xs font-mono font-black px-2.5 py-0.5 rounded-full bg-rose-600/30 text-rose-300 border border-rose-500/40 animate-pulse">15s</span>
+        </div>
+      </div>
+
+      <!-- Animated Progress Bar Hitung Mundur 15 Detik -->
+      <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700/60">
+        <div id="incomingOrderProgressBar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-all duration-1000" style="width: 100%"></div>
       </div>
 
       <!-- Info Layanan & Klien -->
@@ -3589,7 +3597,7 @@ html, body {
   </div>
 
   <!-- SCRIPT -->
-  <script src="js/app.js?v=8.19.1"></script>
+  <script src="js/app.js?v=8.20.0"></script>
 
   <!-- ========================================================
        SLIDING DRAWER / PERSISTENT BOTTOM SHEET PANEL
@@ -3607,7 +3615,7 @@ html, body {
         </div>
         <div>
           <h2 class="text-sm font-black text-white tracking-tight">sobatserabut driver</h2>
-          <span class="inline-block px-2 py-0.2 rounded-full text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">v8.19.1</span>
+          <span class="inline-block px-2 py-0.2 rounded-full text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">v8.20.0</span>
         </div>
       </div>
       <button onclick="closeDriverDrawer()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors" style="background: rgba(30,41,59,0.6);" title="Tutup Menu">
@@ -3725,7 +3733,7 @@ html, body {
 
     <!-- Footer Drawer -->
     <div class="p-4 border-t border-slate-800/80 safe-bottom flex items-center justify-between text-[11px] text-slate-500">
-      <span>Versi 8.19.1</span>
+      <span>Versi 8.20.0</span>
       <span class="text-emerald-400 font-bold flex items-center space-x-1">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
         <span>Terhubung ke Admin</span>
@@ -4208,8 +4216,8 @@ html, body {
     </div>
   </div>
 
-  <!-- SCRIPT ENGINE V8.19.1 -->
-  <script src="js/driver-v8191.js?v=8.19.1"></script>
+  <!-- SCRIPT ENGINE V8.20.0 -->
+  <script src="js/driver-v8191.js?v=8.20.0"></script>
 </body>
 </html>
 

@@ -1,7 +1,7 @@
 {
   "name": "SobatSerabut",
   "short_name": "SobatSerabut",
-  "version": "6.2.0",
+  "version": "6.3.0",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#08060A",
