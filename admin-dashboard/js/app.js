@@ -6,7 +6,14 @@ const API_BASE = window.location.origin;
 let socket = null;
 
 // Admin Authentication State
-let adminToken = localStorage.getItem('sobatserabut_admin_token') || '';
+let adminToken = localStorage.getItem('sobatserabut_admin_token') || localStorage.getItem('adminToken') || '';
+let adminAuthToken = adminToken;
+
+function getAdminAuthToken() {
+  const token = adminToken || localStorage.getItem('sobatserabut_admin_token') || localStorage.getItem('adminToken') || '';
+  adminAuthToken = token;
+  return token;
+}
 
 // Intercept fetch to attach admin token & handle 401
 const originalFetch = window.fetch;
@@ -278,17 +285,20 @@ let categoryChartInstance = null;
 
 // Auto-clear stale/fake cached data — hanya simpan token admin yang valid
 (function clearStaleBrowserCache() {
-  const DATA_VERSION = 'sobatserabut_v2';
+  const DATA_VERSION = 'sobatserabut_v3';
   const savedVersion = localStorage.getItem('_cache_version');
   if (savedVersion !== DATA_VERSION) {
-    // Hapus semua cache lama (data palsu/simulasi yang tersimpan sebelumnya)
-    const adminToken = localStorage.getItem('adminToken');
+    const savedToken = localStorage.getItem('sobatserabut_admin_token') || localStorage.getItem('adminToken') || '';
     localStorage.clear();
     sessionStorage.clear();
-    // Kembalikan token admin agar tidak perlu login ulang
-    if (adminToken) localStorage.setItem('adminToken', adminToken);
+    if (savedToken) {
+      localStorage.setItem('sobatserabut_admin_token', savedToken);
+      localStorage.setItem('adminToken', savedToken);
+      adminToken = savedToken;
+      adminAuthToken = savedToken;
+    }
     localStorage.setItem('_cache_version', DATA_VERSION);
-    console.log('[SobatSerabut] Cache lama dibersihkan — hanya data nyata yang akan ditampilkan.');
+    console.log('[SobatSerabut] Cache dibersihkan & sesi admin dipertahankan.');
   }
 })();
 
@@ -329,55 +339,49 @@ function initSocket() {
       if (statusText) statusText.innerText = 'Socket Disconnected';
     });
 
-    // Real-time location updates (Only processed if admin is authenticated)
+    // Real-time location updates — selalu perbarui peta & counter
     socket.on('mitra:location_update', (data) => {
-      if (!adminToken) return;
       console.log('Mitra GPS Update received:', data);
       handleLiveGpsUpdate(data);
     });
 
     socket.on('driver:location_update', (data) => {
-      if (!adminToken) return;
       console.log('Driver GPS Update received:', data);
-      handleLiveGpsUpdate({ ...data, id: data.driverId || data.id });
+      handleLiveGpsUpdate({ ...data, id: data.driverId || data.id, mitraId: data.driverId || data.id });
     });
 
     socket.on('klien:location_update', (data) => {
-      if (!adminToken) return;
       console.log('Klien GPS Update received:', data);
       handleKlienGpsUpdate(data);
     });
 
     socket.on('user:location_update', (data) => {
-      if (!adminToken) return;
       if (data.role === 'mitra') handleLiveGpsUpdate(data);
       else handleKlienGpsUpdate(data);
     });
 
     // Mitra status change (ready/working/offline)
     socket.on('mitra:status_change', (data) => {
-      if (!adminToken) return;
       console.log('Status change received:', data);
       handleMitraStatusChange(data);
     });
 
     socket.on('driver:status_change', (data) => {
-      if (!adminToken) return;
       console.log('Driver Status change received:', data);
-      handleMitraStatusChange({ ...data, id: data.driverId || data.id });
+      handleMitraStatusChange({ ...data, id: data.driverId || data.id, mitraId: data.driverId || data.id });
     });
 
     // Mitra just logged in / came online
     socket.on('mitra:online', (mitra) => {
-      if (!adminToken) return;
       console.log('Mitra online received:', mitra);
-      const existing = mitraList.find(m => m.id === mitra.id);
+      const mId = mitra.id || mitra.mitraId || mitra.driverId;
+      const existing = mitraList.find(m => m.id === mId);
       if (existing) {
         existing.status = 'ready';
-        existing.lat = mitra.lat;
-        existing.lng = mitra.lng;
+        if (mitra.lat !== undefined) existing.lat = Number(mitra.lat);
+        if (mitra.lng !== undefined) existing.lng = Number(mitra.lng);
       } else {
-        mitraList.unshift(mitra);
+        mitraList.unshift({ ...mitra, id: mId, status: 'ready' });
       }
       renderMitraOnMap();
       renderMitraListSidebar();
@@ -516,13 +520,13 @@ function initSocket() {
 async function loadInitialData() {
   try {
     const [cfgRes, mRes, ordRes, catRes, kycRes, wdRes, trxRes] = await Promise.all([
-      fetch(`${API_BASE}/api/config`).then(r => r.json()),
-      fetch(`${API_BASE}/api/mitra`).then(r => r.json()),
-      fetch(`${API_BASE}/api/orders`).then(r => r.json()),
-      fetch(`${API_BASE}/api/categories`).then(r => r.json()),
-      fetch(`${API_BASE}/api/admin/kyc`, { headers: adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {} }).then(r => r.json()),
-      fetch(`${API_BASE}/api/admin/withdrawals`).then(r => r.json()),
-      fetch(`${API_BASE}/api/admin/transactions`).then(r => r.json())
+      fetch(`${API_BASE}/api/config`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API_BASE}/api/mitra`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API_BASE}/api/orders`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API_BASE}/api/categories`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API_BASE}/api/admin/kyc`, { headers: adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {} }).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API_BASE}/api/admin/withdrawals`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API_BASE}/api/admin/transactions`).then(r => r.json()).catch(() => ({ success: false }))
     ]);
 
     if (cfgRes.success) {
@@ -535,11 +539,13 @@ async function loadInitialData() {
       renderMitraListSidebar();
       renderLeaderboard();
       populateMitraRouteSelect();
+      renderDashboardCounters();
     }
     if (ordRes.success) {
       ordersList = ordRes.data;
       renderOrdersOnMap();
       renderOrdersAuditTable();
+      renderDashboardCounters();
     }
     if (catRes.success) {
       categoriesList = catRes.data || [];
@@ -940,15 +946,24 @@ function renderMitraOnMap() {
   Object.values(mapMarkers).forEach(m => liveMap.removeLayer(m));
   mapMarkers = {};
 
+  const bounds = L.latLngBounds();
+  let validMarkerCount = 0;
+
   mitraList.forEach(m => {
     if (currentFilter !== 'all' && m.status !== currentFilter) return;
+    const lat = Number(m.lat);
+    const lng = Number(m.lng);
+    if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+
+    bounds.extend([lat, lng]);
+    validMarkerCount++;
 
     const markerIcon = createMarkerIcon(m.status, m.isPremium);
-    const marker = L.marker([m.lat, m.lng], { icon: markerIcon }).addTo(liveMap);
+    const marker = L.marker([lat, lng], { icon: markerIcon }).addTo(liveMap);
 
-    const statusBadge = m.status === 'ready' 
+    const statusBadge = (m.status === 'ready' || m.status === 'online') 
       ? '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Siap Order (Hijau)</span>'
-      : m.status === 'working'
+      : (m.status === 'working' || m.status === 'on_job')
       ? '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Sedang Bertugas (Kuning)</span>'
       : '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">Offline (Merah)</span>';
 
@@ -966,9 +981,9 @@ function renderMitraOnMap() {
         </div>
         <div class="mb-2">${statusBadge}</div>
         <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-800 p-2 rounded-lg mb-2 text-slate-300">
-          <div><i class="fa-solid fa-star text-amber-400 mr-1"></i>Rating: <strong>${(m.completedOrders || 0) > 0 ? (m.rating || 5.0) : '0.0'}</strong></div>
+          <div><i class="fa-solid fa-star text-amber-400 mr-1"></i>Rating: <strong>${(m.completedOrders || 0) > 0 ? (m.rating || 5.0) : '5.0'}</strong></div>
           <div><i class="fa-solid fa-check-circle text-blue-400 mr-1"></i>Selesai: <strong>${m.completedOrders || 0}</strong></div>
-          <div class="col-span-2 text-[10px] text-slate-400">Kendaraan: ${m.vehicle || '-'}</div>
+          <div class="col-span-2 text-[10px] text-slate-400">Kendaraan: ${m.vehicle || 'Sepeda Motor'}</div>
         </div>
         <div class="flex space-x-2">
           <button onclick="inspectMitra('${m.id}')" class="flex-1 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] transition-all">Lihat Jejak Rute</button>
@@ -979,6 +994,13 @@ function renderMitraOnMap() {
     marker.bindPopup(popupHtml);
     mapMarkers[m.id] = marker;
   });
+
+  if (validMarkerCount > 0 && liveMap && !window._hasFittedMapBounds) {
+    try {
+      liveMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+      window._hasFittedMapBounds = true;
+    } catch(e) {}
+  }
 
   // Tampilkan titik GPS Pemohon Layanan (Klien) aktif di peta pemantauan admin pusat
   if (typeof klienMarkers === 'undefined') window.klienMarkers = {};
@@ -1106,48 +1128,61 @@ function addOrderMarker(ord) {
 
 // 4. Live GPS Updates Handler
 function handleLiveGpsUpdate(data) {
-  const mIndex = mitraList.findIndex(m => m.id === data.mitraId);
+  const mId = data.mitraId || data.driverId || data.id;
+  if (!mId) return;
+
+  const mIndex = mitraList.findIndex(m => m.id === mId);
   if (mIndex !== -1) {
-    mitraList[mIndex].lat = data.lat;
-    mitraList[mIndex].lng = data.lng;
-    mitraList[mIndex].status = data.status;
+    if (data.lat !== undefined) mitraList[mIndex].lat = Number(data.lat);
+    if (data.lng !== undefined) mitraList[mIndex].lng = Number(data.lng);
+    if (data.status) mitraList[mIndex].status = data.status;
+  } else {
+    // Mitra baru mendaftar / online
+    loadInitialData();
+    return;
   }
 
   // If marker exists, animate pan
-  if (mapMarkers[data.mitraId]) {
-    mapMarkers[data.mitraId].setLatLng([data.lat, data.lng]);
-    mapMarkers[data.mitraId].setIcon(createMarkerIcon(data.status, mitraList[mIndex]?.isPremium));
+  if (mapMarkers[mId]) {
+    mapMarkers[mId].setLatLng([Number(data.lat), Number(data.lng)]);
+    mapMarkers[mId].setIcon(createMarkerIcon(mitraList[mIndex]?.status || data.status, mitraList[mIndex]?.isPremium));
   } else {
     renderMitraOnMap();
   }
 
   renderMitraListSidebar();
+  renderDashboardCounters();
 }
 
 function handleKlienGpsUpdate(data) {
   if (!liveMap) return;
-  const kId = data.klienId || data.userId;
+  const kId = data.klienId || data.userId || data.id;
   if (!kId) return;
 
   if (Array.isArray(klienUsers)) {
     const kIndex = klienUsers.findIndex(k => k.id === kId);
     if (kIndex !== -1) {
-      klienUsers[kIndex].lat = data.lat;
-      klienUsers[kIndex].lng = data.lng;
+      if (data.lat !== undefined) klienUsers[kIndex].lat = Number(data.lat);
+      if (data.lng !== undefined) klienUsers[kIndex].lng = Number(data.lng);
     }
   }
 
   if (klienMarkers && klienMarkers[kId]) {
-    klienMarkers[kId].setLatLng([data.lat, data.lng]);
+    klienMarkers[kId].setLatLng([Number(data.lat), Number(data.lng)]);
   } else {
     renderMitraOnMap();
   }
 }
 
 function handleMitraStatusChange(data) {
-  const mIndex = mitraList.findIndex(m => m.id === data.mitraId);
+  const mId = data.mitraId || data.driverId || data.id;
+  if (!mId) return;
+
+  const mIndex = mitraList.findIndex(m => m.id === mId);
   if (mIndex !== -1) {
     mitraList[mIndex].status = data.status;
+    if (data.lat !== undefined) mitraList[mIndex].lat = Number(data.lat);
+    if (data.lng !== undefined) mitraList[mIndex].lng = Number(data.lng);
   } else {
     // Mitra baru mendaftar / online
     loadInitialData();
@@ -1181,8 +1216,10 @@ function renderMitraListSidebar() {
   }
 
   container.innerHTML = mitraList.map(m => {
-    const statusDot = m.status === 'ready' ? 'bg-emerald-500' : m.status === 'working' ? 'bg-amber-500' : 'bg-rose-500';
-    const statusText = m.status === 'ready' ? 'Siap Order' : m.status === 'working' ? 'Sedang Bertugas' : 'Offline';
+    const isReady = (m.status === 'ready' || m.status === 'online');
+    const isWorking = (m.status === 'working' || m.status === 'on_job');
+    const statusDot = isReady ? 'bg-emerald-500' : isWorking ? 'bg-amber-500' : 'bg-rose-500';
+    const statusText = isReady ? 'Siap Order' : isWorking ? 'Sedang Bertugas' : 'Offline';
 
     return `
       <div onclick="focusMitraOnMap('${m.id}')" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-700/60 border border-slate-700/80 cursor-pointer transition-all">
@@ -1195,7 +1232,7 @@ function renderMitraListSidebar() {
           <span class="text-[10px] text-slate-400 font-mono">${statusText}</span>
         </div>
         <div class="flex items-center justify-between text-[11px] text-slate-400">
-          <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>${m.rating} (${m.completedOrders} ord)</span>
+          <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>${m.rating || 5.0} (${m.completedOrders || 0} ord)</span>
           <span class="text-blue-400 font-mono">Rp ${(m.walletBalance || 0).toLocaleString('id-ID')}</span>
         </div>
       </div>
@@ -1209,7 +1246,7 @@ function renderMitraListSidebar() {
 function focusMitraOnMap(mitraId) {
   const m = mitraList.find(x => x.id === mitraId);
   if (m && liveMap) {
-    liveMap.flyTo([m.lat, m.lng], 16, { duration: 1.2 });
+    liveMap.flyTo([Number(m.lat), Number(m.lng)], 16, { duration: 1.2 });
     if (mapMarkers[mitraId]) {
       mapMarkers[mitraId].openPopup();
     }
@@ -1217,31 +1254,40 @@ function focusMitraOnMap(mitraId) {
 }
 
 function renderDashboardCounters() {
-  const ready = mitraList.filter(m => m.status === 'ready').length;
-  const working = mitraList.filter(m => m.status === 'working').length;
-  const offline = mitraList.filter(m => m.status === 'offline').length;
+  const ready = mitraList.filter(m => m.status === 'ready' || m.status === 'online').length;
+  const working = mitraList.filter(m => m.status === 'working' || m.status === 'on_job').length;
+  const offline = mitraList.filter(m => m.status === 'offline' || (!m.status && m.status !== 'ready' && m.status !== 'working')).length;
 
-  document.getElementById('statReadyCount').innerText = ready;
-  document.getElementById('statWorkingCount').innerText = working;
-  document.getElementById('statOfflineCount').innerText = offline;
-  document.getElementById('badgeOnlineCount').innerText = `${ready + working} Aktif`;
+  const statReady = document.getElementById('statReadyCount');
+  if (statReady) statReady.innerText = ready;
+  const statWorking = document.getElementById('statWorkingCount');
+  if (statWorking) statWorking.innerText = working;
+  const statOffline = document.getElementById('statOfflineCount');
+  if (statOffline) statOffline.innerText = offline;
+  const badgeOnline = document.getElementById('badgeOnlineCount');
+  if (badgeOnline) badgeOnline.innerText = `${ready + working} Aktif`;
 
   const radius = systemConfig.maxRadiusKm || 10;
-  document.getElementById('statRadiusDisplay').innerText = `${radius} KM`;
+  const statRadius = document.getElementById('statRadiusDisplay');
+  if (statRadius) statRadius.innerText = `${radius} KM`;
 
-  document.getElementById('statTotalOrders').innerText = ordersList.length;
+  const statOrders = document.getElementById('statTotalOrders');
+  if (statOrders) statOrders.innerText = ordersList.length;
 
-  // Revenue calculation
-  const platformFee = systemConfig.platformFee || 3000;
-  const commPercent = systemConfig.serviceFeePercentage || 10;
+  // Revenue calculation dari pesanan nyata & biaya platform riil
+  const platformFee = Number(systemConfig.platformFee || 3000);
+  const commPercent = Number(systemConfig.serviceFeePercentage || 10);
   const completedOrders = ordersList.filter(o => o.status === 'completed');
   let estRev = completedOrders.length * platformFee;
   completedOrders.forEach(o => {
-    if (o.budget) {
-      estRev += (o.budget * commPercent) / 100;
+    const val = Number(o.budget || o.price || 0);
+    if (val > 0) {
+      estRev += (val * commPercent) / 100;
     }
   });
-  document.getElementById('statPlatformRevenue').innerText = `Rp ${Math.round(estRev).toLocaleString('id-ID')}`;
+
+  const statRev = document.getElementById('statPlatformRevenue');
+  if (statRev) statRev.innerText = `Rp ${Math.round(estRev).toLocaleString('id-ID')}`;
 
   // KYC badge
   const pendingKyc = kycList.filter(k => k.status === 'pending').length;
@@ -2285,6 +2331,43 @@ async function saveAllCmsConfig() {
   }
 }
 
+async function uploadUnifiedLauncherIcon() {
+  const fileInput = document.getElementById('cmsUnifiedIconFileInput');
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert('Pilih file ikon baru (.svg, .png, .jpg) terlebih dahulu.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  formData.append('target', 'all');
+
+  try {
+    const token = getAdminAuthToken();
+    const res = await fetch(`${API_BASE}/api/admin/config/icon`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-admin-token': token
+      },
+      body: formData
+    }).then(r => r.json());
+
+    if (res.success) {
+      alert(`🎉 ${res.message}\nIkon launcher aplikasi berhasil diubah & disiarkan ke Driver, Client, dan Admin!`);
+      const preview = document.getElementById('cmsIconPreview');
+      if (preview) preview.src = res.iconUrl + '?t=' + Date.now();
+      const headerLogo = document.getElementById('appHeaderLogo');
+      if (headerLogo) headerLogo.src = res.iconUrl + '?t=' + Date.now();
+      loadInitialData();
+    } else {
+      alert(res.message || 'Gagal mengunggah ikon.');
+    }
+  } catch(e) {
+    alert('Koneksi server gagal: ' + e.message);
+  }
+}
+
 async function uploadDedicatedAppIcon(target) {
   const inputId = target === 'driver' ? 'cmsDriverIconFileInput' : 'cmsClientIconFileInput';
   const fileInput = document.getElementById(inputId);
@@ -2299,8 +2382,13 @@ async function uploadDedicatedAppIcon(target) {
   formData.append('target', target);
 
   try {
+    const token = getAdminAuthToken();
     const res = await fetch(`${API_BASE}/api/admin/config/icon`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-admin-token': token
+      },
       body: formData
     }).then(r => r.json());
 
@@ -3747,12 +3835,13 @@ async function handleSendBroadcastSubmit(e) {
   }
 
   try {
+    const token = getAdminAuthToken();
     const res = await fetch(`${API_BASE}/api/admin/broadcast-notification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminAuthToken}`,
-        'x-admin-token': adminAuthToken
+        'Authorization': `Bearer ${token}`,
+        'x-admin-token': token
       },
       body: JSON.stringify({ target, type, title, message, version, forceReload })
     }).then(r => r.json());
@@ -3789,12 +3878,13 @@ async function handleQuickBroadcastSubmit(e) {
   }
 
   try {
+    const token = getAdminAuthToken();
     const res = await fetch(`${API_BASE}/api/admin/broadcast-notification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminAuthToken}`,
-        'x-admin-token': adminAuthToken
+        'Authorization': `Bearer ${token}`,
+        'x-admin-token': token
       },
       body: JSON.stringify({ target, type, title, message })
     }).then(r => r.json());

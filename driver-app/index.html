@@ -1472,6 +1472,12 @@ html, body {
           log in
         </button>
 
+        <!-- Biometric Fingerprint Login Button -->
+        <button type="button" id="btnDriverBiometricLogin" onclick="handleBiometricLogin('mitra')" class="w-full py-3.5 rounded-2xl font-black text-xs text-emerald-300 bg-slate-900 border border-emerald-500/50 hover:bg-slate-800 shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95">
+          <i class="fa-solid fa-fingerprint text-base text-emerald-400"></i>
+          <span>Masuk dengan Sidik Jari HP</span>
+        </button>
+
         <!-- OTP Login options -->
         <div class="p-4 rounded-2xl space-y-3" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2)">
           <p class="text-xs text-emerald-300 font-bold flex items-center space-x-1">
@@ -1540,7 +1546,9 @@ html, body {
           <div class="flex items-center space-x-2">
             <div>
               <div class="flex items-center space-x-1.5">
-                <button onclick="openDriverDrawer()" title="Menu Driver" class="inline-flex items-center justify-center mr-1 text-emerald-400 hover:text-emerald-300"><span class="material-symbols-outlined text-xl">menu</span></button><span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #a7f3d0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
+                <button onclick="openDriverDrawer()" title="Menu Driver" class="inline-flex items-center justify-center mr-1 text-emerald-400 hover:text-emerald-300"><span class="material-symbols-outlined text-xl">menu</span></button>
+                <img src="uploads/logo_icon.svg" alt="Ikon Launcher" class="w-6 h-6 rounded-lg object-contain app-launcher-icon mr-1 border border-emerald-500/30">
+                <span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #a7f3d0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
                 <span id="roleHeaderBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">DRIVER MITRA</span>
               </div>
               <div class="flex items-center space-x-1.5 mt-0.5">
@@ -2075,8 +2083,40 @@ html, body {
         </div>
       </div>
 
-      <!-- KYC Card (Mitra Only) -->
-      <div id="profileKycSection" class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+      <!-- DOKUMEN FOTO VERIFIKASI IDENTITAS TERDAFTAR -->
+      <div id="profileVerificationDocSection" class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-white text-xs flex items-center space-x-2">
+            <i class="fa-solid fa-id-card-clip text-emerald-400"></i>
+            <span>Dokumen Verifikasi Identitas Terdaftar</span>
+          </h4>
+          <span id="profileVerificationBadge" class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">✓ Terverifikasi</span>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Seluruh foto dokumen verifikasi identitas yang Anda daftarkan tersinkronisasi otomatis resmi dari akun Anda:
+        </p>
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <!-- Foto e-KTP -->
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center space-y-1.5">
+            <span class="text-[10px] text-slate-400 font-bold block">Foto e-KTP Asli</span>
+            <div class="w-full h-24 rounded-lg bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center cursor-pointer" onclick="openDriverDocFullView('ktp')">
+              <img id="profileKtpPhotoDisplay" src="uploads/ktp_sample.svg" class="w-full h-full object-cover">
+            </div>
+            <span id="profileNikDisplay" class="text-[10px] text-slate-400 font-mono block truncate">NIK Terdaftar</span>
+          </div>
+          <!-- Foto Selfie Wajah -->
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center space-y-1.5">
+            <span class="text-[10px] text-slate-400 font-bold block">Foto Selfie Verifikasi</span>
+            <div class="w-full h-24 rounded-lg bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center cursor-pointer" onclick="openDriverDocFullView('selfie')">
+              <img id="profileSelfiePhotoDisplay" src="uploads/selfie_sample.svg" class="w-full h-full object-cover">
+            </div>
+            <span class="text-[10px] text-emerald-400 font-semibold block">Wajah Terverifikasi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KYC Card (Mitra Only) - Disembunyikan setelah login, data dikelola di Admin -->
+      <div id="profileKycSection" class="hidden p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
         <div class="flex items-center justify-between">
           <h4 class="font-bold text-white text-xs flex items-center space-x-2">
             <i class="fa-solid fa-id-card text-blue-400"></i>
@@ -2093,27 +2133,8 @@ html, body {
         </button>
       </div>
 
-      <!-- VIP Premium Card (Mitra Only) -->
-      <div id="profileVipSection" class="p-4 rounded-2xl bg-gradient-to-br from-amber-900/30 via-slate-900 to-slate-900 border border-amber-500/40 shadow-xl space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-crown text-amber-400 text-base"></i>
-            <h4 class="font-extrabold text-white text-xs">Langganan Mitra VIP Premium</h4>
-          </div>
-          <span class="text-amber-400 font-bold text-xs">Rp 50.000 / bln</span>
-        </div>
-        <ul class="text-[11px] text-slate-300 space-y-1 list-disc list-inside">
-          <li>Notifikasi order masuk <strong>2 menit lebih awal</strong></li>
-          <li>Penawaran Anda muncul di <strong>urutan paling atas</strong> klien</li>
-          <li>Lencana emas <strong>Mitra Terpercaya</strong></li>
-        </ul>
-        <button onclick="upgradeToPremium()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20">
-          Aktivasi Akun VIP Sekarang
-        </button>
-      </div>
-
-      <!-- Ikon & Identitas Aplikasi Terpusat Admin -->
-      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-2">
+      <!-- Ikon & Identitas Aplikasi Terpusat Admin - Disembunyikan -->
+      <div class="hidden p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-2">
         <h4 class="font-bold text-white text-xs flex items-center space-x-2">
           <i class="fa-solid fa-circle-check text-blue-400"></i>
           <span>Identitas &amp; Logo Resmi Terpusat</span>
@@ -2123,8 +2144,8 @@ html, body {
         </p>
       </div>
 
-      <!-- Pengaturan Koneksi Server & Sinkronisasi Laptop -->
-      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+      <!-- Pengaturan Koneksi Server & Sinkronisasi Laptop - Disembunyikan -->
+      <div class="hidden p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
         <h4 class="font-bold text-white text-xs flex items-center space-x-2">
           <i class="fa-solid fa-server text-emerald-400"></i>
           <span>Koneksi Server Laptop &amp; Link</span>
@@ -2153,21 +2174,6 @@ html, body {
         <button onclick="cleanMyTaskHistory()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition-all active:scale-95">
           <span class="material-symbols-outlined text-sm">delete_sweep</span>
           <span>Bersihkan Riwayat Tugas Sekarang</span>
-        </button>
-      </div>
-
-      <!-- PUSAT BANTUAN -->
-      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
-        <div class="flex items-center space-x-2 mb-2">
-          <span class="material-symbols-outlined text-sky-400 text-lg">help_center</span>
-          <h3 class="font-extrabold text-white text-sm">Pusat Bantuan</h3>
-        </div>
-        <div id="driverHelpAccordion" class="space-y-2">
-          <div class="text-[11px] text-slate-400 text-center py-2">Memuat bantuan...</div>
-        </div>
-        <button onclick="loadDriverHelp()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition-all active:scale-95">
-          <span class="material-symbols-outlined text-sm">refresh</span>
-          <span>Muat Ulang Bantuan</span>
         </button>
       </div>
 
@@ -2246,6 +2252,24 @@ html, body {
         <div id="driverHistoryTasksContainer" class="space-y-3">
           <!-- populated via JS -->
         </div>
+      </div>
+
+      <!-- PUSAT BANTUAN MENU KERJA DRIVER -->
+      <div id="driverHelpSection" class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3 mt-4">
+        <div class="flex items-center space-x-2 mb-1">
+          <span class="material-symbols-outlined text-emerald-400 text-lg">help_center</span>
+          <h3 class="font-extrabold text-white text-sm">Pusat Bantuan Kerja Driver</h3>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Panduan dan pusat bantuan pengerjaan tugas, penerimaan radar pesanan, dan penarikan saldo kerja:
+        </p>
+        <div id="driverHelpAccordion" class="space-y-2">
+          <div class="text-[11px] text-slate-400 text-center py-2">Memuat panduan bantuan...</div>
+        </div>
+        <button onclick="loadDriverHelp()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition-all active:scale-95">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          <span>Muat Ulang Bantuan</span>
+        </button>
       </div>
     </div>
 

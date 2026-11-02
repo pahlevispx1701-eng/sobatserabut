@@ -1087,10 +1087,15 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
             </div>
           </div>
 
-          <div class="pt-2">
+          <div class="pt-2 space-y-2">
             <button type="submit" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm shadow-lg shadow-blue-600/30 active:scale-98 transition-all flex items-center justify-center space-x-2">
               <i class="fa-solid fa-right-to-bracket"></i>
               <span>Login</span>
+            </button>
+            <!-- Biometric Fingerprint Login Button -->
+            <button type="button" id="btnClientBiometricLogin" onclick="handleBiometricLogin('klien')" class="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-blue-400 text-blue-700 font-black text-xs shadow-sm active:scale-98 transition-all flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-fingerprint text-base text-blue-600"></i>
+              <span>Masuk dengan Sidik Jari HP</span>
             </button>
           </div>
         </form>
@@ -1278,6 +1283,7 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
           <div class="flex items-center space-x-2">
             <div>
               <div class="flex items-center space-x-1.5">
+                <img src="uploads/logo_icon.svg" alt="Ikon Launcher" class="w-6 h-6 rounded-lg object-contain app-launcher-icon mr-1 border border-blue-500/30">
                 <span id="appHeaderName" class="font-black text-base tracking-tight" style="background: linear-gradient(90deg, #ffffff 0%, #bfdbfe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sobatserabut</span>
                 <span id="roleHeaderBadge" class="text-[9px] px-2 py-0.5 rounded-full font-extrabold tracking-wider" style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3);">KLIEN</span>
               </div>
@@ -1711,8 +1717,8 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
         </button>
       </div>
 
-      <!-- Ikon & Identitas Aplikasi Terpusat Admin -->
-      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-2">
+      <!-- Ikon & Identitas Aplikasi Terpusat Admin - Disembunyikan setelah login -->
+      <div class="hidden p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-2">
         <h4 class="font-bold text-white text-xs flex items-center space-x-2">
           <i class="fa-solid fa-circle-check text-blue-400"></i>
           <span>Identitas &amp; Logo Resmi Terpusat</span>
@@ -1722,8 +1728,8 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
         </p>
       </div>
 
-      <!-- Pengaturan Koneksi Server & Sinkronisasi Laptop -->
-      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+      <!-- Pengaturan Koneksi Server & Sinkronisasi Laptop - Disembunyikan setelah login -->
+      <div class="hidden p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
         <h4 class="font-bold text-white text-xs flex items-center space-x-2">
           <i class="fa-solid fa-server text-emerald-400"></i>
           <span>Koneksi Server Laptop &amp; Link</span>

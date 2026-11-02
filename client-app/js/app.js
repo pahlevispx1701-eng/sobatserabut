@@ -639,10 +639,16 @@ function initSocket() {
 
     socket.on('config:icon_updated', (data) => {
       if (data && (data.target === 'client' || data.target === 'all')) {
-        const logoUrl = (data.iconUrl || '/uploads/logo_icon_client.svg') + '?t=' + Date.now();
-        document.querySelectorAll('#appHeaderLogo, #headerAppBrandLogo').forEach(el => {
+        const logoUrl = (data.iconUrl || '/uploads/logo_icon.svg') + '?t=' + Date.now();
+        document.querySelectorAll('#appHeaderLogo, #headerAppBrandLogo, .app-launcher-icon, img[src*="logo_icon"]').forEach(el => {
           el.src = logoUrl;
         });
+        document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']").forEach(link => {
+          link.href = logoUrl;
+        });
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_ICON_CACHE', iconUrl: logoUrl });
+        }
       }
     });
 
@@ -7048,4 +7054,116 @@ if (typeof io !== 'undefined') {
       }
     });
   } catch(e) { /* silent */ }
+}
+
+// WebAuthn Biometric Fingerprint Engine (Klien)
+async function handleBiometricLogin(role = 'klien') {
+  if (!window.PublicKeyCredential) {
+    showToast('Sensor biometrik tidak didukung pada browser ini.', 'warning');
+    return;
+  }
+  try {
+    const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (!isAvailable) {
+      showToast('Sensor sidik jari belum diaktifkan di HP Anda.', 'warning');
+      return;
+    }
+  } catch(e) {}
+
+  const bioKey = 'sobatserabut_biometric_client';
+  const rawBio = localStorage.getItem(bioKey);
+
+  if (!rawBio) {
+    const remembered = localStorage.getItem('sobatserabut_client_user') || localStorage.getItem('currentUser');
+    if (!remembered) {
+      showToast('Silakan masuk sekali menggunakan nomor HP & kata sandi terlebih dahulu untuk mengaktifkan sidik jari asli HP Anda.', 'info');
+      return;
+    }
+    await registerBiometricCredential(role);
+    return;
+  }
+
+  try {
+    const credData = JSON.parse(rawBio);
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: Uint8Array.from(atob(credData.rawId), c => c.charCodeAt(0)),
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    });
+
+    if (assertion) {
+      showToast('✓ Sidik jari cocok! Selamat datang kembali.', 'success');
+      const user = credData.user;
+      if (typeof saveClientSession === 'function') saveClientSession(user);
+      currentUser = user;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      const loginModal = document.getElementById('loginFlowScreen');
+      if (loginModal) loginModal.classList.add('hidden');
+      if (typeof onUserAuthenticated === 'function') onUserAuthenticated(user);
+    }
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('Verifikasi sidik jari dibatalkan.', 'warning');
+    } else {
+      showToast('Gagal memverifikasi sidik jari: ' + err.message, 'error');
+    }
+  }
+}
+
+async function registerBiometricCredential(role = 'klien') {
+  try {
+    const rawUser = localStorage.getItem('sobatserabut_client_user') || localStorage.getItem('currentUser');
+    if (!rawUser) return;
+    const user = JSON.parse(rawUser);
+
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+    const userId = new TextEncoder().encode(user.id || user.phone);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'SobatSerabut', id: window.location.hostname },
+        user: {
+          id: userId,
+          name: user.phone || user.name,
+          displayName: user.name || 'Pengguna SobatSerabut'
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: 'public-key' },
+          { alg: -257, type: 'public-key' }
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required'
+        },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    });
+
+    if (credential) {
+      const rawIdStr = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      const bioKey = 'sobatserabut_biometric_client';
+      localStorage.setItem(bioKey, JSON.stringify({
+        rawId: rawIdStr,
+        userId: user.id,
+        user: user,
+        registeredAt: new Date().toISOString()
+      }));
+      showToast('🎉 Sidik jari HP Anda berhasil didaftarkan!', 'success');
+    }
+  } catch(e) {
+    console.warn('Biometric registration:', e);
+  }
 }

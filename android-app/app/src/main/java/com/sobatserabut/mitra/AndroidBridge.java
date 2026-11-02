@@ -118,7 +118,9 @@ public class AndroidBridge {
                 );
                 channel.setDescription("Notifikasi pesanan, obrolan, dan informasi tugas");
                 channel.enableVibration(true);
+                channel.setVibrationPattern(new long[]{0, 500, 200, 500, 200, 800});
                 channel.enableLights(true);
+                channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
                 nm.createNotificationChannel(channel);
             }
 
@@ -144,7 +146,8 @@ public class AndroidBridge {
                    .setContentIntent(pendingIntent);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                builder.setPriority(android.app.Notification.PRIORITY_HIGH);
+                builder.setPriority(android.app.Notification.PRIORITY_MAX);
+                builder.setCategory(android.app.Notification.CATEGORY_CALL);
             }
 
             nm.notify(notificationId++, builder.build());

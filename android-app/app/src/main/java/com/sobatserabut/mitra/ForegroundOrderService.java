@@ -166,10 +166,10 @@ public class ForegroundOrderService extends Service {
                 vibrator.vibrate(pattern, -1);
             }
 
-            // 2. Bunyi Ringtone / Notifikasi HP
-            Uri alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            // 2. Bunyi Nada Dering (Ringtone Kringgg HP Asli)
+            Uri alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
             if (alertUri == null) {
-                alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+                alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             }
             if (alertUri != null) {
                 Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), alertUri);
@@ -178,9 +178,13 @@ public class ForegroundOrderService extends Service {
                 }
             }
 
-            // 3. Suara TTS: "Kring.. ada orderan masuk ni"
-            final String voiceText = (message != null && !message.isEmpty()) ? message : "Kring.. ada orderan masuk ni!";
+            // 3. Suara TTS lantang: "ADA ORDERAN MASUK"
+            final String voiceText = (message != null && !message.isEmpty()) ? message : "ADA ORDERAN MASUK";
             if (ttsReady && tts != null) {
+                try {
+                    tts.setPitch(1.25f); // Nada wanita
+                    tts.setSpeechRate(1.0f); // Kecepatan normal
+                } catch (Throwable t) {}
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     tts.speak(voiceText, TextToSpeech.QUEUE_FLUSH, null, "ORDER_TTS_ID");
                 } else {

@@ -1153,27 +1153,21 @@ input:focus, select:focus, textarea:focus {
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- 1. Kustomisasi Branding, Logo & Ikon sobatserabut.com -->
+        <!-- 1. Kustomisasi Ikon Launcher & Branding Terpusat sobatserabut.com -->
         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
           <h3 class="font-bold text-white text-sm flex items-center space-x-2 pb-2 border-b border-slate-700">
-            <i class="fa-solid fa-paint-roller text-blue-400"></i>
-            <span>Logo &amp; Ikon Aplikasi sobatserabut.com</span>
+            <i class="fa-solid fa-icons text-blue-400"></i>
+            <span>Ikon Launcher Aplikasi (Terpusat)</span>
           </h3>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="text-center py-2.5 bg-slate-900 rounded-xl border border-slate-700/80 p-2">
-              <span class="text-[10px] text-slate-400 font-semibold block mb-1.5">Logo Header Aplikasi</span>
-              <div class="w-16 h-16 mx-auto rounded-xl bg-slate-800 border border-blue-500/40 p-1.5 flex items-center justify-center shadow-lg">
-                <img id="cmsLogoPreview" src="/uploads/logo_sobatserabut.svg" alt="Preview Logo" class="w-full h-full object-contain">
-              </div>
+          <div class="text-center py-3 bg-slate-900 rounded-xl border border-slate-700/80 p-3">
+            <span class="text-[11px] text-amber-400 font-bold block mb-2">Ikon Launcher / Favicon Resmi Terpusat</span>
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-slate-800 border-2 border-emerald-500/60 p-2 flex items-center justify-center shadow-lg">
+              <img id="cmsIconPreview" src="/uploads/logo_icon.svg" alt="Preview Ikon" class="w-full h-full object-contain">
             </div>
-
-            <div class="text-center py-2.5 bg-slate-900 rounded-xl border border-slate-700/80 p-2">
-              <span class="text-[10px] text-slate-400 font-semibold block mb-1.5">Ikon Launcher / Favicon</span>
-              <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-800 border-2 border-amber-500/40 p-2 flex items-center justify-center shadow-lg">
-                <img id="cmsIconPreview" src="/uploads/logo_icon.svg" alt="Preview Ikon" class="w-full h-full object-contain">
-              </div>
-            </div>
+            <p class="text-[10px] text-slate-400 mt-2 leading-relaxed">
+              Ikon ini otomatis digunakan di seluruh aplikasi: <strong>Driver Mitra</strong>, <strong>Client</strong>, dan <strong>Admin Dashboard</strong>.
+            </p>
           </div>
 
           <div>
@@ -1186,43 +1180,20 @@ input:focus, select:focus, textarea:focus {
             <input type="text" id="cmsAppTaglineInput" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500">
           </div>
 
-          <!-- Upload Logo File -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Upload File Logo Header (PNG/SVG/JPG)</label>
-            <input type="file" id="cmsLogoFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500">
-          </div>
-
-          <!-- Upload Ikon Khusus App Driver & App Klien & Splash Screen -->
-          <div class="p-3 bg-slate-900/90 rounded-xl border border-red-500/40 space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-red-400 mb-1">
-                <i class="fa-solid fa-motorcycle mr-1 text-red-500"></i>
-                Ganti Ikon Aplikasi Driver (Driver-SobatSerabut)
-              </label>
-              <input type="file" id="cmsDriverIconFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-500">
-              <button type="button" onclick="uploadDedicatedAppIcon('driver')" class="mt-1.5 w-full py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] shadow">
-                Broadcast Ikon Driver ke Seluruh Mitra
-              </button>
-            </div>
-
-            <div class="pt-2 border-t border-slate-800">
-              <label class="block text-xs font-bold text-amber-300 mb-1">
-                <i class="fa-solid fa-user mr-1 text-amber-400"></i>
-                Ganti Ikon Aplikasi Klien (SobatSerabut Klien)
-              </label>
-              <input type="file" id="cmsClientIconFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
-              <button type="button" onclick="uploadDedicatedAppIcon('client')" class="mt-1.5 w-full py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] shadow">
-                Broadcast Ikon Klien ke Seluruh Pemohon
-              </button>
-            </div>
-
-            <div class="pt-2 border-t border-slate-800">
-              <label class="block text-xs font-bold text-slate-300 mb-1">
-                <i class="fa-solid fa-image mr-1 text-blue-400"></i>
-                Ganti Layar Splash / Banner Pembuka
-              </label>
-              <input type="file" id="cmsSplashFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-slate-800 file:text-slate-200">
-            </div>
+          <!-- Upload Ikon Launcher Terpusat -->
+          <div class="p-3.5 bg-slate-900/90 rounded-xl border border-emerald-500/50 space-y-3">
+            <label class="block text-xs font-bold text-emerald-400">
+              <i class="fa-solid fa-upload mr-1 text-emerald-400"></i>
+              Ganti Ikon Launcher Terpusat (Driver, Client &amp; Admin)
+            </label>
+            <input type="file" id="cmsUnifiedIconFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer">
+            <button type="button" onclick="uploadUnifiedLauncherIcon()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all">
+              <i class="fa-solid fa-tower-broadcast text-xs"></i>
+              <span>Broadcast Ganti Seluruh Ikon Driver, Client &amp; Admin</span>
+            </button>
+            <p class="text-[10px] text-slate-400 text-center leading-tight">
+              Mengubah file ikon di server dan menyiarkan pembaruan ikon secara instan ke semua perangkat HP (APK &amp; PWA).
+            </p>
           </div>
         </div>
 

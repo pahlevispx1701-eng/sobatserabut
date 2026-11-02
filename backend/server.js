@@ -5257,37 +5257,114 @@ app.post('/api/orders/:id/reject', (req, res) => {
  * CMS/CONFIG ENDPOINTS TAMBAHAN
  * ======================================================== */
 
-// Upload ikon app driver/client
+// Upload & Broadcast ikon app (Driver, Client, Admin)
 app.post('/api/admin/config/icon', requireAdminAuth, upload.single('file'), (req, res) => {
-  const { target } = req.body; // 'driver' | 'client'
+  const target = req.body.target || 'all'; // 'all' | 'driver' | 'client'
   let iconUrl = '';
+  let sourceFilePath = null;
 
   if (req.file) {
     iconUrl = `/uploads/${req.file.filename}`;
-    // Salin ke nama file tetap
+    sourceFilePath = path.join(UPLOADS_DIR, req.file.filename);
+  } else if (req.body.iconBase64) {
+    iconUrl = saveBase64Image(req.body.iconBase64, 'logo_icon_uploaded');
+    if (iconUrl) {
+      sourceFilePath = path.join(__dirname, iconUrl.replace(/^\//, ''));
+    }
+  }
+
+  if (!iconUrl || !sourceFilePath || !fs.existsSync(sourceFilePath)) {
+    return res.status(400).json({ success: false, message: 'File ikon tidak ditemukan atau gagal disimpan.' });
+  }
+
+  const projectRoot = path.join(__dirname, '..');
+  const fileExt = path.extname(sourceFilePath).toLowerCase();
+  const isSvg = fileExt === '.svg' || (req.file && req.file.mimetype && req.file.mimetype.includes('svg'));
+
+  if (target === 'all') {
+    // Sinkronkan ke seluruh ekosistem: Admin, Driver, Client, Mitra, Web Root
+    const targetsToCopy = [
+      path.join(UPLOADS_DIR, 'logo_icon.svg'),
+      path.join(UPLOADS_DIR, 'logo_sobatserabut.svg'),
+      path.join(projectRoot, 'driver-app/img/logo_icon.svg'),
+      path.join(projectRoot, 'driver-app/uploads/logo_icon.svg'),
+      path.join(projectRoot, 'client-app/img/logo_icon.svg'),
+      path.join(projectRoot, 'client-app/uploads/logo_icon.svg'),
+      path.join(projectRoot, 'admin-dashboard/img/logo_icon.svg'),
+      path.join(projectRoot, 'admin-dashboard/uploads/logo_icon.svg'),
+      path.join(projectRoot, 'mitra-app/img/logo_icon.svg'),
+      path.join(projectRoot, 'mitra-app/uploads/logo_icon.svg'),
+      path.join(projectRoot, 'favicon.svg')
+    ];
+
+    if (!isSvg) {
+      targetsToCopy.push(
+        path.join(UPLOADS_DIR, 'logo_icon.png'),
+        path.join(UPLOADS_DIR, 'logo_sobatserabut.png'),
+        path.join(projectRoot, 'driver-app/img/logo_icon.png'),
+        path.join(projectRoot, 'driver-app/uploads/logo_icon.png'),
+        path.join(projectRoot, 'client-app/img/logo_icon.png'),
+        path.join(projectRoot, 'client-app/uploads/logo_icon.png'),
+        path.join(projectRoot, 'admin-dashboard/img/logo_icon.png'),
+        path.join(projectRoot, 'admin-dashboard/uploads/logo_icon.png'),
+        path.join(projectRoot, 'mitra-app/img/logo_icon.png'),
+        path.join(projectRoot, 'mitra-app/uploads/logo_icon.png'),
+        path.join(projectRoot, 'favicon.ico')
+      );
+    }
+
+    targetsToCopy.forEach(dest => {
+      try {
+        const dir = path.dirname(dest);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.copyFileSync(sourceFilePath, dest);
+      } catch (err) {
+        console.warn(`Gagal menyalin ikon ke ${dest}:`, err.message);
+      }
+    });
+
+    const versionedIconUrl = `/uploads/logo_icon.svg?v=${Date.now()}`;
+    const updated = db.updateConfig({
+      appIconUrl: versionedIconUrl,
+      driverIconUrl: versionedIconUrl,
+      clientIconUrl: versionedIconUrl,
+      logoUrl: versionedIconUrl
+    });
+
+    const eventData = { target: 'all', iconUrl: versionedIconUrl, updatedAt: new Date().toISOString() };
+    io.emit('config:icon_updated', eventData);
+    io.emit('config:update', updated);
+
+    return res.json({
+      success: true,
+      message: 'Seluruh ikon Driver, Client & Admin berhasil diubah dan disiarkan ke semua aplikasi!',
+      iconUrl: versionedIconUrl,
+      data: updated
+    });
+  } else {
+    // Target spesifik: driver atau client
     const targetFilename = target === 'driver' ? 'logo_icon_driver.svg' : 'logo_icon_client.svg';
     try {
-      fs.copyFileSync(path.join(UPLOADS_DIR, req.file.filename), path.join(UPLOADS_DIR, targetFilename));
-      iconUrl = `/uploads/${targetFilename}`;
+      fs.copyFileSync(sourceFilePath, path.join(UPLOADS_DIR, targetFilename));
+      iconUrl = `/uploads/${targetFilename}?v=${Date.now()}`;
     } catch (e) {
       console.warn('Gagal menyalin file ikon:', e.message);
     }
-  } else if (req.body.iconBase64) {
-    iconUrl = saveBase64Image(req.body.iconBase64, target === 'driver' ? 'logo_icon_driver' : 'logo_icon_client');
+
+    const configKey = target === 'driver' ? 'driverIconUrl' : 'clientIconUrl';
+    const updated = db.updateConfig({ [configKey]: iconUrl });
+
+    const eventData = { target, iconUrl, updatedAt: new Date().toISOString() };
+    io.emit('config:icon_updated', eventData);
+    io.emit('config:update', updated);
+
+    return res.json({
+      success: true,
+      message: `Ikon app ${target} berhasil diperbarui dan disiarkan!`,
+      iconUrl,
+      data: updated
+    });
   }
-
-  if (!iconUrl) {
-    return res.status(400).json({ success: false, message: 'File ikon tidak ditemukan.' });
-  }
-
-  const configKey = target === 'driver' ? 'driverIconUrl' : 'clientIconUrl';
-  const updated = db.updateConfig({ [configKey]: iconUrl });
-
-  const eventData = { target, iconUrl, updatedAt: new Date().toISOString() };
-  io.emit('config:icon_updated', eventData);
-  io.emit('config:update', updated);
-
-  res.json({ success: true, message: `Ikon app ${target} berhasil diperbarui dan disiarkan!`, iconUrl, data: updated });
 });
 
 // Simpan zona geofencing

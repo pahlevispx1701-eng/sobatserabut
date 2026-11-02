@@ -639,10 +639,16 @@ function initSocket() {
 
     socket.on('config:icon_updated', (data) => {
       if (data && (data.target === 'client' || data.target === 'all')) {
-        const logoUrl = (data.iconUrl || '/uploads/logo_icon_client.svg') + '?t=' + Date.now();
-        document.querySelectorAll('#appHeaderLogo, #headerAppBrandLogo').forEach(el => {
+        const logoUrl = (data.iconUrl || '/uploads/logo_icon.svg') + '?t=' + Date.now();
+        document.querySelectorAll('#appHeaderLogo, #headerAppBrandLogo, .app-launcher-icon, img[src*="logo_icon"]').forEach(el => {
           el.src = logoUrl;
         });
+        document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']").forEach(link => {
+          link.href = logoUrl;
+        });
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_ICON_CACHE', iconUrl: logoUrl });
+        }
       }
     });
 
@@ -1503,24 +1509,10 @@ async function selectOtpDeliveryMethod(method) {
     }).then(r => r.json());
 
     if (res.success) {
-      if (res.devOtp) {
-        pendingDevOtp = res.devOtp.toString();
-        showToast(`Kode OTP: ${pendingDevOtp} ("jangan berikan kode otp ini kepada siapapun")`, 'success', 8000);
-        const quickCard = document.getElementById('stage4OtpQuickCard');
-        const quickCode = document.getElementById('stage4OtpQuickCode');
-        if (quickCard && quickCode) {
-          quickCode.innerText = pendingDevOtp;
-          quickCard.classList.remove('hidden');
-        }
-        const boxes = Array.from(document.querySelectorAll('.stage4-otp-box'));
-        const otpDigits = pendingDevOtp.slice(0, 6);
-        boxes.forEach((b, i) => { if (otpDigits[i]) b.value = otpDigits[i]; });
-        if (otpDigits.length === 6) {
-          setTimeout(() => verifyStage4OtpCode(otpDigits), 600);
-        }
-      } else {
-        showToast(`Kode OTP berhasil dikirim ke nomor ${pendingDeliveryPhone}!`, 'success');
-      }
+      const boxes = Array.from(document.querySelectorAll('.stage4-otp-box'));
+      boxes.forEach(b => b.value = '');
+      if (boxes[0]) boxes[0].focus();
+      showToast(res.message || `Kode OTP resmi telah dikirim ke WhatsApp ${pendingDeliveryPhone}!`, 'success', 8000);
     } else {
       showToast(res.message || 'Gagal mengirim kode OTP.', 'error');
     }
@@ -1563,20 +1555,10 @@ async function resendStage4OtpToCustomPhone(method) {
         else { btnWA2.classList.add('hidden'); btnSMS2.classList.remove('hidden'); }
       }
 
-      if (res.devOtp) {
-        pendingDevOtp = res.devOtp.toString();
-        const quickCard = document.getElementById('stage4OtpQuickCard');
-        const quickCode = document.getElementById('stage4OtpQuickCode');
-        if (quickCard && quickCode) {
-          quickCode.innerText = pendingDevOtp;
-          quickCard.classList.remove('hidden');
-        }
-        const boxes = Array.from(document.querySelectorAll('.stage4-otp-box'));
-        const otpDigits = pendingDevOtp.slice(0, 6);
-        boxes.forEach((b, i) => { if (otpDigits[i]) b.value = otpDigits[i]; });
-        setTimeout(() => verifyStage4OtpCode(otpDigits), 500);
-      }
-      showToast(res.message || `Kode OTP berhasil dikirim ke ${targetPhone}`, 'success');
+      const boxes = Array.from(document.querySelectorAll('.stage4-otp-box'));
+      boxes.forEach(b => b.value = '');
+      if (boxes[0]) boxes[0].focus();
+      showToast(res.message || `Kode OTP berhasil dikirim ke WhatsApp ${targetPhone}`, 'success');
     } else {
       showToast(res.message || 'Gagal mengirim kode OTP.', 'error');
     }
@@ -2074,19 +2056,9 @@ async function requestMinimalForgotOtp(method) {
       const targetDisplay = document.getElementById('minimalForgotTargetDisplay');
       if (targetDisplay) targetDisplay.innerText = res.phone || phone;
 
-      // Reset box OTP & jika ada devOtp tampilkan
       const boxes = document.querySelectorAll('#minimalForgotOtpContainer input');
       boxes.forEach(b => b.value = '');
-      if (res.devOtp) {
-        const str = res.devOtp.toString();
-        boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-        const quickCard = document.getElementById('minimalForgotQuickCard');
-        const quickCode = document.getElementById('minimalForgotQuickCode');
-        if (quickCard && quickCode) {
-          quickCode.innerText = str;
-          quickCard.classList.remove('hidden');
-        }
-      } else if (boxes[0]) {
+      if (boxes[0]) {
         boxes[0].focus();
       }
 
@@ -2403,10 +2375,7 @@ async function requestForgotPasswordOtp(method) {
 
       const boxes = document.querySelectorAll('#forgotOtpDigitsContainer input');
       boxes.forEach(b => b.value = '');
-      if (res.devOtp) {
-        const str = res.devOtp.toString();
-        boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-      } else if (boxes[0]) {
+      if (boxes[0]) {
         boxes[0].focus();
       }
 
@@ -2542,10 +2511,7 @@ async function requestOtpLogin(method) {
 
       const boxes = document.querySelectorAll('#otpDigitsContainer input');
       boxes.forEach(b => b.value = '');
-      if (res.devOtp) {
-        const str = res.devOtp.toString();
-        boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-      } else if (boxes[0]) {
+      if (boxes[0]) {
         boxes[0].focus();
       }
 
@@ -3090,10 +3056,7 @@ async function handleRegisterOtpSubmit(e) {
 
     const boxes = document.querySelectorAll('#otpDigitsContainer input');
     boxes.forEach(b => b.value = '');
-    if (sendRes.devOtp) {
-      const str = sendRes.devOtp.toString();
-      boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-    } else if (boxes[0]) {
+    if (boxes[0]) {
       boxes[0].focus();
     }
 
@@ -6860,11 +6823,195 @@ function showBroadcastModal(data) {
     iconEl.innerHTML = (data.type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (data.type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
   }
 
+  // Simpan ke riwayat pusat notifikasi klien
+  saveNotificationToClientHistory(data);
+  updateClientNotifBadge();
+
   if (modal) modal.classList.remove('hidden');
 
   playNotificationSound();
   speakVoiceNotification((data.type === 'urgent' ? 'Peringatan: ' : 'Pemberitahuan admin: ') + (data.title || 'Ada pengumuman baru'));
 }
+
+/* ========================================================
+ * PUSAT NOTIFIKASI KLIEN (IN-APP NOTIFICATION CENTER)
+ * ======================================================== */
+let clientNotifFilter = 'all';
+
+function getClientNotifHistory() {
+  try {
+    const raw = localStorage.getItem('sobatserabut_client_notifications');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveNotificationToClientHistory(notif) {
+  if (!notif) return;
+  const list = getClientNotifHistory();
+  const item = {
+    id: notif.id || `NOTIF-C-${Date.now()}`,
+    type: notif.type || 'announcement',
+    title: notif.title || 'Pemberitahuan Resmi SobatSerabut',
+    message: notif.message || notif.releaseNotes || '',
+    version: notif.version || notif.latestVersion || '',
+    actionUrl: notif.actionUrl || notif.clientApkUrl || `${API_BASE}/download/client-apk`,
+    createdAt: notif.createdAt || new Date().toISOString(),
+    read: false
+  };
+  const isDup = list.some(x => x.title === item.title && (Date.now() - new Date(x.createdAt).getTime()) < 60000);
+  if (!isDup) {
+    list.unshift(item);
+    localStorage.setItem('sobatserabut_client_notifications', JSON.stringify(list.slice(0, 40)));
+  }
+}
+
+function updateClientNotifBadge() {
+  const badge = document.getElementById('clientNotifBadge');
+  if (!badge) return;
+  const list = getClientNotifHistory();
+  const unread = list.filter(n => !n.read).length;
+  if (unread > 0) {
+    badge.innerText = unread > 9 ? '9+' : unread;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  } else {
+    badge.classList.add('hidden');
+    badge.classList.remove('flex');
+  }
+}
+
+function openClientNotificationCenter() {
+  const modal = document.getElementById('clientNotificationModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  // Mark all as read
+  const list = getClientNotifHistory();
+  list.forEach(n => n.read = true);
+  localStorage.setItem('sobatserabut_client_notifications', JSON.stringify(list));
+  updateClientNotifBadge();
+
+  renderClientNotificationList();
+
+  // Ambil update notifikasi dari server
+  fetch(`${API_BASE}/api/notifications/active?target=client`)
+    .then(r => r.json())
+    .then(res => {
+      if (res && res.success && Array.isArray(res.data)) {
+        res.data.forEach(item => saveNotificationToClientHistory(item));
+        renderClientNotificationList();
+      }
+    }).catch(() => {});
+}
+
+function closeClientNotificationCenter() {
+  const modal = document.getElementById('clientNotificationModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function filterClientNotifs(filter) {
+  clientNotifFilter = filter;
+  ['all', 'app_update', 'promo'].forEach(f => {
+    const btn = document.getElementById(`clientTabNotif${f.charAt(0).toUpperCase() + f.slice(1).replace('_', '')}`);
+    if (btn) {
+      if (f === filter) {
+        btn.className = 'flex-1 py-1.5 rounded-xl font-bold bg-blue-600 text-white transition-all';
+      } else {
+        btn.className = 'flex-1 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all';
+      }
+    }
+  });
+  renderClientNotificationList();
+}
+
+function renderClientNotificationList() {
+  const container = document.getElementById('clientNotifListContainer');
+  if (!container) return;
+  const list = getClientNotifHistory();
+  const filtered = list.filter(n => {
+    if (clientNotifFilter === 'all') return true;
+    return n.type === clientNotifFilter;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center space-y-2">
+        <i class="fa-regular fa-bell-slash text-slate-600 text-3xl"></i>
+        <p class="text-xs text-slate-400 font-bold">Belum Ada Notifikasi</p>
+        <p class="text-[11px] text-slate-500">Pemberitahuan pembaruan versi dan diskon dari admin akan tampil di sini.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(n => {
+    const isUpdate = (n.type === 'app_update');
+    const isPromo = (n.type === 'promo');
+    const isUrgent = (n.type === 'urgent');
+
+    const badgeBg = isUpdate ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' :
+                    isPromo ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                    isUrgent ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                    'bg-blue-500/20 text-blue-300 border-blue-500/40';
+
+    const icon = isUpdate ? 'fa-rocket' :
+                 isPromo ? 'fa-fire' :
+                 isUrgent ? 'fa-triangle-exclamation' : 'fa-bullhorn';
+
+    const label = isUpdate ? 'PEMBARUAN VERSI' :
+                  isPromo ? 'PROMO DISKON' :
+                  isUrgent ? 'PERINGATAN' : 'PENGUMUMAN';
+
+    const timeStr = n.createdAt ? new Date(n.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+
+    return `
+      <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 hover:border-blue-500/40 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] px-2 py-0.5 rounded-full font-black border ${badgeBg} flex items-center space-x-1">
+            <i class="fa-solid ${icon} text-[8px] mr-1"></i>
+            <span>${label}</span>
+          </span>
+          <span class="text-[10px] text-slate-500 font-mono">${timeStr}</span>
+        </div>
+        <h4 class="font-bold text-white text-xs leading-snug">${n.title}</h4>
+        <p class="text-[11px] text-slate-300 leading-relaxed">${n.message}</p>
+        ${isUpdate ? `
+          <div class="pt-1">
+            <a href="${n.actionUrl || `${API_BASE}/download/client-apk`}" target="_blank" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-blue-600/30 active:scale-95 transition-all">
+              <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+              <span>Unduh Update Versi ${n.version || '6.3.0'} Sekarang</span>
+            </a>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function clearAllClientNotifs() {
+  localStorage.removeItem('sobatserabut_client_notifications');
+  renderClientNotificationList();
+  updateClientNotifBadge();
+}
+
+// Inisialisasi badge notifikasi klien saat startup
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    updateClientNotifBadge();
+    fetch(`${API_BASE}/api/notifications/active?target=client`)
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.success && Array.isArray(res.data)) {
+          res.data.forEach(item => saveNotificationToClientHistory(item));
+          updateClientNotifBadge();
+        }
+      }).catch(() => {});
+  }, 1000);
+});
 
 function closeBroadcastModal() {
   const modal = document.getElementById('broadcastNotificationModal');
@@ -6907,4 +7054,116 @@ if (typeof io !== 'undefined') {
       }
     });
   } catch(e) { /* silent */ }
+}
+
+// WebAuthn Biometric Fingerprint Engine (Klien)
+async function handleBiometricLogin(role = 'klien') {
+  if (!window.PublicKeyCredential) {
+    showToast('Sensor biometrik tidak didukung pada browser ini.', 'warning');
+    return;
+  }
+  try {
+    const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (!isAvailable) {
+      showToast('Sensor sidik jari belum diaktifkan di HP Anda.', 'warning');
+      return;
+    }
+  } catch(e) {}
+
+  const bioKey = 'sobatserabut_biometric_client';
+  const rawBio = localStorage.getItem(bioKey);
+
+  if (!rawBio) {
+    const remembered = localStorage.getItem('sobatserabut_client_user') || localStorage.getItem('currentUser');
+    if (!remembered) {
+      showToast('Silakan masuk sekali menggunakan nomor HP & kata sandi terlebih dahulu untuk mengaktifkan sidik jari asli HP Anda.', 'info');
+      return;
+    }
+    await registerBiometricCredential(role);
+    return;
+  }
+
+  try {
+    const credData = JSON.parse(rawBio);
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: Uint8Array.from(atob(credData.rawId), c => c.charCodeAt(0)),
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    });
+
+    if (assertion) {
+      showToast('✓ Sidik jari cocok! Selamat datang kembali.', 'success');
+      const user = credData.user;
+      if (typeof saveClientSession === 'function') saveClientSession(user);
+      currentUser = user;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      const loginModal = document.getElementById('loginFlowScreen');
+      if (loginModal) loginModal.classList.add('hidden');
+      if (typeof onUserAuthenticated === 'function') onUserAuthenticated(user);
+    }
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('Verifikasi sidik jari dibatalkan.', 'warning');
+    } else {
+      showToast('Gagal memverifikasi sidik jari: ' + err.message, 'error');
+    }
+  }
+}
+
+async function registerBiometricCredential(role = 'klien') {
+  try {
+    const rawUser = localStorage.getItem('sobatserabut_client_user') || localStorage.getItem('currentUser');
+    if (!rawUser) return;
+    const user = JSON.parse(rawUser);
+
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+    const userId = new TextEncoder().encode(user.id || user.phone);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'SobatSerabut', id: window.location.hostname },
+        user: {
+          id: userId,
+          name: user.phone || user.name,
+          displayName: user.name || 'Pengguna SobatSerabut'
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: 'public-key' },
+          { alg: -257, type: 'public-key' }
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required'
+        },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    });
+
+    if (credential) {
+      const rawIdStr = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      const bioKey = 'sobatserabut_biometric_client';
+      localStorage.setItem(bioKey, JSON.stringify({
+        rawId: rawIdStr,
+        userId: user.id,
+        user: user,
+        registeredAt: new Date().toISOString()
+      }));
+      showToast('🎉 Sidik jari HP Anda berhasil didaftarkan!', 'success');
+    }
+  } catch(e) {
+    console.warn('Biometric registration:', e);
+  }
 }

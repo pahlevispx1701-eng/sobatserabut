@@ -238,20 +238,38 @@ window.triggerDeviceNotification = function(title, message) {
   if (window.Android && typeof window.Android.showNotification === 'function') {
     try {
       window.Android.showNotification(title, message);
-      return;
     } catch(e) {
       console.warn('Native Android showNotification error:', e);
     }
   }
 
-  // 2. Web Notification API (Browser / PWA)
+  // 2. Service Worker showNotification (standar PWA untuk bilah status bar Android)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      try {
+        reg.showNotification(title, {
+          body: message,
+          icon: 'uploads/logo_icon.png',
+          badge: 'uploads/logo_icon.png',
+          vibrate: [600, 200, 600, 200, 800],
+          tag: 'sobatserabut-notif-' + Date.now(),
+          renotify: true,
+          requireInteraction: true
+        });
+      } catch(e) {
+        console.warn('SW notification error:', e);
+      }
+    }).catch(() => {});
+  }
+
+  // 3. Web Notification API (Browser / PWA fallback)
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
       new Notification(title, {
         body: message,
-        icon: 'uploads/logo_icon.svg',
-        badge: 'uploads/logo_icon.svg',
-        vibrate: [200, 100, 200]
+        icon: 'uploads/logo_icon.png',
+        badge: 'uploads/logo_icon.png',
+        vibrate: [600, 200, 600, 200, 800]
       });
     } catch(e) {}
   }
@@ -599,16 +617,24 @@ function initSocket() {
       applyMaintenanceMode(alert.maintenanceMode, alert.maintenanceMessage);
     });
 
-    socket.on('order:new', (newOrder) => {
-      const alertMsg = 'Kring.. ada orderan masuk ni!';
-      if (window.Android && window.Android.playOrderAlertSound) {
-        window.Android.playOrderAlertSound(alertMsg);
-      } else if (window.AndroidBridge && window.AndroidBridge.playOrderAlertSound) {
-        window.AndroidBridge.playOrderAlertSound(alertMsg);
+    socket.on('config:icon_updated', (data) => {
+      if (data && data.iconUrl) {
+        const fullIconUrl = data.iconUrl.startsWith('http') ? data.iconUrl : `${API_BASE}${data.iconUrl.startsWith('/') ? '' : '/'}${data.iconUrl}`;
+        document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']").forEach(el => {
+          el.href = fullIconUrl;
+        });
+        document.querySelectorAll('.app-launcher-icon, img[src*="logo_icon"]').forEach(img => {
+          img.src = fullIconUrl;
+        });
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_ICON_CACHE', iconUrl: fullIconUrl });
+        }
       }
-      playAudioSound('order_chime');
-      speakVoiceNotification(alertMsg);
-      triggerDeviceNotification('Pesanan Baru Masuk! 📦', (newOrder.title || 'Pesanan Baru') + (newOrder.price ? ' - Rp ' + Number(newOrder.price).toLocaleString('id-ID') : ''));
+    });
+
+    socket.on('order:new', (newOrder) => {
+      playIncomingOrderAlertSound();
+      triggerDeviceNotification('ADA ORDERAN MASUK! 📦', (newOrder.title || 'Pesanan Baru') + (newOrder.price ? ' - Rp ' + Number(newOrder.price).toLocaleString('id-ID') : ''));
       if (currentUser?.role === 'mitra') {
         loadNearbyTasksForMitra();
         // Tampilkan modal popup notifikasi jika driver sedang Mulai Bekerja (ready)
@@ -844,6 +870,7 @@ function initSocket() {
     socket.on('broadcast:notification', (data) => {
       if (!data) return;
       if (data.target === 'all' || data.target === 'driver') {
+        triggerDeviceNotification(data.title || 'Pemberitahuan Admin 📢', data.message || '');
         showBroadcastModal(data);
       }
     });
@@ -2540,15 +2567,8 @@ function onUserAuthenticated(user) {
   if (socket && user && user.id) {
     socket.off(`driver:order_offer:${user.id}`);
     socket.on(`driver:order_offer:${user.id}`, (offer) => {
-      const alertMsg = 'Kring.. ada orderan masuk ni!';
-      if (window.Android && window.Android.playOrderAlertSound) {
-        window.Android.playOrderAlertSound(alertMsg);
-      } else if (window.AndroidBridge && window.AndroidBridge.playOrderAlertSound) {
-        window.AndroidBridge.playOrderAlertSound(alertMsg);
-      }
-      playAudioSound('order_chime');
-      speakVoiceNotification(alertMsg);
-      triggerDeviceNotification('Pesanan Ditawarkan Kepada Anda! 📦', (offer.title || 'Pesanan Baru') + (offer.price ? ' - Rp ' + Number(offer.price).toLocaleString('id-ID') : ''));
+      playIncomingOrderAlertSound();
+      triggerDeviceNotification('ADA ORDERAN MASUK! 📦', (offer.title || 'Pesanan Baru') + (offer.price ? ' - Rp ' + Number(offer.price).toLocaleString('id-ID') : ''));
       if (currentUser?.status === 'ready') {
         showIncomingOrderModal(offer);
       }
@@ -2579,7 +2599,188 @@ function onUserAuthenticated(user) {
     pBadge.className = 'text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30';
   }
 
+  // Sinkronkan dokumen verifikasi identitas (e-KTP & Selfie) di Profil Saya
+  renderDriverProfileVerificationDocs();
+
   updateWalletDisplay();
+}
+
+function renderDriverProfileVerificationDocs() {
+  if (!currentUser) return;
+  const ktpImg = document.getElementById('profileKtpPhotoDisplay');
+  const selfieImg = document.getElementById('profileSelfiePhotoDisplay');
+  const nikDisplay = document.getElementById('profileNikDisplay');
+
+  let ktpSrc = currentUser.ktpPhoto || 'uploads/ktp_sample.svg';
+  if (ktpSrc && !ktpSrc.startsWith('http') && !ktpSrc.startsWith('data:') && !ktpSrc.startsWith('/')) {
+    ktpSrc = '/' + ktpSrc;
+  }
+  if (ktpImg) ktpImg.src = ktpSrc;
+
+  let selfieSrc = currentUser.selfieKtpPhoto || currentUser.lastDailySelfiePhoto || currentUser.avatar || 'uploads/selfie_sample.svg';
+  if (selfieSrc && !selfieSrc.startsWith('http') && !selfieSrc.startsWith('data:') && !selfieSrc.startsWith('/')) {
+    selfieSrc = '/' + selfieSrc;
+  }
+  if (selfieImg) selfieImg.src = selfieSrc;
+
+  if (nikDisplay) {
+    nikDisplay.innerText = currentUser.nik ? `NIK: ${currentUser.nik}` : 'NIK Terdaftar: Terverifikasi';
+  }
+
+  // Auto-sync avatar: jika avatar masih placeholder/default svg, otomatis sinkronkan foto selfie verifikasi
+  if (!currentUser.avatar || currentUser.avatar.includes('avatar_mitra.svg') || currentUser.avatar.includes('default')) {
+    if (currentUser.selfieKtpPhoto && !currentUser.selfieKtpPhoto.includes('avatar_mitra.svg')) {
+      currentUser.avatar = currentUser.selfieKtpPhoto;
+      const avatarEl = document.getElementById('profileUserAvatar');
+      if (avatarEl) avatarEl.src = currentUser.avatar;
+    }
+  }
+}
+
+function openDriverDocFullView(type) {
+  if (!currentUser) return;
+  const src = type === 'ktp' ? (currentUser.ktpPhoto || 'uploads/ktp_sample.svg') : (currentUser.selfieKtpPhoto || currentUser.avatar || 'uploads/selfie_sample.svg');
+  const title = type === 'ktp' ? 'Foto e-KTP Asli Terdaftar' : 'Foto Selfie Verifikasi Wajah';
+
+  let modal = document.getElementById('driverDocPreviewModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'driverDocPreviewModal';
+    modal.className = 'fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm';
+    modal.onclick = (e) => { if (e.target === modal || e.target.closest('#closeDocPreviewBtn')) modal.classList.add('hidden'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="relative max-w-sm w-full bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl p-4 text-center space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <span class="text-xs font-bold text-white">${title}</span>
+        <button id="closeDocPreviewBtn" class="w-7 h-7 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold">&times;</button>
+      </div>
+      <div class="w-full max-h-80 overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center">
+        <img src="${src}" class="max-w-full max-h-80 object-contain">
+      </div>
+      <p class="text-[10px] text-emerald-400 font-semibold">✓ Dokumen Identitas Resmi Terverifikasi Sah</p>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+}
+
+// WebAuthn Biometric Fingerprint Engine
+async function handleBiometricLogin(role = 'mitra') {
+  if (!window.PublicKeyCredential) {
+    showToast('Sensor biometrik tidak didukung pada browser ini.', 'warning');
+    return;
+  }
+  try {
+    const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (!isAvailable) {
+      showToast('Sensor sidik jari belum diaktifkan di HP Anda.', 'warning');
+      return;
+    }
+  } catch(e) {}
+
+  const bioKey = role === 'mitra' ? 'sobatserabut_biometric_driver' : 'sobatserabut_biometric_client';
+  const rawBio = localStorage.getItem(bioKey);
+
+  if (!rawBio) {
+    const userSessionKey = role === 'mitra' ? 'sobatserabut_driver_user' : 'sobatserabut_client_user';
+    const remembered = localStorage.getItem(userSessionKey);
+    if (!remembered) {
+      showToast('Silakan masuk sekali menggunakan nomor HP & kata sandi terlebih dahulu untuk mengaktifkan sidik jari asli HP Anda.', 'info');
+      return;
+    }
+    await registerBiometricCredential(role);
+    return;
+  }
+
+  try {
+    const credData = JSON.parse(rawBio);
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: Uint8Array.from(atob(credData.rawId), c => c.charCodeAt(0)),
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    });
+
+    if (assertion) {
+      showToast('✓ Sidik jari cocok! Selamat datang kembali.', 'success');
+      const user = credData.user;
+      if (role === 'mitra') {
+        saveDriverSession(user);
+        hideAuthOverlay();
+        onUserAuthenticated(user);
+      } else {
+        saveClientSession(user);
+        hideAuthOverlay();
+        onUserAuthenticated(user);
+      }
+    }
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('Verifikasi sidik jari dibatalkan.', 'warning');
+    } else {
+      showToast('Gagal memverifikasi sidik jari: ' + err.message, 'error');
+    }
+  }
+}
+
+async function registerBiometricCredential(role = 'mitra') {
+  try {
+    const userSessionKey = role === 'mitra' ? 'sobatserabut_driver_user' : 'sobatserabut_client_user';
+    const rawUser = localStorage.getItem(userSessionKey);
+    if (!rawUser) return;
+    const user = JSON.parse(rawUser);
+
+    const challenge = new Uint8Array(32);
+    window.crypto.getRandomValues(challenge);
+    const userId = new TextEncoder().encode(user.id || user.phone);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'SobatSerabut', id: window.location.hostname },
+        user: {
+          id: userId,
+          name: user.phone || user.name,
+          displayName: user.name || 'Pengguna SobatSerabut'
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: 'public-key' },
+          { alg: -257, type: 'public-key' }
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required'
+        },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    });
+
+    if (credential) {
+      const rawIdStr = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      const bioKey = role === 'mitra' ? 'sobatserabut_biometric_driver' : 'sobatserabut_biometric_client';
+      localStorage.setItem(bioKey, JSON.stringify({
+        rawId: rawIdStr,
+        userId: user.id,
+        user: user,
+        registeredAt: new Date().toISOString()
+      }));
+      showToast('🎉 Sidik jari HP Anda berhasil didaftarkan!', 'success');
+    }
+  } catch(e) {
+    console.warn('Biometric registration:', e);
+  }
+}
 }
 
 async function refreshUserProfile() {
@@ -3999,8 +4200,8 @@ function showIncomingOrderModal(order) {
   if (!order || currentUser?.status !== 'ready') return;
   currentIncomingOrder = order;
 
-  playNotificationSound();
-  if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 500]);
+  playIncomingOrderAlertSound();
+  triggerDeviceNotification('ADA ORDERAN MASUK! 📦', (order.title || order.category || 'Pesanan Baru') + (order.budget ? ' - Rp ' + Number(order.budget).toLocaleString('id-ID') : ''));
 
   const modal = document.getElementById('incomingOrderModal');
   if (!modal) return;
@@ -5736,6 +5937,91 @@ function unlockAudioSystem() {
 ['click', 'touchstart', 'keydown'].forEach(evt => {
   window.addEventListener(evt, unlockAudioSystem, { once: false, passive: true });
 });
+
+function playTelephoneRingKringgg() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Vintage mechanical bell ringtone ("Kringgg... Kringgg...")
+    // Kombinasi frekuensi bel ganda 753Hz & 853Hz dengan modulasi ketukan 22Hz
+    const ringDur = 1.25;
+    [753, 853].forEach(freq => {
+      const osc = audioCtx.createOscillator();
+      const tremolo = audioCtx.createOscillator();
+      const tremoloGain = audioCtx.createGain();
+      const mainGain = audioCtx.createGain();
+
+      tremolo.frequency.value = 22; // 22 pukulan bel per detik
+      tremoloGain.gain.value = 0.55;
+      tremolo.connect(mainGain.gain);
+
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(mainGain);
+      mainGain.connect(audioCtx.destination);
+
+      mainGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      mainGain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + ringDur);
+
+      tremolo.start(audioCtx.currentTime);
+      osc.start(audioCtx.currentTime);
+
+      tremolo.stop(audioCtx.currentTime + ringDur);
+      osc.stop(audioCtx.currentTime + ringDur);
+    });
+  } catch(e) {
+    console.warn('Audio ringtone error:', e);
+  }
+}
+
+function speakFemaleVoice(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'id-ID';
+    utterance.rate = 1.0;   // Kecepatan normal
+    utterance.pitch = 1.25; // Nada wanita lantang & jelas
+    utterance.volume = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const femaleId = voices.find(v => (v.lang.includes('id') || v.lang.includes('ID')) && 
+      (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('wanita') || 
+       v.name.toLowerCase().includes('gadis') || v.name.toLowerCase().includes('siti') || 
+       v.name.toLowerCase().includes('putri') || v.name.toLowerCase().includes('google id')));
+    
+    if (femaleId) utterance.voice = femaleId;
+    else {
+      const anyId = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+      if (anyId) utterance.voice = anyId;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } catch(e) {}
+}
+
+function playIncomingOrderAlertSound() {
+  // 1. Getar HP nyata saat orderan masuk
+  if ('vibrate' in navigator) {
+    try { navigator.vibrate([600, 200, 600, 200, 800]); } catch(e) {}
+  }
+
+  // 2. Bunyikan nada dering "kringgg"
+  playTelephoneRingKringgg();
+
+  // 3. Panggil nada dering & getar native Android (APK) jika tersedia
+  if (window.Android && window.Android.playOrderAlertSound) {
+    try { window.Android.playOrderAlertSound("ADA ORDERAN MASUK"); } catch(e) {}
+  } else if (window.AndroidBridge && window.AndroidBridge.playOrderAlertSound) {
+    try { window.AndroidBridge.playOrderAlertSound("ADA ORDERAN MASUK"); } catch(e) {}
+  }
+
+  // 4. Suara lantang wanita: "ADA ORDERAN MASUK" (normal rate, pitch wanita)
+  setTimeout(() => {
+    speakFemaleVoice("ADA ORDERAN MASUK");
+  }, 1300);
+}
 
 function speakVoiceNotification(text) {
   try {
