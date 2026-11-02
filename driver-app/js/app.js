@@ -1251,16 +1251,7 @@ async function requestForgotPasswordOtp(method) {
 
       const boxes = document.querySelectorAll('#forgotOtpDigitsContainer input');
       boxes.forEach(b => b.value = '');
-      if (res.devOtp) {
-        const str = res.devOtp.toString();
-        boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-        const quickCard = document.getElementById('forgotOtpScreenQuickCard');
-        const quickCode = document.getElementById('forgotOtpScreenQuickCode');
-        if (quickCard && quickCode) {
-          quickCode.innerText = str;
-          quickCard.classList.remove('hidden');
-        }
-      } else if (boxes[0]) {
+      if (boxes[0]) {
         boxes[0].focus();
       }
 
@@ -1395,16 +1386,7 @@ async function requestOtpLogin(method) {
 
       const boxes = document.querySelectorAll('#otpDigitsContainer input');
       boxes.forEach(b => b.value = '');
-      if (res.devOtp) {
-        const str = res.devOtp.toString();
-        boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-        const quickCard = document.getElementById('otpScreenQuickCard');
-        const quickCode = document.getElementById('otpScreenQuickCode');
-        if (quickCard && quickCode) {
-          quickCode.innerText = str;
-          quickCard.classList.remove('hidden');
-        }
-      } else if (boxes[0]) {
+      if (boxes[0]) {
         boxes[0].focus();
       }
 
@@ -2058,16 +2040,7 @@ function setupOtpScreenUI(otpData, devOtp) {
 
   const boxes = document.querySelectorAll('#otpDigitsContainer input');
   boxes.forEach(b => b.value = '');
-  if (devOtp) {
-    const str = devOtp.toString();
-    boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-    const quickCard = document.getElementById('otpScreenQuickCard');
-    const quickCode = document.getElementById('otpScreenQuickCode');
-    if (quickCard && quickCode) {
-      quickCode.innerText = str;
-      quickCard.classList.remove('hidden');
-    }
-  } else if (boxes[0]) {
+  if (boxes[0]) {
     boxes[0].focus();
   }
 
@@ -2304,21 +2277,12 @@ async function handleRegisterOtpSubmit(e) {
 
     const boxes = document.querySelectorAll('#otpDigitsContainer input');
     boxes.forEach(b => b.value = '');
-    if (sendRes.devOtp) {
-      const str = sendRes.devOtp.toString();
-      boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-      const quickCard = document.getElementById('otpScreenQuickCard');
-      const quickCode = document.getElementById('otpScreenQuickCode');
-      if (quickCard && quickCode) {
-        quickCode.innerText = str;
-        quickCard.classList.remove('hidden');
-      }
-    } else if (boxes[0]) {
+    if (boxes[0]) {
       boxes[0].focus();
     }
 
     startOtpTimer(30);
-    showToast(sendRes.devOtp ? `Kode OTP: ${sendRes.devOtp} (dikirim via WhatsApp Bot ke ${sendRes.deliveryPhone || deliveryPhone})` : (sendRes.message || 'Kode OTP dikirim!'), 'success', 8000);
+    showToast(sendRes.message || 'Kode OTP resmi telah dikirim ke WhatsApp Anda.', 'success', 8000);
   } catch (err) {
     showToast('Koneksi server gagal: ' + err.message, 'error');
   }
@@ -2368,18 +2332,10 @@ async function resendDriverOtpToOtherPhone(method) {
       const methodLabel = document.getElementById('otpScreenMethodLabel');
       if (methodLabel) methodLabel.innerText = (method === 'whatsapp') ? 'WhatsApp Bot (087791201091)' : 'SMS';
 
-      if (res.devOtp) {
-        const str = res.devOtp.toString();
-        const boxes = document.querySelectorAll('#otpDigitsContainer input');
-        boxes.forEach((b, i) => { if (str[i]) b.value = str[i]; });
-        const quickCard = document.getElementById('otpScreenQuickCard');
-        const quickCode = document.getElementById('otpScreenQuickCode');
-        if (quickCard && quickCode) {
-          quickCode.innerText = str;
-          quickCard.classList.remove('hidden');
-        }
-      }
-      showToast(res.message || `Kode OTP berhasil dikirim ke ${targetPhone}`, 'success');
+      const boxes = document.querySelectorAll('#otpDigitsContainer input');
+      boxes.forEach(b => b.value = '');
+      if (boxes[0]) boxes[0].focus();
+      showToast(res.message || `Kode OTP resmi berhasil dikirim ke WhatsApp ${targetPhone}`, 'success');
     } else {
       showToast(res.message || 'Gagal mengirim kode OTP', 'error');
     }
@@ -2636,6 +2592,10 @@ async function refreshUserProfile() {
       saveDriverSession(currentUser);
       updateWalletDisplay();
       updateDriverPerformanceFace();
+    } else if (res && res.success === false) {
+      showToast('Data akun driver Anda telah diperbarui atau dihapus oleh Admin. Silakan daftar kembali.', 'info');
+      saveDriverSession(null);
+      showAuthOverlay();
     }
   } catch(e) {}
 }
@@ -6319,11 +6279,196 @@ function showBroadcastModal(data) {
     iconEl.innerHTML = (data.type === 'promo') ? '<i class="fa-solid fa-fire text-amber-400"></i>' : (data.type === 'urgent') ? '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>' : '<i class="fa-solid fa-bullhorn text-blue-400"></i>';
   }
 
+  // Simpan ke riwayat pusat notifikasi driver
+  saveNotificationToDriverHistory(data);
+  updateDriverNotifBadge();
+
   if (modal) modal.classList.remove('hidden');
 
   playAudioSound('order_chime');
   speakVoiceNotification((data.type === 'urgent' ? 'Peringatan: ' : 'Pemberitahuan admin: ') + (data.title || 'Ada pengumuman baru'));
 }
+
+/* ========================================================
+ * PUSAT NOTIFIKASI DRIVER (IN-APP NOTIFICATION CENTER)
+ * ======================================================== */
+let driverNotifFilter = 'all';
+
+function getDriverNotifHistory() {
+  try {
+    const raw = localStorage.getItem('sobatserabut_driver_notifications');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveNotificationToDriverHistory(notif) {
+  if (!notif) return;
+  const list = getDriverNotifHistory();
+  const item = {
+    id: notif.id || `NOTIF-${Date.now()}`,
+    type: notif.type || 'announcement',
+    title: notif.title || 'Pemberitahuan Resmi SobatSerabut',
+    message: notif.message || notif.releaseNotes || '',
+    version: notif.version || notif.latestVersion || '',
+    actionUrl: notif.actionUrl || notif.driverApkUrl || `${API_BASE}/download/driver-apk`,
+    createdAt: notif.createdAt || new Date().toISOString(),
+    read: false
+  };
+  // Hindari duplikat judul dalam 1 menit
+  const isDup = list.some(x => x.title === item.title && (Date.now() - new Date(x.createdAt).getTime()) < 60000);
+  if (!isDup) {
+    list.unshift(item);
+    localStorage.setItem('sobatserabut_driver_notifications', JSON.stringify(list.slice(0, 40)));
+  }
+}
+
+function updateDriverNotifBadge() {
+  const badge = document.getElementById('driverNotifBadge');
+  if (!badge) return;
+  const list = getDriverNotifHistory();
+  const unread = list.filter(n => !n.read).length;
+  if (unread > 0) {
+    badge.innerText = unread > 9 ? '9+' : unread;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  } else {
+    badge.classList.add('hidden');
+    badge.classList.remove('flex');
+  }
+}
+
+function openDriverNotificationCenter() {
+  const modal = document.getElementById('driverNotificationModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  // Mark all as read
+  const list = getDriverNotifHistory();
+  list.forEach(n => n.read = true);
+  localStorage.setItem('sobatserabut_driver_notifications', JSON.stringify(list));
+  updateDriverNotifBadge();
+
+  renderDriverNotificationList();
+
+  // Ambil juga update notifikasi aktif dari server
+  fetch(`${API_BASE}/api/notifications/active?target=driver`)
+    .then(r => r.json())
+    .then(res => {
+      if (res && res.success && Array.isArray(res.data)) {
+        res.data.forEach(item => saveNotificationToDriverHistory(item));
+        renderDriverNotificationList();
+      }
+    }).catch(() => {});
+}
+
+function closeDriverNotificationCenter() {
+  const modal = document.getElementById('driverNotificationModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function filterDriverNotifs(filter) {
+  driverNotifFilter = filter;
+  ['all', 'app_update', 'promo'].forEach(f => {
+    const btn = document.getElementById(`tabNotif${f.charAt(0).toUpperCase() + f.slice(1).replace('_', '')}`);
+    if (btn) {
+      if (f === filter) {
+        btn.className = 'flex-1 py-1.5 rounded-xl font-bold bg-emerald-600 text-white transition-all';
+      } else {
+        btn.className = 'flex-1 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all';
+      }
+    }
+  });
+  renderDriverNotificationList();
+}
+
+function renderDriverNotificationList() {
+  const container = document.getElementById('driverNotifListContainer');
+  if (!container) return;
+  const list = getDriverNotifHistory();
+  const filtered = list.filter(n => {
+    if (driverNotifFilter === 'all') return true;
+    return n.type === driverNotifFilter;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center space-y-2">
+        <i class="fa-regular fa-bell-slash text-slate-600 text-3xl"></i>
+        <p class="text-xs text-slate-400 font-bold">Belum Ada Notifikasi</p>
+        <p class="text-[11px] text-slate-500">Pemberitahuan pembaruan versi dan promo dari admin akan tampil di sini.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(n => {
+    const isUpdate = (n.type === 'app_update');
+    const isPromo = (n.type === 'promo');
+    const isUrgent = (n.type === 'urgent');
+
+    const badgeBg = isUpdate ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' :
+                    isPromo ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                    isUrgent ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' :
+                    'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+
+    const icon = isUpdate ? 'fa-rocket' :
+                 isPromo ? 'fa-fire' :
+                 isUrgent ? 'fa-triangle-exclamation' : 'fa-bullhorn';
+
+    const label = isUpdate ? 'PEMBARUAN VERSI' :
+                  isPromo ? 'PROMO SPESIAL' :
+                  isUrgent ? 'PERINGATAN' : 'PENGUMUMAN';
+
+    const timeStr = n.createdAt ? new Date(n.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+
+    return `
+      <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 hover:border-emerald-500/40 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] px-2 py-0.5 rounded-full font-black border ${badgeBg} flex items-center space-x-1">
+            <i class="fa-solid ${icon} text-[8px] mr-1"></i>
+            <span>${label}</span>
+          </span>
+          <span class="text-[10px] text-slate-500 font-mono">${timeStr}</span>
+        </div>
+        <h4 class="font-bold text-white text-xs leading-snug">${n.title}</h4>
+        <p class="text-[11px] text-slate-300 leading-relaxed">${n.message}</p>
+        ${isUpdate ? `
+          <div class="pt-1">
+            <a href="${n.actionUrl || `${API_BASE}/download/driver-apk`}" target="_blank" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-600/30 active:scale-95 transition-all">
+              <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+              <span>Unduh Update Versi ${n.version || '8.20.0'} Sekarang</span>
+            </a>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function clearAllDriverNotifs() {
+  localStorage.removeItem('sobatserabut_driver_notifications');
+  renderDriverNotificationList();
+  updateDriverNotifBadge();
+}
+
+// Inisialisasi badge notifikasi saat startup
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    updateDriverNotifBadge();
+    fetch(`${API_BASE}/api/notifications/active?target=driver`)
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.success && Array.isArray(res.data)) {
+          res.data.forEach(item => saveNotificationToDriverHistory(item));
+          updateDriverNotifBadge();
+        }
+      }).catch(() => {});
+  }, 1000);
+});
 
 function closeBroadcastModal() {
   const modal = document.getElementById('broadcastNotificationModal');

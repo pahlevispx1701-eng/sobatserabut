@@ -536,10 +536,10 @@ input:focus, select:focus, textarea:focus {
         <span id="socketStatusText">Live Socket Connected</span>
       </div>
 
-      <!-- Tombol Pintas Kirim Notif Promo Massal -->
-      <button onclick="openBroadcastPromoModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-red-600/30 transition-all active:scale-95" title="Kirim Notifikasi Promo atau Siaran ke Driver & Klien">
+      <!-- Tombol Pintas Kirim Notifikasi -->
+      <button onclick="openBroadcastPromoModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-red-600/30 transition-all active:scale-95" title="Kirim Notifikasi Langsung ke Driver & Klien">
         <i class="fa-solid fa-bullhorn text-xs animate-bounce"></i>
-        <span>Kirim Notif Promo</span>
+        <span>Kirim Notifikasi</span>
       </button>
 
       <!-- Profile -->
@@ -601,7 +601,7 @@ input:focus, select:focus, textarea:focus {
     </button>
     <button onclick="switchTab('broadcast')" id="tabBtn-broadcast" class="tab-btn px-4 py-3 flex items-center space-x-2 border-b-2 border-transparent hover:text-slate-200 transition-all">
       <i class="fa-solid fa-bullhorn text-rose-400"></i>
-      <span>Siaran Promo &amp; Notif</span>
+      <span>Kirim Notifikasi</span>
     </button>
   </nav>
 
@@ -752,7 +752,17 @@ input:focus, select:focus, textarea:focus {
               <i class="fa-solid fa-users-gear text-blue-400"></i>
               <span>Daftar Mitra Aktif</span>
             </h3>
-            <span id="activeMitraCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">0 Mitra</span>
+            <div class="flex items-center space-x-2">
+              <span id="activeMitraCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">0 Mitra</span>
+              <button type="button" onclick="refreshActiveMitraList(true)" title="Perbarui Daftar Mitra Aktif" class="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 text-blue-400 text-xs font-semibold flex items-center space-x-1.5 transition-all border border-slate-600 shadow-sm cursor-pointer">
+                <i id="btnRefreshMitraIcon" class="fa-solid fa-arrows-rotate"></i>
+                <span>Refresh</span>
+              </button>
+              <button type="button" onclick="hapusSemuaMitraAktif()" title="Hapus Semua Data Mitra Aktif" class="px-2.5 py-1 rounded-lg bg-red-900/60 hover:bg-red-700/80 active:scale-95 text-red-400 hover:text-red-200 text-xs font-semibold flex items-center space-x-1.5 transition-all border border-red-700/50 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Hapus Semua</span>
+              </button>
+            </div>
           </div>
 
           <!-- Search Mitra -->
@@ -1622,8 +1632,8 @@ input:focus, select:focus, textarea:focus {
     <section id="tab-broadcast" class="tab-content hidden space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-xl font-extrabold text-white">Pusat Siaran Notifikasi Promo &amp; Informasi Massal</h2>
-          <p class="text-xs text-slate-400">Kirimkan pesan promo, diskon komisi, atau pengumuman darurat langsung ke HP pengemudi Driver &amp; Klien SobatSerabut secara real-time.</p>
+          <h2 class="text-xl font-extrabold text-white">Pusat Kirim Notifikasi &amp; Pembaruan Versi</h2>
+          <p class="text-xs text-slate-400">Kirimkan notifikasi pembaruan versi terbaru, promo spesial, diskon, atau pengumuman langsung terhubung ke aplikasi Driver &amp; Klien secara real-time.</p>
         </div>
         <button onclick="loadBroadcastHistory()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 flex items-center space-x-2">
           <i class="fa-solid fa-arrows-rotate"></i>
@@ -2038,7 +2048,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <!-- ========================================================
-       MODAL: KIRIM NOTIFIKASI PROMO & SIARAN MASSAL
+       MODAL: KIRIM NOTIFIKASI
        ======================================================== -->
   <div id="broadcastPromoModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-800 border border-red-500/40 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
@@ -2048,8 +2058,8 @@ input:focus, select:focus, textarea:focus {
             <i class="fa-solid fa-bullhorn"></i>
           </div>
           <div>
-            <h3 class="text-base font-black text-white">Kirim Notifikasi Promo Massal</h3>
-            <p class="text-[11px] text-slate-400">Siarkan pesan ke seluruh perangkat pengguna secara instan</p>
+            <h3 class="text-base font-black text-white">Kirim Notifikasi</h3>
+            <p class="text-[11px] text-slate-400">Siarkan pembaruan versi, promo, atau pengumuman ke Driver &amp; Klien secara instan</p>
           </div>
         </div>
         <button onclick="closeBroadcastPromoModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -2066,30 +2076,31 @@ input:focus, select:focus, textarea:focus {
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-300 mb-1">Tipe Siaran</label>
+            <label class="block font-bold text-slate-300 mb-1">Tipe Notifikasi</label>
             <select id="quickModalType" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-xs focus:border-red-500 focus:outline-none">
+              <option value="app_update">🚀 Pembaruan Versi Baru</option>
               <option value="promo" selected>🔥 Promo Spesial</option>
-              <option value="announcement">📢 Pengumuman</option>
-              <option value="urgent">⚠️ Peringatan</option>
+              <option value="announcement">📢 Pengumuman Resmi</option>
+              <option value="urgent">⚠️ Peringatan Penting</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-300 mb-1">Judul Promo / Pesan</label>
-          <input type="text" id="quickModalTitle" placeholder="Contoh: 🔥 BONUS ORDER DRIVER RAJIN!" required maxlength="60" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs focus:border-red-500 focus:outline-none">
+          <label class="block font-bold text-slate-300 mb-1">Judul Notifikasi</label>
+          <input type="text" id="quickModalTitle" placeholder="Contoh: 🚀 Update Versi Baru SobatSerabut v8.20.0!" required maxlength="60" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs focus:border-red-500 focus:outline-none">
         </div>
 
         <div>
           <label class="block font-bold text-slate-300 mb-1">Pesan Notifikasi</label>
-          <textarea id="quickModalMessage" rows="3" placeholder="Ketik rincian promo atau pesan yang ingin disampaikan..." required maxlength="250" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed focus:border-red-500 focus:outline-none"></textarea>
+          <textarea id="quickModalMessage" rows="3" placeholder="Ketik rincian pembaruan versi, promo, atau pengumuman yang ingin disampaikan..." required maxlength="250" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed focus:border-red-500 focus:outline-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-700">
           <button type="button" onclick="closeBroadcastPromoModal()" class="px-4 py-2.5 rounded-xl bg-slate-700 text-slate-200 font-bold">Batal</button>
           <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 text-white font-black shadow-lg shadow-red-600/30 flex items-center space-x-1.5 active:scale-95 transition-all">
             <i class="fa-solid fa-paper-plane text-xs"></i>
-            <span>Kirim Siaran Sekarang</span>
+            <span>Kirim Notifikasi</span>
           </button>
         </div>
       </form>

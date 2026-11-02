@@ -404,37 +404,35 @@
   };
 
   /* ========================================================
-   * 5. KODE OTP WA ENGINE
+   * 5. KODE OTP WA ENGINE (REAL WHATSAPP OTP)
    * ======================================================== */
   window.requestOtpCode = async function(phone) {
     const phoneDisplay = document.getElementById('otpPhoneDisplay');
     if (phoneDisplay) phoneDisplay.innerText = phone || '08xxxxxxxxxx';
 
-    // Generate 6 digit code
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    window.currentGeneratedOtp = generated;
-
-    const quickCodeEl = document.getElementById('newOtpQuickCode');
-    if (quickCodeEl) quickCodeEl.innerText = generated;
-
-    // Send to backend
+    // Kirim permintaan OTP nyata ke backend via WhatsApp bot
     try {
-      fetch(`${API_ENDPOINT}/api/auth/send-otp`, {
+      const res = await fetch(`${API_ENDPOINT}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: phone,
           role: 'mitra',
-          method: 'whatsapp',
-          code: generated
+          method: 'whatsapp'
         })
-      }).then(r => r.json()).then(data => {
-        if (data && data.devCode) {
-          window.currentGeneratedOtp = data.devCode;
-          if (quickCodeEl) quickCodeEl.innerText = data.devCode;
+      }).then(r => r.json());
+
+      if (res && res.success) {
+        if (typeof showToast === 'function') {
+          showToast(`Kode OTP resmi berhasil dikirim ke WhatsApp ${phone}. Silakan periksa pesan masuk WA Anda.`, 'success', 6000);
         }
-      }).catch(() => {});
-    } catch(e) {}
+      } else {
+        const msg = (res && res.message) ? res.message : 'Gagal mengirim OTP ke WhatsApp';
+        if (typeof showToast === 'function') showToast(msg, 'error');
+      }
+    } catch(e) {
+      if (typeof showToast === 'function') showToast('Gagal menghubungi server WhatsApp OTP: ' + e.message, 'error');
+    }
 
     startOtpCountdown();
   };
@@ -465,7 +463,7 @@
     if (window.currentRegPhone) {
       requestOtpCode(window.currentRegPhone);
       if (typeof showToast === 'function') {
-        showToast('sobatserabut mengirimkan ulang kode otp wa ke nomor Anda', 'info');
+        showToast('Mengirimkan ulang kode OTP resmi via WhatsApp...', 'info');
       }
     }
   };
@@ -485,25 +483,52 @@
     }
   };
 
-  window.submitNewOtp = function() {
+  window.submitNewOtp = async function() {
     const boxes = document.querySelectorAll('.new-otp-input');
     let entered = '';
     boxes.forEach(b => entered += b.value.trim());
 
     if (entered.length < 6) {
-      // If user typed nothing or partial, autofill with official generated OTP for zero blocker
-      entered = window.currentGeneratedOtp || '123456';
-      boxes.forEach((b, i) => b.value = entered[i] || '');
+      if (typeof showToast === 'function') {
+        showToast('Silakan masukkan 6 digit kode OTP yang dikirim ke WhatsApp Anda.', 'warning');
+      }
+      return;
     }
 
-    if (typeof showToast === 'function') {
-      showToast('Kode OTP berhasil diverifikasi!', 'success');
-    }
+    // Verifikasi kode nyata ke backend
+    try {
+      const res = await fetch(`${API_ENDPOINT}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: window.currentRegPhone,
+          otp: entered.trim(),
+          role: 'mitra'
+        })
+      }).then(r => r.json());
 
-    // Direct to buat password
-    showScreen('screenCreatePassword');
-    const passInput = document.getElementById('newPasswordInput');
-    if (passInput) setTimeout(() => passInput.focus(), 200);
+      if (res && res.success) {
+        if (typeof showToast === 'function') {
+          showToast('Kode OTP terverifikasi benar!', 'success');
+        }
+        // Direct to buat password
+        showScreen('screenCreatePassword');
+        const passInput = document.getElementById('newPasswordInput');
+        if (passInput) setTimeout(() => passInput.focus(), 200);
+      } else {
+        // Kode OTP salah: jangan izinkan lewat, ulangi input sampai benar
+        const errMsg = (res && res.message) ? res.message : 'Kode OTP yang dimasukkan salah. Silakan periksa pesan WhatsApp Anda dan ulangi.';
+        if (typeof showToast === 'function') {
+          showToast(errMsg, 'error', 6000);
+        }
+        boxes.forEach(b => b.value = '');
+        if (boxes[0]) boxes[0].focus();
+      }
+    } catch(err) {
+      if (typeof showToast === 'function') {
+        showToast('Gagal memverifikasi OTP: ' + err.message, 'error');
+      }
+    }
   };
 
   /* ========================================================
@@ -751,7 +776,7 @@
 
     window.pendingKycCheckInterval = setInterval(async () => {
       await checkKycStatusFromServer(mitraId);
-    }, 3500);
+    }, 3000);
 
     // Listen socket real-time
     if (typeof io !== 'undefined') {
@@ -759,7 +784,7 @@
         const sock = (typeof socket !== 'undefined' && socket) ? socket : io(API_ENDPOINT);
         sock.on('kyc:reviewed', (data) => {
           if (data && (data.mitraId === mitraId || data.status === 'approved')) {
-            onKycApprovedByAdmin();
+            onKycApprovedByAdmin(data.user);
           }
         });
       } catch(e) {}
@@ -772,7 +797,7 @@
       const res = await fetch(`${API_ENDPOINT}/api/mitra/${mitraId}`).then(r => r.json());
       if (res && res.success && res.data) {
         if (res.data.kycStatus === 'approved') {
-          onKycApprovedByAdmin();
+          onKycApprovedByAdmin(res.data);
         }
       }
     } catch(e) {}
@@ -784,31 +809,62 @@
       if (typeof showToast === 'function') showToast('Belum ada data pendaftaran yang tertunda', 'info');
       return;
     }
-    if (typeof showToast === 'function') showToast('Memeriksa status konfirmasi admin...', 'info');
+    if (typeof showToast === 'function') showToast('Memeriksa status persetujuan admin...', 'info');
     await checkKycStatusFromServer(id);
   };
 
-  function onKycApprovedByAdmin() {
+  async function onKycApprovedByAdmin(approvedUser) {
     if (window.pendingKycCheckInterval) {
       clearInterval(window.pendingKycCheckInterval);
       window.pendingKycCheckInterval = null;
     }
 
-    localStorage.setItem('sobatserabut_driver_approved', 'true');
-
-    if (typeof showToast === 'function') {
-      showToast('Selamat! Data pendaftaran Anda telah dikonfirmasi dan disetujui oleh admin.', 'success', 8000);
+    const pendingId = localStorage.getItem('sobatserabut_driver_pending_id');
+    let user = approvedUser;
+    if (!user && pendingId) {
+      try {
+        const res = await fetch(`${API_ENDPOINT}/api/mitra/${pendingId}`).then(r => r.json());
+        if (res && res.data) user = res.data;
+      } catch(e) {}
     }
 
-    // Tampilan berubah ke tampilan awal ,,,sobatserabut driver log in
-    showScreen('screenLoginPassword');
-    const banner = document.getElementById('loginSuccessRegBanner');
-    if (banner) banner.classList.remove('hidden');
+    if (user) {
+      user.kycStatus = 'approved';
+      user.status = 'ready';
+      window.currentUser = user;
+      localStorage.setItem('sobatserabut_driver_user', JSON.stringify(user));
+      localStorage.removeItem('sobatserabut_driver_pending_id');
+      localStorage.removeItem('sobatserabut_driver_registered');
+      localStorage.setItem('sobatserabut_driver_approved', 'true');
 
-    const phoneInput = document.getElementById('loginPhoneInput');
-    const savedPhone = localStorage.getItem('sobatserabut_driver_saved_phone') || window.currentRegPhone;
-    if (phoneInput && savedPhone) {
-      phoneInput.value = savedPhone;
+      // Masuk langsung ke tampilan driver tanpa meminta login ulang
+      const authCont = document.getElementById('authContainer');
+      if (authCont) {
+        authCont.classList.add('hidden');
+        authCont.classList.remove('flex');
+      }
+
+      // Sembunyikan semua layar auth
+      const screens = [
+        'screenPermissionNotif', 'screenDeviceLocationSettings', 'screenSplash',
+        'screenPhoneInput', 'screenSliderCaptcha', 'screenOtp', 'screenCreatePassword',
+        'screenProfileSetup', 'screenWelcomeDocs', 'screenUploadDocs', 'screenUploadPhoto',
+        'screenPending', 'screenLoginPassword'
+      ];
+      screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+      });
+
+      if (typeof onUserAuthenticated === 'function') {
+        onUserAuthenticated(user);
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`🎉 Selamat ${user.name}! Akun kemitraan Anda telah disetujui Admin. Anda sekarang aktif sebagai Driver SobatSerabut!`, 'success', 9000);
+      }
+    } else {
+      showScreen('screenLoginPassword');
     }
   }
 
@@ -1569,6 +1625,16 @@
       if (authCont) {
         authCont.classList.remove('hidden');
         authCont.classList.add('flex');
+      }
+
+      // PERIKSA STATUS PENDAFTARAN MENUNGGU PERSETUJUAN ADMIN
+      const pendingDriverId = localStorage.getItem('sobatserabut_driver_pending_id');
+      if (pendingDriverId) {
+        // Driver sudah daftar dan menunggu persetujuan admin: JANGAN KELUARKAN KE LOGIN!
+        showScreen('screenPending');
+        startPendingKycPolling(pendingDriverId);
+        checkKycStatusFromServer(pendingDriverId);
+        return;
       }
 
       if (!isOnboarded) {

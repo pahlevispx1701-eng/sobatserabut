@@ -444,6 +444,13 @@ function initSocket() {
 
     socket.on('kyc:deleted', (data) => {
       kycList = kycList.filter(k => k.id !== data.id);
+      // Sinkronkan: hapus mitra terkait dari daftar aktif jika KYC-nya dihapus admin
+      if (data.mitraId) {
+        mitraList = mitraList.filter(m => m.id !== data.mitraId);
+        renderMitraOnMap();
+        renderMitraListSidebar();
+        renderDashboardCounters();
+      }
       renderKycTable();
     });
 
@@ -454,13 +461,45 @@ function initSocket() {
         kycList[idx].reviewNotes = data.notes;
       }
       renderKycTable();
+
+      // Jika disetujui, langsung tampilkan mitra di Daftar Mitra Aktif
+      if (data.status === 'approved') {
+        if (data.user) {
+          const mIdx = mitraList.findIndex(m => m.id === data.mitraId);
+          if (mIdx !== -1) {
+            mitraList[mIdx] = { ...mitraList[mIdx], ...data.user, status: 'ready' };
+          } else {
+            mitraList.unshift({ ...data.user, status: 'ready' });
+          }
+          renderMitraOnMap();
+          renderMitraListSidebar();
+          renderDashboardCounters();
+        } else {
+          refreshActiveMitraList(false);
+        }
+      }
+
       const label = data.status === 'approved' ? '✅ Diterima' : '❌ Ditolak';
-      showKycToast(`${label}: Keputusan KYC telah disinkronkan`, data.status === 'approved' ? 'success' : 'error');
+      showKycToast(`${label}: Keputusan KYC telah disinkronkan & mitra aktif diperbarui`, data.status === 'approved' ? 'success' : 'error');
     });
 
     socket.on('user:deleted', (data) => {
       kycList = kycList.filter(k => (k.mitraId || k.userId) !== data.userId);
+      mitraList = mitraList.filter(m => m.id !== data.userId);
       renderKycTable();
+      renderMitraOnMap();
+      renderMitraListSidebar();
+      renderDashboardCounters();
+    });
+
+    socket.on('mitra:cleared', () => {
+      mitraList = [];
+      kycList = kycList.filter(k => k.role !== 'mitra' && !k.mitraId);
+      renderMitraOnMap();
+      renderMitraListSidebar();
+      renderDashboardCounters();
+      renderKycTable();
+      showKycToast('🧹 Seluruh data mitra aktif telah dibersihkan oleh sistem', 'info');
     });
 
     socket.on('withdrawal:new', (wd) => {
@@ -2815,8 +2854,81 @@ async function deleteKycUser(kycId, userId, userName) {
   }
 
   renderKycTable();
+  if (userId) {
+    mitraList = mitraList.filter(m => m.id !== userId);
+    renderMitraOnMap();
+    renderMitraListSidebar();
+    renderDashboardCounters();
+  }
+  refreshActiveMitraList(false);
   showKycToast(`🗑️ ${msg}`, 'info');
 }
+
+async function refreshActiveMitraList(showAlert = true) {
+  const btnIcon = document.getElementById('btnRefreshMitraIcon');
+  if (btnIcon) btnIcon.classList.add('fa-spin');
+  try {
+    const res = await fetch(`${API_BASE}/api/mitra`).then(r => r.json());
+    if (res.success && Array.isArray(res.data)) {
+      mitraList = res.data;
+      renderMitraOnMap();
+      renderMitraListSidebar();
+      renderDashboardCounters();
+      renderLeaderboard();
+      if (showAlert) {
+        showKycToast(`✅ Daftar mitra aktif diperbarui (${mitraList.length} mitra)`, 'success');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to refresh active mitra list:', err);
+    if (showAlert) {
+      showKycToast('❌ Gagal memperbarui daftar mitra', 'error');
+    }
+  } finally {
+    if (btnIcon) {
+      setTimeout(() => btnIcon.classList.remove('fa-spin'), 600);
+    }
+  }
+}
+window.refreshActiveMitraList = refreshActiveMitraList;
+
+// Hapus semua data mitra aktif dari panel admin
+async function hapusSemuaMitraAktif() {
+  const jumlah = mitraList ? mitraList.length : 0;
+  if (jumlah === 0) {
+    showKycToast('ℹ️ Tidak ada data mitra aktif saat ini', 'info');
+    return;
+  }
+  const konfirmasi = confirm(
+    `⚠️ HAPUS SEMUA MITRA AKTIF\n\nAnda akan menghapus ${jumlah} mitra beserta data KYC-nya dari sistem secara permanen.\n\nData baru hanya akan muncul ketika mitra mendaftar ulang.\n\nLanjutkan?`
+  );
+  if (!konfirmasi) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/mitra/clear-all`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': adminToken ? `Bearer ${adminToken}` : ''
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      mitraList = [];
+      renderMitraOnMap();
+      renderMitraListSidebar();
+      renderDashboardCounters();
+      renderKycTable();
+      showKycToast('🧹 Semua data mitra aktif berhasil dihapus. Data baru akan muncul ketika mitra mendaftar kembali.', 'info');
+    } else {
+      showKycToast(`❌ Gagal: ${data.message || 'Terjadi kesalahan'}`, 'error');
+    }
+  } catch (err) {
+    console.error('hapusSemuaMitraAktif error:', err);
+    showKycToast('❌ Gagal menghapus data mitra. Periksa koneksi server.', 'error');
+  }
+}
+window.hapusSemuaMitraAktif = hapusSemuaMitraAktif;
 
 function showKycToast(message, type = 'info') {
   const colors = { success: 'bg-emerald-600', error: 'bg-rose-600', info: 'bg-slate-600' };

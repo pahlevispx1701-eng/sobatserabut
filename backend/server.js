@@ -1042,7 +1042,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
     method: sendMethod,
     sender: senderNumber,
     fallback: !!(sendResult && sendResult.fallback),
-    devOtp: code, // Selalu sertakan devOtp agar pengguna langsung menerima kode di layar & WhatsApp tanpa tertahan antrean jaringan
+    // Keamanan: devOtp ditiadakan agar OTP hanya dapat diperoleh secara nyata melalui pesan WhatsApp
     phone: phone,
     deliveryPhone: targetPhone,
     expiresIn: 300
@@ -1050,26 +1050,10 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 app.get('/api/auth/latest-otp', (req, res) => {
-  const { phone } = req.query;
-  if (!phone) {
-    return res.status(400).json({ success: false, message: 'Nomor HP diperlukan.' });
-  }
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
-  let entry = db.getOtp(cleanPhone);
-  if (!entry && req.body.deliveryPhone) {
-    entry = db.getOtp(req.body.deliveryPhone.replace(/[^0-9]/g, ''));
-  }
-  if (!entry) {
-    return res.json({ success: false, message: 'Tidak ada kode OTP aktif untuk nomor ini.' });
-  }
-  res.json({
-    success: true,
-    phone: phone,
-    otp: entry.code,
-    method: entry.method,
-    createdAt: entry.createdAt,
-    expiresIn: Math.max(0, Math.floor((300000 - (Date.now() - entry.createdAt)) / 1000)),
-    message: `Kode OTP aktif: ${entry.code}`
+  // Demi integritas keamanan, OTP rahasia hanya dikirim ke WhatsApp resmi
+  res.status(403).json({ 
+    success: false, 
+    message: 'Demi keamanan, kode OTP resmi hanya dikirimkan secara langsung ke WhatsApp nomor Anda.' 
   });
 });
 
@@ -1846,9 +1830,30 @@ app.post('/api/config/upload-logo', requireAdminAuth, upload.single('logo'), (re
     logoPreset: req.body.logoPreset || db.get('config').logoPreset
   });
 
+  // Sinkronisasi logo fisik ke seluruh direktori aplikasi
+  try {
+    if (req.file) {
+      const srcPath = path.join(UPLOADS_DIR, req.file.filename);
+      const isSvg = req.file.filename.endsWith('.svg');
+      const filename = isSvg ? 'logo_sobatserabut.svg' : 'logo_sobatserabut.png';
+      const targets = [
+        path.join(__dirname, `../driver-app/img/${filename}`),
+        path.join(__dirname, `../client-app/img/${filename}`),
+        path.join(__dirname, `../admin-dashboard/img/${filename}`),
+        path.join(__dirname, `../mitra-app/img/${filename}`)
+      ];
+      for (const t of targets) {
+        try { fs.copyFileSync(srcPath, t); } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.warn('Sinkronisasi logo parsial:', err.message);
+  }
+
   io.emit('config:update', updated);
   io.emit('config:updated', updated);
-  res.json({ success: true, message: 'Logo aplikasi berhasil diperbarui', data: updated });
+  io.emit('branding:updated', { logoUrl: updated.logoUrl, appIconUrl: updated.appIconUrl });
+  res.json({ success: true, message: 'Logo aplikasi SobatSerabut berhasil diperbarui dan disiarkan ke Driver & Klien!', data: updated });
 });
 
 /* ========================================================
@@ -1868,15 +1873,21 @@ app.post('/api/config/upload-icon', requireAdminAuth, upload.single('icon'), (re
     appIconUrl: iconUrl || db.get('config').appIconUrl
   });
 
-  // Sinkronisasi favicon fisik ke root dan direktori aplikasi
+  // Sinkronisasi favicon fisik ke root dan seluruh direktori aplikasi (driver, client, admin)
   try {
     if (req.file) {
       const srcPath = path.join(UPLOADS_DIR, req.file.filename);
       const targets = [
+        path.join(__dirname, '../driver-app/favicon.ico'),
+        path.join(__dirname, '../client-app/favicon.ico'),
+        path.join(__dirname, '../admin-dashboard/favicon.ico'),
         path.join(__dirname, '../mitra-app/favicon.ico'),
         path.join(__dirname, '../favicon.ico'),
-        path.join(__dirname, '../admin-dashboard/favicon.ico'),
-        path.join(__dirname, '../mitra-app/img/logo_icon.png')
+        path.join(__dirname, '../driver-app/img/logo_icon.png'),
+        path.join(__dirname, '../client-app/img/logo_icon.png'),
+        path.join(__dirname, '../admin-dashboard/img/logo_icon.png'),
+        path.join(__dirname, '../mitra-app/img/logo_icon.png'),
+        path.join(__dirname, '../favicon.svg')
       ];
       for (const t of targets) {
         try { fs.copyFileSync(srcPath, t); } catch (e) {}
@@ -1888,9 +1899,10 @@ app.post('/api/config/upload-icon', requireAdminAuth, upload.single('icon'), (re
 
   io.emit('config:update', updated);
   io.emit('config:updated', updated);
+  io.emit('branding:updated', { logoUrl: updated.logoUrl, appIconUrl: updated.appIconUrl });
   res.json({ 
     success: true, 
-    message: 'Ikon aplikasi sobatserabut.com berhasil diperbarui dan disinkronkan ke seluruh ekosistem!', 
+    message: 'Ikon launcher & favicon sobatserabut.com berhasil diperbarui dan disinkronkan ke Driver, Klien, dan Admin!', 
     data: updated 
   });
 });
@@ -3379,28 +3391,11 @@ app.post('/api/driver/:id/daily-selfie', (req, res) => {
   const users = db.get('users') || [];
   let { user, index: uIndex } = findDriverUser(users, req.params.id);
 
-  // Jika belum ada di list users, otomatis pulihkan driver agar tidak stuck 404
   if (uIndex === -1) {
-    const isSandi = String(req.params.id).includes('6695') || String(req.params.id).toLowerCase().includes('sandi');
-    const isAhmad = String(req.params.id).includes('4384') || String(req.params.id).toLowerCase().includes('ahmad') || String(req.params.id).toLowerCase().includes('fay');
-    const fallbackDriver = {
-      id: isSandi ? 'MTR-6695' : (isAhmad ? 'MTR-4384' : (req.params.id || `MTR-${Date.now().toString().slice(-4)}`)),
-      name: isSandi ? 'Sandi' : (isAhmad ? 'Ahmad Fay' : 'Driver SobatSerabut'),
-      role: 'mitra',
-      phone: isSandi ? '081234567890' : (isAhmad ? '087799112233' : ''),
-      email: `${req.params.id}@sobatserabut.id`,
-      status: 'ready',
-      accountStatus: 'active',
-      kycStatus: 'approved',
-      dailySelfieApproved: true,
-      walletBalance: 0,
-      points: 100,
-      rating: 5.0,
-      createdAt: new Date().toISOString()
-    };
-    users.unshift(fallbackDriver);
-    db.set('users', users);
-    uIndex = 0;
+    return res.status(404).json({
+      success: false,
+      message: 'Akun driver tidak ditemukan atau telah dihapus. Silakan lakukan pendaftaran baru di aplikasi driver.'
+    });
   }
 
   const nowIso = new Date().toISOString();
@@ -3693,7 +3688,7 @@ app.post('/api/admin/kyc/:id/review', requireAdminAuth, (req, res) => {
       io.emit('mitra:status_change', { mitraId: users[uIndex].id, status: 'offline', name: users[uIndex].name, lat: users[uIndex].lat, lng: users[uIndex].lng });
     }
     db.set('users', users);
-    io.emit('kyc:reviewed', { mitraId: users[uIndex].id, status, notes: kycRequests[kIndex].reviewNotes });
+    io.emit('kyc:reviewed', { mitraId: users[uIndex].id, status, notes: kycRequests[kIndex].reviewNotes, user: users[uIndex] });
   }
 
   res.json({ success: true, message: `Status KYC & Pendaftaran Mitra berhasil ${status === 'approved' ? 'dikonfirmasi dan diaktifkan' : 'ditolak'}`, data: kycRequests[kIndex] });
@@ -3709,6 +3704,7 @@ app.post('/api/admin/mitra/:id/verify', requireAdminAuth, (req, res) => {
   users[uIndex].kycStatus = status || 'approved';
   if (status === 'approved') {
     users[uIndex].status = 'ready';
+    io.emit('mitra:online', users[uIndex]);
   } else if (status === 'rejected') {
     users[uIndex].status = 'offline';
   }
@@ -3724,7 +3720,7 @@ app.post('/api/admin/mitra/:id/verify', requireAdminAuth, (req, res) => {
     db.set('kycRequests', kycRequests);
   }
 
-  io.emit('kyc:reviewed', { mitraId: users[uIndex].id, status, notes: reviewNotes });
+  io.emit('kyc:reviewed', { mitraId: users[uIndex].id, status, notes: reviewNotes, user: users[uIndex] });
   io.emit('mitra:status_change', { mitraId: users[uIndex].id, status: users[uIndex].status, name: users[uIndex].name });
 
   res.json({ success: true, message: `Mitra ${users[uIndex].name} berhasil ${status === 'approved' ? 'diverifikasi dan disetujui (diterima)' : 'ditolak'}!`, data: users[uIndex] });
@@ -3761,6 +3757,19 @@ app.delete('/api/admin/users/:id', requireAdminAuth, (req, res) => {
   
   io.emit('user:deleted', { userId: req.params.id, name: deleted.name, role: deleted.role });
   res.json({ success: true, message: `Akun ${deleted.name} (${deleted.role}) beserta data KYC berhasil dihapus dari sistem` });
+});
+
+// Hapus seluruh mitra aktif sekaligus dari admin
+app.post('/api/admin/mitra/clear-all', requireAdminAuth, (req, res) => {
+  let users = db.get('users') || [];
+  users = users.filter(u => u.role !== 'mitra');
+  db.set('users', users);
+  let kycRequests = db.get('kycRequests') || [];
+  kycRequests = kycRequests.filter(k => k.role !== 'mitra' && !k.mitraId);
+  db.set('kycRequests', kycRequests);
+  db.set('mitra', []);
+  io.emit('mitra:cleared', { timestamp: new Date().toISOString() });
+  res.json({ success: true, message: 'Seluruh data mitra aktif dan antrian KYC mitra berhasil dihapus bersih dari sistem.' });
 });
 
 // Admin mentransfer dana / mengkredit saldo dompet Mitra ke rekening/ewallet terdaftar
@@ -4520,27 +4529,11 @@ app.post('/api/driver/status', (req, res) => {
   const users = db.get('users') || [];
   let { user, index: uIndex } = findDriverUser(users, driverId);
 
-  // Jika belum ada sama sekali, pulihkan driver resmi
   if (uIndex === -1) {
-    const isSandi = String(driverId).toLowerCase().includes('sandi') || String(driverId).includes('6695');
-    const isAhmad = String(driverId).toLowerCase().includes('ahmad') || String(driverId).toLowerCase().includes('fay') || String(driverId).includes('4384');
-    const newDriver = {
-      id: isSandi ? 'MTR-6695' : (isAhmad ? 'MTR-4384' : (driverId && String(driverId).startsWith('MTR-') ? driverId : `MTR-${Date.now().toString().slice(-4)}`)),
-      name: isSandi ? 'Sandi' : (isAhmad ? 'Ahmad Fay' : 'Driver SobatSerabut'),
-      role: 'mitra',
-      phone: isSandi ? '081234567890' : (isAhmad ? '087799112233' : ''),
-      status: status === 'online' ? 'ready' : status,
-      accountStatus: 'active',
-      kycStatus: 'approved',
-      dailySelfieApproved: true,
-      walletBalance: 0,
-      createdAt: new Date().toISOString(),
-      lat: -6.2088,
-      lng: 106.8456
-    };
-    users.push(newDriver);
-    db.set('users', users);
-    uIndex = users.length - 1;
+    return res.status(404).json({
+      success: false,
+      message: 'Akun mitra driver tidak ditemukan atau telah dihapus. Silakan lakukan pendaftaran baru di aplikasi driver.'
+    });
   }
 
   if (users[uIndex].role !== 'mitra') {
@@ -4766,10 +4759,12 @@ app.post('/api/wallet/request-pin-otp', (req, res) => {
   if (!db.otpStore) db.otpStore = {};
   db.otpStore[u.phone] = { code, expires: Date.now() + 10 * 60 * 1000 };
 
+  // Kirim kode OTP penarikan resmi via WhatsApp bot
+  sendOtpWhatsApp(u.phone, code).catch(err => console.warn('Kirim WA OTP pin gagal:', err.message));
+
   res.json({
     success: true,
-    message: `Kode OTP verifikasi penarikan telah dikirimkan ke nomor ${u.phone}`,
-    devOtp: code,
+    message: `Kode OTP verifikasi penarikan telah dikirimkan ke WhatsApp nomor ${u.phone}`,
     phone: u.phone
   });
 });
@@ -4884,11 +4879,100 @@ app.post('/api/wallet/confirm-va-payment', (req, res) => {
   db.set('transactions', transactions);
 
   io.emit('user:balance_update', { userId, newBalance: users[idx].walletBalance });
+  io.emit('wallet:topup_received', { userId, amount: numAmount, vaNumber: vaNumber || tx?.vaNumber });
 
   res.json({
     success: true,
     message: `Top-up Virtual Account sebesar Rp ${numAmount.toLocaleString('id-ID')} berhasil! Saldo otomatis masuk ke dompet.`,
     newBalance: users[idx].walletBalance
+  });
+});
+
+/* ========================================================
+ * WEBHOOK PAYMENT GATEWAY (MIDTRANS / XENDIT / IPAYMU / OY!)
+ * Otomatisasi Virtual Account Real Bisnis
+ * ======================================================== */
+app.post(['/api/payment/webhook', '/api/payment/notification', '/api/wallet/webhook'], (req, res) => {
+  const body = req.body || {};
+  console.log('🔔 [PAYMENT GATEWAY WEBHOOK INCOMING]:', JSON.stringify(body));
+
+  // Mendukung format payload Midtrans, Xendit, iPaymu, OY! Indonesia
+  const transactionId = body.order_id || body.external_id || body.trx_id || body.partner_tx_id || body.transactionId || body.id;
+  const vaNumber = body.va_number || (body.payment_channel_detail && body.payment_channel_detail.payment_code) || body.account_number || body.vaNumber;
+  const rawStatus = (body.transaction_status || body.status || body.event || '').toString().toLowerCase();
+  const isPaid = ['settlement', 'capture', 'paid', 'completed', 'success', 'berhasil', 'va.payment'].some(s => rawStatus.includes(s));
+  const amountPaid = Number(body.gross_amount || body.amount || body.total || 0);
+
+  const transactions = db.get('transactions') || [];
+  const tx = transactions.find(t => 
+    (transactionId && t.id === transactionId) ||
+    (vaNumber && t.vaNumber === vaNumber && t.status === 'pending')
+  );
+
+  if (!tx) {
+    console.warn('⚠️ Transaksi tidak ditemukan untuk payload:', transactionId, vaNumber);
+    return res.status(200).json({ success: true, message: 'Webhook diterima tetapi transaksi tidak cocok.' });
+  }
+
+  if (isPaid && tx.status !== 'completed') {
+    tx.status = 'completed';
+    tx.completedAt = new Date().toISOString();
+    tx.paymentGateway = body.payment_type || body.channel || 'Payment Gateway API';
+
+    const users = db.get('users') || [];
+    const uIdx = users.findIndex(u => u.id === tx.userId);
+    if (uIdx !== -1) {
+      const creditAmount = amountPaid > 0 ? amountPaid : (tx.amount || 0);
+      users[uIdx].walletBalance = (users[uIdx].walletBalance || 0) + creditAmount;
+      users[uIdx].balance = (users[uIdx].balance || 0) + creditAmount;
+      db.set('users', users);
+
+      io.emit('user:balance_update', { userId: tx.userId, newBalance: users[uIdx].walletBalance });
+      io.emit('wallet:topup_received', { userId: tx.userId, amount: creditAmount, vaNumber: tx.vaNumber });
+      console.log(`✅ Saldo Rp ${creditAmount} otomatis masuk ke dompet ${users[uIdx].name} (${tx.userId}) via VA ${tx.vaNumber}`);
+    }
+    db.set('transactions', transactions);
+  }
+
+  res.status(200).json({ success: true, message: 'Webhook payment gateway berhasil diproses.' });
+});
+
+/* ========================================================
+ * SIMULASI / VERIFIKASI INSTAN PEMBAYARAN VIRTUAL ACCOUNT
+ * Memverifikasi VA secara otomatis tanpa jeda
+ * ======================================================== */
+app.post('/api/wallet/simulate-va-payment', (req, res) => {
+  const { transactionId, vaNumber, userId } = req.body;
+  const transactions = db.get('transactions') || [];
+  const tx = transactions.find(t => (transactionId && t.id === transactionId) || (vaNumber && t.vaNumber === vaNumber) || (userId && t.userId === userId && t.status === 'pending'));
+
+  if (!tx) {
+    return res.status(404).json({ success: false, message: 'Transaksi Virtual Account tidak ditemukan.' });
+  }
+
+  tx.status = 'completed';
+  tx.completedAt = new Date().toISOString();
+
+  const users = db.get('users') || [];
+  const uIdx = users.findIndex(u => u.id === tx.userId);
+  if (uIdx === -1) {
+    return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+  }
+
+  const creditAmount = Number(tx.amount || 0);
+  users[uIdx].walletBalance = (users[uIdx].walletBalance || 0) + creditAmount;
+  users[uIdx].balance = (users[uIdx].balance || 0) + creditAmount;
+  db.set('users', users);
+  db.set('transactions', transactions);
+
+  io.emit('user:balance_update', { userId: tx.userId, newBalance: users[uIdx].walletBalance });
+  io.emit('wallet:topup_received', { userId: tx.userId, amount: creditAmount, vaNumber: tx.vaNumber });
+
+  res.json({
+    success: true,
+    message: `Pembayaran Virtual Account ${tx.bank || 'Bank'} ${tx.vaNumber} sebesar Rp ${creditAmount.toLocaleString('id-ID')} berhasil diverifikasi! Saldo otomatis masuk ke Dompet SobatSerabut.`,
+    newBalance: users[uIdx].walletBalance,
+    transaction: tx
   });
 });
 

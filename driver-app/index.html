@@ -1011,14 +1011,18 @@ html, body {
           </div>
         </div>
 
-        <!-- OTP Quick Helper Card -->
-        <div id="newOtpQuickCard" class="p-3 rounded-2xl text-center space-y-1 animate-pulse" style="background:rgba(5,150,105,0.2);border:1px solid rgba(16,185,129,0.4)">
-          <p class="text-[11px] text-emerald-300 font-bold flex items-center justify-center space-x-1">
-            <span class="material-symbols-outlined text-sm">key</span>
-            <span>KODE OTP WA RESMI</span>
+        <!-- Petunjuk Keamanan OTP WhatsApp Resmi -->
+        <div class="p-3.5 rounded-2xl text-center space-y-1.5" style="background:rgba(5,150,105,0.15);border:1px solid rgba(16,185,129,0.3)">
+          <p class="text-xs text-emerald-300 font-bold flex items-center justify-center space-x-1">
+            <span class="material-symbols-outlined text-sm">lock</span>
+            <span>OTP HANYA DIKIRIM KE WHATSAPP</span>
           </p>
-          <div id="newOtpQuickCode" class="text-3xl font-black font-mono text-emerald-300 tracking-widest">123456</div>
-          <p class="text-[10px] text-slate-300">"jangan berikan kode otp ini kepada siapapun"</p>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Periksa pesan masuk WhatsApp Anda. Masukkan 6-digit kode OTP resmi yang dikirimkan oleh sistem SobatSerabut.
+          </p>
+        </div>
+        <div id="newOtpQuickCard" class="hidden">
+          <div id="newOtpQuickCode" class="hidden"></div>
         </div>
 
         <!-- 6-digit OTP boxes -->
@@ -1560,6 +1564,11 @@ html, body {
             <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
             <span id="headerWalletDisplay" class="font-mono text-xs font-bold" style="color: #34d399;">Rp 0</span>
           </div>
+          <!-- Tombol Notifikasi Driver -->
+          <button onclick="openDriverNotificationCenter()" title="Pusat Notifikasi & Pembaruan" class="relative w-8 h-8 rounded-2xl flex items-center justify-center transition-all bg-slate-800/80 border border-slate-700/60 text-amber-400 hover:text-amber-300">
+            <i class="fa-solid fa-bell text-xs"></i>
+            <span id="driverNotifBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white font-mono text-[9px] font-black flex items-center justify-center">0</span>
+          </button>
           <button onclick="openServerSettingsModal()" title="Pengaturan" class="w-8 h-8 rounded-2xl flex items-center justify-center transition-all" style="background: rgba(51,65,85,0.6); border: 1px solid rgba(71,85,105,0.4); color: #94a3b8;">
             <i class="fa-solid fa-sliders text-xs"></i>
           </button>
@@ -4213,6 +4222,43 @@ html, body {
         <button onclick="document.getElementById('modalKycImageViewer').classList.add('hidden')" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
       </div>
       <img id="kycImageViewerImg" src="" class="w-full max-h-[70vh] object-contain rounded-2xl border border-slate-700">
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL PUSAT NOTIFIKASI DRIVER SOBATSERABUT
+       ======================================================== -->
+  <div id="driverNotificationModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl flex flex-col" style="background:#0b1329;border:1px solid rgba(16,185,129,0.3);max-height:85dvh;">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg border border-emerald-500/30">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-white text-base">Pusat Notifikasi Driver</h3>
+            <p class="text-[11px] text-slate-400">Pembaruan versi, promo spesial, dan info resmi</p>
+          </div>
+        </div>
+        <button onclick="closeDriverNotificationCenter()" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="flex items-center space-x-1.5 p-1 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs">
+        <button onclick="filterDriverNotifs('all')" id="tabNotifAll" class="flex-1 py-1.5 rounded-xl font-bold bg-emerald-600 text-white transition-all">Semua</button>
+        <button onclick="filterDriverNotifs('app_update')" id="tabNotifUpdate" class="flex-1 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all">Update Versi</button>
+        <button onclick="filterDriverNotifs('promo')" id="tabNotifPromo" class="flex-1 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all">Promo</button>
+      </div>
+
+      <!-- List Container -->
+      <div id="driverNotifListContainer" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
+        <div class="p-6 text-center text-slate-400 italic">Memuat notifikasi...</div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+        <button onclick="clearAllDriverNotifs()" class="text-[11px] text-slate-500 hover:text-slate-300">Hapus Riwayat</button>
+        <button onclick="closeDriverNotificationCenter()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">Tutup</button>
+      </div>
     </div>
   </div>
 

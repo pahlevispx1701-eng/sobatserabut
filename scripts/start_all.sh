@@ -227,10 +227,10 @@ webroot = '$VPS_WEBROOT'
 proj    = '$PROJECT_DIR'
 tar_p   = '/tmp/sobat_v6_deploy.tar.gz'
 
-# 1. Buat arsip terbaru
+# 1. Buat arsip terbaru (tanpa menimpa data database riil VPS)
 subprocess.run([
-  'tar', '-czf', tar_p, '-C', proj,
-  'driver-app', 'client-app', 'admin-dashboard', 'backend', 'mitra-app', 'portal', 'package.json'
+  'tar', '-czf', tar_p, '--exclude=backend/data', '-C', proj,
+  'driver-app', 'client-app', 'admin-dashboard', 'backend', 'mitra-app', 'portal', 'package.json', 'app.js', 'ecosystem.config.js'
 ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def ssh_run(host, user, password, cmd, timeout=45):

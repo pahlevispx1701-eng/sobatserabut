@@ -1287,6 +1287,11 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
         </div>
 
         <div class="flex items-center space-x-1.5">
+          <!-- Tombol Notifikasi Klien -->
+          <button onclick="openClientNotificationCenter()" title="Pusat Notifikasi & Pembaruan" class="relative w-8 h-8 rounded-2xl flex items-center justify-center transition-all bg-slate-800/80 border border-slate-700/60 text-amber-400 hover:text-amber-300">
+            <i class="fa-solid fa-bell text-xs"></i>
+            <span id="clientNotifBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white font-mono text-[9px] font-black flex items-center justify-center">0</span>
+          </button>
           <div onclick="switchMainTab('wallet')" class="flex items-center space-x-1.5 cursor-pointer px-3 py-1.5 rounded-2xl" style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2);">
             <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
             <span id="headerWalletDisplay" class="font-mono text-xs font-bold" style="color: #34d399;">Rp 0</span>
@@ -3037,6 +3042,43 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
       <button type="button" onclick="closeBroadcastModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs shadow-lg transition-all active:scale-95">
         <span>Saya Mengerti &amp; Lanjutkan</span>
       </button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL PUSAT NOTIFIKASI KLIEN SOBATSERABUT
+       ======================================================== -->
+  <div id="clientNotificationModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl p-5 space-y-4 shadow-2xl flex flex-col" style="background:#080e1e;border:1px solid rgba(59,130,246,0.3);max-height:85dvh;">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg border border-blue-500/30">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-white text-base">Pusat Notifikasi Klien</h3>
+            <p class="text-[11px] text-slate-400">Pembaruan versi, promo diskon, dan informasi resmi</p>
+          </div>
+        </div>
+        <button onclick="closeClientNotificationCenter()" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="flex items-center space-x-1.5 p-1 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs">
+        <button onclick="filterClientNotifs('all')" id="clientTabNotifAll" class="flex-1 py-1.5 rounded-xl font-bold bg-blue-600 text-white transition-all">Semua</button>
+        <button onclick="filterClientNotifs('app_update')" id="clientTabNotifUpdate" class="flex-1 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all">Update Versi</button>
+        <button onclick="filterClientNotifs('promo')" id="clientTabNotifPromo" class="flex-1 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all">Promo</button>
+      </div>
+
+      <!-- List Container -->
+      <div id="clientNotifListContainer" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
+        <div class="p-6 text-center text-slate-400 italic">Memuat notifikasi...</div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+        <button onclick="clearAllClientNotifs()" class="text-[11px] text-slate-500 hover:text-slate-300">Hapus Riwayat</button>
+        <button onclick="closeClientNotificationCenter()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">Tutup</button>
+      </div>
     </div>
   </div>
 
