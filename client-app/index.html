@@ -582,6 +582,25 @@ nav.fixed.bottom-0, [id*="navBtn-"] {
   z-index: 100 !important;
   pointer-events: auto !important;
 }
+
+/* Fix: pastikan nav button tidak tertimpa CSS CTA global */
+#navBtn-home, #navBtn-map, #navBtn-orders, #navBtn-profile, #navBtn-wallet {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 101 !important;
+  position: relative !important;
+}
+
+/* Pastikan nav container tidak tertutup apapun */
+nav.fixed.bottom-0 {
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+}
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="height:100dvh;overflow:hidden">

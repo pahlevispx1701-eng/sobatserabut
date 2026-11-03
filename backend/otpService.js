@@ -14,11 +14,11 @@ function getOtpSenderNumber() {
 
 function getFonnteToken() {
   const cfg = (db && typeof db.get === 'function') ? (db.get('config') || {}) : {};
-  return cfg.fonnteToken || process.env.FONNTE_TOKEN || '8H6JfKCSA2ov9ZEi6GTd';
+  return cfg.fonnteToken || process.env.FONNTE_TOKEN || 'G7pBKmdnGMyfnLoEkv7g';
 }
 
 function getOtpBootMessage(otpCode) {
-  const senderNumber = getOtpSenderNumber();
+  const senderNumber = getOtpSenderNumber() || '087791201091';
 
   return `🤖 [BOT RESMI SOBATSERABUT - ${senderNumber}]\n\n` +
          `KODE VERIFIKASI OTP ANDA: *${otpCode}*\n\n` +
@@ -66,7 +66,7 @@ async function sendOtpWhatsApp(targetNumber, otpCode) {
     const response = await axios.post('https://api.fonnte.com/send', {
       target: clean,
       message: message,
-      countryCode: '0'
+      countryCode: '62'
     }, {
       headers: {
         'Authorization': token
@@ -158,7 +158,7 @@ async function sendOtpSMS(targetNumber, otpCode) {
     const response = await axios.post('https://api.fonnte.com/send', {
       target: clean,
       message: waMessage,
-      countryCode: '0'
+      countryCode: '62'
     }, {
       headers: {
         'Authorization': token

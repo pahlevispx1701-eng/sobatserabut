@@ -2,17 +2,15 @@
 # ==============================================================================
 # SOBATSERABUT — ULTRA PREMIUM CLOUD DOMAINESIA ECOSYSTEM
 # Driver App  : Dark Emerald Genesis Edition v8.20.0
-# Client App  : Volcanic Ember Phoenix Edition v6.3.0
-# Update: ✅ Radar Order 15 Detik Countdown — Modal hilang otomatis jika tidak direspons
-#         ✅ Izin Kamera, Lokasi, Notifikasi, Mikrofon — Diminta SEKALI per perangkat
-#            (localStorage-based: tidak muncul lagi jika sudah diizinkan)
-#            (Tetap muncul di HP yang belum mengizinkan)
-#         ✅ Chat In-App — Terbuka saat order diterima driver, terkunci setelah selesai
-#         ✅ Call In-App — Terbuka saat order diterima driver, terkunci setelah selesai
-#         ✅ Socket Room-Based — Chat & Call hanya ke peserta order aktif
-#         ✅ KYC Admin Panel v2.0 — Panel Verifikasi Identitas Ketat
-#         Sinkronisasi Cloud DomaiNesia & APK Otomatis
-# Build Date: 2026-11-02 ChatCall-v1.0 Permission-OneTime
+# Client App  : Volcanic Ember Phoenix Edition v6.3.3
+# Update: ✅ Fix Admin: toggleServerMaintenance kini mengirim auth token (fix 401 error)
+#         ✅ Fix Admin: Simpan Pengaturan berhasil tanpa "Gagal memperbarui konfigurasi"
+#         ✅ Fix Client: Tombol Beranda, Maps, Pesanan, Profil bisa diklik normal kembali
+#         ✅ Avatar Motor: TOP-DOWN VIEW (tampak dari atas) — orang mengendarai motor pakai helm
+#         ✅ Avatar Motor: Animasi ROTASI otomatis sesuai arah gerakan di peta (bearing)
+#         ✅ Avatar Motor: Berlaku di Admin, Driver, dan Client app
+#         ✅ Semua perubahan tersimpan & ter-deploy ke DomaiNesia
+# Build Date: 2026-11-04 v6.3.3-AdminFix-TopdownAvatar-NavFix
 # VPS DomaiNesia: 160.19.166.231
 # Domain Resmi: https://sobatserabut.160.19.166.231.sslip.io
 # Domain Kustom: https://app.sobatserabut.id
@@ -49,7 +47,7 @@ echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║   🚀 SOBATSERABUT — ULTRA PREMIUM LAUNCH                    ║"
 echo "║   Driver App: Dark Emerald Genesis Edition v8.20.0           ║"
-echo "║   Client App: Volcanic Ember Phoenix Edition v6.3.0          ║"
+echo "║   Client App: Volcanic Ember Phoenix Edition v6.3.3          ║"
 echo "║   🆕  Radar 15s | Izin Sekali | Chat In-App | Call In-App  ║"
 echo "║   Cloud VPS  : DomaiNesia ($VPS_IP)               ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
@@ -101,7 +99,7 @@ window.SOBATSERABUT_CONFIG = {
   BUILD_DATE: "$BUILD_TS",
   APP_NAME: "SobatSerabut Driver",
   VPS_IP: "$VPS_IP",
-  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true }
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true, topdownAvatar: true, bearingRotation: true }
 };
 EOF
 
@@ -113,11 +111,11 @@ cat > "$PROJECT_DIR/client-app/js/config.js" <<EOF
 // SobatSerabut Klien — Auto-generated config — $BUILD_TS
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: "$PUBLIC_URL",
-  VERSION: "6.3.0",
+  VERSION: "6.3.3",
   BUILD_DATE: "$BUILD_TS",
   APP_NAME: "SobatSerabut",
   VPS_IP: "$VPS_IP",
-  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true }
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true, topdownAvatar: true, bearingRotation: true }
 };
 EOF
 
@@ -126,7 +124,7 @@ cp "$PROJECT_DIR/driver-app/js/config.js" "$PROJECT_DIR/android-app/app/src/main
 # Sinkronkan assets client-app ke android-app assets
 cp "$PROJECT_DIR/client-app/index.html" "$PROJECT_DIR/android-app/app/src/main/assets/www/index.html" 2>/dev/null || true
 cp "$PROJECT_DIR/client-app/js/app.js" "$PROJECT_DIR/android-app/app/src/main/assets/www/js/app.js" 2>/dev/null || true
-ok "config.js tersinkronisasi (Driver v8.20.0 & Klien v6.3.0) → $PUBLIC_URL"
+ok "config.js tersinkronisasi (Driver v8.20.0 & Klien v6.3.3) → $PUBLIC_URL"
 
 # ── STEP 2b: Update Branding Strings ─────────────────────────────────
 echo -e "${BOLD}${CYAN}🎨 2b. Memperbarui branding SobatSerabut...${RESET}"

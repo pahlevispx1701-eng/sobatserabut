@@ -1034,11 +1034,28 @@ app.post('/api/auth/send-otp', async (req, res) => {
   const senderNumber = getOtpSenderNumber();
   const methodText = (sendResult && sendResult.fallback) ? 'WhatsApp (dialihkan dari SMS)' : (sendMethod === 'whatsapp' ? 'WhatsApp' : 'SMS');
 
+  // ✅ FIX: Cek apakah OTP berhasil terkirim via Fonnte gateway
+  if (sendResult && sendResult.success === false) {
+    console.warn(`⚠️ [OTP SEND FAILED] Kode ${code} GAGAL dikirim ke ${cleanTargetPhone}:`, sendResult.error);
+    // OTP sudah tersimpan, beri peringatan agar user bisa coba ulang kirim OTP
+    return res.json({
+      success: true,
+      warning: true,
+      message: `Kode OTP berhasil dibuat namun pengiriman ${methodText} ke ${targetPhone} mengalami kendala: ${sendResult.error || 'Periksa koneksi WhatsApp Bot'}. Jika dalam 1 menit tidak diterima, klik "Kirim Ulang OTP".`,
+      method: sendMethod,
+      sender: senderNumber,
+      fallback: false,
+      phone: phone,
+      deliveryPhone: targetPhone,
+      expiresIn: 300
+    });
+  }
+
   console.log(`✅ [OTP PROCESSED] Kode ${code} dikirim ke ${cleanTargetPhone} via ${methodText}`);
 
   res.json({
     success: true,
-    message: `Kode OTP 6-digit berhasil diproses dan dikirim via ${methodText} dari Bot ${senderNumber} ("jangan berikan kode otp ini kepada siapapun") ke nomor ${targetPhone}.`,
+    message: `Kode OTP 6-digit berhasil dikirim via ${methodText} dari Bot ${senderNumber} ("jangan berikan kode otp ini kepada siapapun") ke nomor ${targetPhone}.`,
     method: sendMethod,
     sender: senderNumber,
     fallback: !!(sendResult && sendResult.fallback),
@@ -1325,8 +1342,41 @@ app.post('/api/auth/update-avatar', (req, res) => {
   users[idx].avatar = savedUrl;
   db.set('users', users);
 
-  io.emit('user:avatar_updated', { userId: users[idx].id, avatar: savedUrl });
-  res.json({ success: true, message: 'Foto profil resmi berhasil disimpan!', avatarUrl: savedUrl, user: users[idx] });
+  // Perbarui foto avatar klien dan driver pada seluruh pesanan (aktif & riwayat)
+  const orders = db.get('orders') || [];
+  let ordersModified = false;
+  orders.forEach(o => {
+    if (o.clientId === userId || o.userId === userId) {
+      o.clientAvatar = savedUrl;
+      ordersModified = true;
+    }
+    if (o.assignedMitraId === userId || o.mitraId === userId) {
+      o.mitraAvatar = savedUrl;
+      ordersModified = true;
+    }
+  });
+  if (ordersModified) {
+    db.set('orders', orders);
+    io.emit('orders:update', orders);
+  }
+
+  const payload = {
+    userId: users[idx].id,
+    avatar: savedUrl,
+    name: users[idx].name,
+    role: users[idx].role
+  };
+  io.emit('user:avatar_updated', payload);
+  io.emit('user:updated', users[idx]);
+
+  console.log(`📸 [AVATAR SYNC] Foto profil diperbarui untuk ${users[idx].name} (${users[idx].role}): ${savedUrl}`);
+
+  res.json({
+    success: true,
+    message: 'Foto profil resmi berhasil disimpan dan langsung disinkronkan ke seluruh aplikasi!',
+    avatarUrl: savedUrl,
+    user: users[idx]
+  });
 });
 
 // ========================================================
@@ -1782,17 +1832,93 @@ app.get('/api/ping', (req, res) => {
 });
 
 app.get('/api/config', (req, res) => {
-  res.json({ success: true, data: db.get('config') });
+  const cfg = db.get('config') || {};
+  // ✅ FIX: Normalkan semua tarif dasar & simpan kembali ke DB jika bernilai 0/kosong
+  let needSave = false;
+  if (!cfg.baseFare || cfg.baseFare <= 0) { cfg.baseFare = 25000; needSave = true; }
+  if (!cfg.farePerKm || cfg.farePerKm <= 0) { cfg.farePerKm = 3500; needSave = true; }
+  if (!cfg.platformFee || cfg.platformFee <= 0) { cfg.platformFee = 3000; needSave = true; }
+  if (!cfg.serviceFeePercentage || cfg.serviceFeePercentage <= 0) { cfg.serviceFeePercentage = 10; needSave = true; }
+  if (!cfg.radarRadiusMeters || cfg.radarRadiusMeters < 100) { cfg.radarRadiusMeters = 10000; cfg.maxRadiusKm = 10; needSave = true; }
+  if (!cfg.appName) { cfg.appName = 'SobatSerabut'; needSave = true; }
+  if (!cfg.appTagline) { cfg.appTagline = 'Solusi Cepat Serabutan & Jasa Harian'; needSave = true; }
+  if (!cfg.otpSenderNumber) { cfg.otpSenderNumber = '087791201091'; needSave = true; }
+  if (!cfg.fonnteToken) { cfg.fonnteToken = 'G7pBKmdnGMyfnLoEkv7g'; needSave = true; }
+  if (!cfg.otpMessageFormat) {
+    cfg.otpMessageFormat = '🤖 [BOT RESMI SOBATSERABUT - 087791201091]\nKODE VERIFIKASI OTP ANDA: *{otpCode}*\n\n⚠️ PERINGATAN RESMI:\n"jangan berikan kode otp ini kepada siapapun"\n\nKode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 menit.';
+    needSave = true;
+  }
+  if (!cfg.maintenanceMessage) {
+    cfg.maintenanceMessage = 'Aplikasi SobatSerabut sedang menjalani pemeliharaan berkala untuk peningkatan server. Kami akan segera kembali!';
+    needSave = true;
+  }
+  if (!cfg.announcement) {
+    cfg.announcement = 'Selamat datang di SobatSerabut! Layanan serabutan & pekerjaan harian terpercaya siap membantu Anda kapan saja.';
+    needSave = true;
+  }
+  // Simpan kembali normalisasi ke DB agar persisten
+  if (needSave) db.updateConfig(cfg);
+  res.json({ success: true, data: cfg });
 });
 
 app.post('/api/config', requireAdminAuth, (req, res) => {
+  const currentConfig = db.get('config') || {};
+
   if (req.body.radarRadiusMeters !== undefined) {
     let r = Number(req.body.radarRadiusMeters);
     if (isNaN(r) || r < 100) r = 100;
-    if (r > 2000) r = 2000;
+    if (r > 10000) r = 10000;
     req.body.radarRadiusMeters = r;
     req.body.maxRadiusKm = Number((r / 1000).toFixed(2));
   }
+
+  // Lindungi agar tarif dasar jasa, tarif KM, platform fee & komisi tidak ter-reset menjadi 0
+  if (req.body.baseFare !== undefined) {
+    const num = Number(req.body.baseFare);
+    req.body.baseFare = (isNaN(num) || num <= 0) ? (currentConfig.baseFare || 25000) : num;
+  }
+  if (req.body.farePerKm !== undefined) {
+    const num = Number(req.body.farePerKm);
+    req.body.farePerKm = (isNaN(num) || num <= 0) ? (currentConfig.farePerKm || 3500) : num;
+  }
+  if (req.body.platformFee !== undefined) {
+    const num = Number(req.body.platformFee);
+    req.body.platformFee = (isNaN(num) || num <= 0) ? (currentConfig.platformFee || 3000) : num;
+  }
+  if (req.body.serviceFeePercentage !== undefined) {
+    const num = Number(req.body.serviceFeePercentage);
+    req.body.serviceFeePercentage = (isNaN(num) || num <= 0) ? (currentConfig.serviceFeePercentage || 10) : num;
+  }
+  if (req.body.premiumSubscriptionPrice !== undefined) {
+    // Sesuai permintaan: langganan VIP dihapus (dinonaktifkan / 0)
+    req.body.premiumSubscriptionPrice = 0;
+  }
+  if (!req.body.appName) {
+    req.body.appName = currentConfig.appName || 'SobatSerabut';
+  }
+  if (!req.body.appTagline) {
+    req.body.appTagline = currentConfig.appTagline || 'Solusi Cepat Serabutan & Jasa Harian';
+  }
+  if (!req.body.otpSenderNumber) {
+    req.body.otpSenderNumber = currentConfig.otpSenderNumber || '087791201091';
+  }
+  if (!req.body.fonnteToken) {
+    req.body.fonnteToken = currentConfig.fonnteToken || 'G7pBKmdnGMyfnLoEkv7g';
+  }
+  if (!req.body.otpMessageFormat) {
+    req.body.otpMessageFormat = currentConfig.otpMessageFormat || '🤖 [BOT RESMI SOBATSERABUT - 087791201091]\nKODE VERIFIKASI OTP ANDA: *{otpCode}*\n\n⚠️ PERINGATAN RESMI:\n"jangan berikan kode otp ini kepada siapapun"\n\nKode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 menit.';
+  }
+  if (typeof req.body.maintenanceMessage !== 'undefined' && req.body.maintenanceMessage !== null) {
+    req.body.maintenanceMessage = req.body.maintenanceMessage.trim();
+  } else if (!req.body.maintenanceMessage && currentConfig.maintenanceMessage) {
+    req.body.maintenanceMessage = currentConfig.maintenanceMessage;
+  }
+  if (typeof req.body.announcement !== 'undefined' && req.body.announcement !== null) {
+    req.body.announcement = req.body.announcement.trim();
+  } else if (!req.body.announcement && currentConfig.announcement) {
+    req.body.announcement = currentConfig.announcement;
+  }
+
   const updated = db.updateConfig(req.body);
   io.emit('config:update', updated);
   io.emit('config:updated', updated);

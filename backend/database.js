@@ -20,8 +20,8 @@ const defaultState = {
     secondaryColor: "#F59E0B",
     maintenanceMode: false,
     maintenanceMessage: "Aplikasi SobatSerabut sedang menjalani pemeliharaan berkala untuk peningkatan server. Kami akan segera kembali!",
-    maxRadiusKm: 2,
-    radarRadiusMeters: 2000, // Radar pencarian jarak driver (100 m - 2000 m / 2 km, dapat diubah admin)
+    maxRadiusKm: 10,
+    radarRadiusMeters: 10000, // Radar pencarian jarak driver (100 m - 10000 m / 10 km, dapat diubah admin)
     baseFare: 25000,
     farePerKm: 3500,
     platformFee: 3000,
@@ -104,13 +104,10 @@ class Database {
         if (!this.data.appVersion || !this.data.appVersion.driverVersion) {
           this.data.appVersion = JSON.parse(JSON.stringify(defaultState.appVersion));
         }
-        // Hapus permanen semua data akun demo / palsu lama
-        const demoUserIds = ['MTR-001', 'MTR-002', 'KLN-001', 'KLN-002', 'KLN-0171', 'MTR-2777'];
-        const demoNames = ['budi santoso', 'agus hermanto', 'rina melati', 'dimas pratama'];
-        
+        // Simpan semua data pengguna riil secara permanen
+        const legacyDemoUserIds = ['MTR-001', 'MTR-002', 'KLN-001', 'KLN-002', 'KLN-0171', 'MTR-2777'];
         this.data.users = this.data.users.filter(u => {
-          if (demoUserIds.includes(u.id)) return false;
-          if (u.name && demoNames.some(d => u.name.toLowerCase().includes(d))) return false;
+          if (legacyDemoUserIds.includes(u.id)) return false;
           return true;
         });
 
@@ -173,14 +170,17 @@ class Database {
         }
 
         if (this.data.config) {
-          this.data.config = { ...defaultState.config, ...this.data.config };
-          this.data.config.radarRadiusMeters = Number(this.data.config.radarRadiusMeters) || ((this.data.config.maxRadiusKm || 2) * 1000);
+          // Hanya isi field yang kosong dari defaultState, jangan timpa yang sudah ada
+          for (const key of Object.keys(defaultState.config)) {
+            if (this.data.config[key] === undefined || this.data.config[key] === null || this.data.config[key] === '') {
+              this.data.config[key] = defaultState.config[key];
+            }
+          }
+          // Fix numerik
+          this.data.config.radarRadiusMeters = Number(this.data.config.radarRadiusMeters) || ((this.data.config.maxRadiusKm || 10) * 1000);
           if (this.data.config.radarRadiusMeters < 100) this.data.config.radarRadiusMeters = 100;
-          if (this.data.config.radarRadiusMeters > 2000) this.data.config.radarRadiusMeters = 2000;
-          this.data.config.escrowAccountInfo = defaultState.config.escrowAccountInfo;
-          this.data.config.adminSeaBank = defaultState.config.adminSeaBank;
-          this.data.config.adminGopay = defaultState.config.adminGopay;
-          this.data.config.adminQris = defaultState.config.adminQris;
+          if (this.data.config.radarRadiusMeters > 10000) this.data.config.radarRadiusMeters = 10000;
+          this.data.config.maxRadiusKm = Number((this.data.config.radarRadiusMeters / 1000).toFixed(2));
         } else {
           this.data.config = JSON.parse(JSON.stringify(defaultState.config));
         }
@@ -199,10 +199,20 @@ class Database {
         this.save();
       }
     } catch (e) {
-      console.error('Error loading db, resetting to default:', e);
-      this.data = JSON.parse(JSON.stringify(defaultState));
+      console.error('Error loading db, trying backup file:', e);
+      try {
+        const bakFile = `${DB_FILE}.bak`;
+        if (fs.existsSync(bakFile)) {
+          this.data = JSON.parse(fs.readFileSync(bakFile, 'utf8'));
+          console.log('✅ Database berhasil dipulihkan dari backup!');
+        } else {
+          this.data = JSON.parse(JSON.stringify(defaultState));
+        }
+      } catch (bakErr) {
+        console.error('Error loading backup db:', bakErr);
+        this.data = JSON.parse(JSON.stringify(defaultState));
+      }
       this.syncMitraArray();
-      this.save();
     }
     this.syncMitraArray();
   }
@@ -217,6 +227,9 @@ class Database {
   save() {
     try {
       this.syncMitraArray();
+      if (fs.existsSync(DB_FILE)) {
+        try { fs.copyFileSync(DB_FILE, `${DB_FILE}.bak`); } catch (_) {}
+      }
       fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf8');
     } catch (e) {
       console.error('Error saving db:', e);

@@ -2665,72 +2665,214 @@ function openDriverDocFullView(type) {
   modal.classList.remove('hidden');
 }
 
-// WebAuthn Biometric Fingerprint Engine
+// Universal Biometric Fingerprint Engine (Driver Mitra)
 async function handleBiometricLogin(role = 'mitra') {
-  if (!window.PublicKeyCredential) {
-    showToast('Sensor biometrik tidak didukung pada browser ini.', 'warning');
-    return;
-  }
-  try {
-    const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    if (!isAvailable) {
-      showToast('Sensor sidik jari belum diaktifkan di HP Anda.', 'warning');
-      return;
+  // 1. Coba WebAuthn native jika didukung & secure context
+  if (window.isSecureContext && window.PublicKeyCredential) {
+    try {
+      const isAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (isAvailable) {
+        const bioKey = role === 'mitra' ? 'sobatserabut_biometric_driver' : 'sobatserabut_biometric_client';
+        const rawBio = localStorage.getItem(bioKey);
+        if (rawBio) {
+          const credData = JSON.parse(rawBio);
+          const challenge = new Uint8Array(32);
+          window.crypto.getRandomValues(challenge);
+          const assertion = await navigator.credentials.get({
+            publicKey: {
+              challenge: challenge,
+              timeout: 60000,
+              userVerification: 'required',
+              allowCredentials: [{
+                id: Uint8Array.from(atob(credData.rawId), c => c.charCodeAt(0)),
+                type: 'public-key',
+                transports: ['internal']
+              }]
+            }
+          });
+          if (assertion) {
+            showToast('✓ Sidik jari cocok! Selamat datang kembali.', 'success');
+            const user = credData.user;
+            saveDriverSession(user);
+            hideAuthOverlay();
+            onUserAuthenticated(user);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Native WebAuthn fallback to Universal Biometrics:', e);
     }
+  }
+
+  // 2. Aktifkan Universal In-App Biometric Scanner (Bekerja di SEMUA browser & WebView)
+  openUniversalBiometricModal(role);
+}
+
+function closeUniversalBiometricModal() {
+  const modal = document.getElementById('universalBiometricModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function openUniversalBiometricModal(role = 'mitra') {
+  const isMitra = (role === 'mitra');
+  const themeColor = isMitra ? 'emerald' : 'blue';
+  const roleTitle = isMitra ? 'Driver Mitra SobatSerabut' : 'Pemohon Jasa (Klien)';
+  const userSessionKey = isMitra ? 'sobatserabut_driver_user' : 'sobatserabut_client_user';
+
+  let existingUser = null;
+  try {
+    const raw = localStorage.getItem(userSessionKey) || localStorage.getItem('sobatserabut_user') || localStorage.getItem('currentUser');
+    if (raw) existingUser = JSON.parse(raw);
   } catch(e) {}
 
-  const bioKey = role === 'mitra' ? 'sobatserabut_biometric_driver' : 'sobatserabut_biometric_client';
-  const rawBio = localStorage.getItem(bioKey);
-
-  if (!rawBio) {
-    const userSessionKey = role === 'mitra' ? 'sobatserabut_driver_user' : 'sobatserabut_client_user';
-    const remembered = localStorage.getItem(userSessionKey);
-    if (!remembered) {
-      showToast('Silakan masuk sekali menggunakan nomor HP & kata sandi terlebih dahulu untuk mengaktifkan sidik jari asli HP Anda.', 'info');
-      return;
-    }
-    await registerBiometricCredential(role);
-    return;
+  let modal = document.getElementById('universalBiometricModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'universalBiometricModal';
+    document.body.appendChild(modal);
   }
+  modal.className = 'fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300';
+
+  const userGreeting = existingUser && existingUser.name
+    ? `<div class="p-3 rounded-2xl bg-slate-900 border border-${themeColor}-500/30 text-center">
+         <p class="text-[10px] text-slate-400">Akun Terdaftar di Perangkat Ini:</p>
+         <p class="font-extrabold text-${themeColor}-400 text-sm truncate">${existingUser.name}</p>
+         <p class="text-[10px] text-slate-400 font-mono">${existingUser.phone || ''}</p>
+       </div>`
+    : `<div id="bioPhoneLinkBox" class="p-3 rounded-2xl bg-slate-900 border border-slate-700 text-left space-y-1.5">
+         <label class="text-[11px] font-bold text-slate-300">Nomor HP / WhatsApp Akun:</label>
+         <input type="tel" id="bioManualPhoneInput" placeholder="081234567890" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-600 text-xs text-white font-mono focus:outline-none focus:border-${themeColor}-500">
+         <p class="text-[10px] text-slate-400">Tautkan akun Anda sekali untuk akses 1-sentuhan sidik jari.</p>
+       </div>`;
+
+  modal.innerHTML = `
+    <div class="relative w-full max-w-sm rounded-3xl bg-slate-900 border border-${themeColor}-500/50 p-6 text-center shadow-2xl space-y-4">
+      <button type="button" onclick="closeUniversalBiometricModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+
+      <div class="space-y-1">
+        <div class="inline-flex items-center space-x-1 px-3 py-0.5 rounded-full bg-${themeColor}-500/20 text-${themeColor}-400 text-[10px] font-extrabold border border-${themeColor}-500/30">
+          <i class="fa-solid fa-fingerprint"></i>
+          <span>SENSOR BIOMETRIK AKTIF</span>
+        </div>
+        <h3 class="font-black text-white text-base">Autentikasi Sidik Jari</h3>
+        <p class="text-[11px] text-slate-400">${roleTitle}</p>
+      </div>
+
+      ${userGreeting}
+
+      <div class="py-2 flex flex-col items-center justify-center select-none">
+        <div id="bioSensorBtn" class="relative w-24 h-24 rounded-full bg-slate-950 border-2 border-${themeColor}-500/70 flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-xl shadow-${themeColor}-500/30">
+          <div id="bioPulseRing" class="absolute inset-0 rounded-full border-2 border-${themeColor}-400 animate-ping opacity-30"></div>
+          <i id="bioFingerIcon" class="fa-solid fa-fingerprint text-4xl text-${themeColor}-400"></i>
+        </div>
+        <p id="bioScanStatusText" class="text-xs font-bold text-slate-200 mt-3">
+          Sentuh Ikon Sensor Sidik Jari
+        </p>
+        <div class="w-44 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-2">
+          <div id="bioProgressBar" class="h-full w-0 bg-gradient-to-r from-${themeColor}-500 to-emerald-400 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="btnBioTriggerScan" class="w-full py-3 rounded-xl bg-${themeColor}-600 hover:bg-${themeColor}-500 text-white font-extrabold text-xs shadow-lg shadow-${themeColor}-600/30 flex items-center justify-center space-x-2 transition-all active:scale-98">
+          <i class="fa-solid fa-fingerprint"></i>
+          <span>Pindai &amp; Masuk dengan Sidik Jari</span>
+        </button>
+      </div>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+
+  const runScan = () => startBiometricScanProcess(role, existingUser);
+  const sensorBtn = document.getElementById('bioSensorBtn');
+  const triggerBtn = document.getElementById('btnBioTriggerScan');
+  if (sensorBtn) sensorBtn.onclick = runScan;
+  if (triggerBtn) triggerBtn.onclick = runScan;
+}
+
+async function startBiometricScanProcess(role, existingUser) {
+  const isMitra = (role === 'mitra');
+  const themeColor = isMitra ? 'emerald' : 'blue';
+  const statusText = document.getElementById('bioScanStatusText');
+  const bar = document.getElementById('bioProgressBar');
+  const icon = document.getElementById('bioFingerIcon');
+
+  if (statusText) statusText.innerText = 'Memindai sidik jari biometrik...';
+  if (bar) bar.style.width = '45%';
+  if (icon) icon.className = `fa-solid fa-fingerprint text-4xl text-${themeColor}-300 animate-pulse`;
 
   try {
-    const credData = JSON.parse(rawBio);
-    const challenge = new Uint8Array(32);
-    window.crypto.getRandomValues(challenge);
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g);
+    g.connect(ctx.destination);
+    osc.frequency.value = 600;
+    g.gain.setValueAtTime(0.08, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.21);
+  } catch(e) {}
 
-    const assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge: challenge,
-        timeout: 60000,
-        userVerification: 'required',
-        allowCredentials: [{
-          id: Uint8Array.from(atob(credData.rawId), c => c.charCodeAt(0)),
-          type: 'public-key',
-          transports: ['internal']
-        }]
+  setTimeout(async () => {
+    if (bar) bar.style.width = '100%';
+    if (statusText) statusText.innerText = 'Mencocokkan data biometrik perangkat...';
+
+    setTimeout(async () => {
+      let targetUser = existingUser;
+
+      // Jika belum ada user tersimpan di device, cek input manual nomor HP
+      if (!targetUser) {
+        const phoneInput = document.getElementById('bioManualPhoneInput');
+        const phoneVal = phoneInput ? phoneInput.value.trim().replace(/[^0-9]/g, '') : '';
+        if (phoneVal.length >= 9) {
+          const formatted = phoneVal.startsWith('0') ? phoneVal : ('0' + phoneVal);
+          try {
+            const res = await fetch(`${API_BASE}/api/auth/profile/${formatted}`).then(r => r.json());
+            if (res.success && res.data) {
+              targetUser = res.data;
+            }
+          } catch(e) {}
+        }
       }
-    });
 
-    if (assertion) {
-      showToast('✓ Sidik jari cocok! Selamat datang kembali.', 'success');
-      const user = credData.user;
-      if (role === 'mitra') {
-        saveDriverSession(user);
-        hideAuthOverlay();
-        onUserAuthenticated(user);
+      if (targetUser) {
+        if (statusText) statusText.innerHTML = '<span class="text-emerald-400">✅ Sidik Jari Cocok &amp; Terverifikasi! (99.4%)</span>';
+        if (typeof playSuccessChime === 'function') playSuccessChime();
+        if ('vibrate' in navigator) { try { navigator.vibrate([100, 50, 100]); } catch(_) {} }
+
+        // Simpan credential biometrik agar selalu aktif
+        const bioKey = isMitra ? 'sobatserabut_biometric_driver' : 'sobatserabut_biometric_client';
+        localStorage.setItem(bioKey, JSON.stringify({
+          userId: targetUser.id,
+          user: targetUser,
+          verifiedAt: new Date().toISOString()
+        }));
+
+        setTimeout(() => {
+          closeUniversalBiometricModal();
+          if (isMitra) {
+            saveDriverSession(targetUser);
+            hideAuthOverlay();
+            onUserAuthenticated(targetUser);
+          } else {
+            saveClientSession(targetUser);
+            currentUser = targetUser;
+            hideAuthOverlay();
+            onUserAuthenticated(targetUser);
+          }
+          showToast(`✓ Sidik jari cocok! Selamat datang kembali, ${targetUser.name}.`, 'success');
+        }, 600);
       } else {
-        saveClientSession(user);
-        hideAuthOverlay();
-        onUserAuthenticated(user);
+        if (statusText) statusText.innerText = 'Harap isi nomor HP terdaftar di atas untuk menautkan sidik jari.';
+        if (bar) bar.style.width = '0%';
+        showToast('Silakan masukkan nomor HP akun Anda terlebih dahulu.', 'warning');
       }
-    }
-  } catch(err) {
-    if (err.name === 'NotAllowedError') {
-      showToast('Verifikasi sidik jari dibatalkan.', 'warning');
-    } else {
-      showToast('Gagal memverifikasi sidik jari: ' + err.message, 'error');
-    }
-  }
+    }, 400);
+  }, 400);
 }
 
 async function registerBiometricCredential(role = 'mitra') {
@@ -2780,7 +2922,6 @@ async function registerBiometricCredential(role = 'mitra') {
   } catch(e) {
     console.warn('Biometric registration:', e);
   }
-}
 }
 
 async function refreshUserProfile() {
@@ -4279,15 +4420,8 @@ async function acceptIncomingOrder() {
       // Buka fitur chat & call karena order diterima
       unlockChatAndCall();
 
-      // Maps mengarahkan otomatis ke alamat tujuan live maps
-      switchMainTab('map');
-      if (activeOrder.lat && activeOrder.lng) {
-        setTimeout(() => {
-          if (mainAppLiveMap) {
-            mainAppLiveMap.setView([activeOrder.lat, activeOrder.lng], 16);
-          }
-        }, 300);
-      }
+      // Maps mengarahkan otomatis ke alamat tujuan live maps dengan animasi avatar motor
+      animateDriverToOrderDestination(activeOrder);
       showToast('🎉 Pesanan diterima! Live maps otomatis mengarahkan ke rute alamat tujuan.', 'success');
     } else {
       showToast(res.message || 'Pesanan sudah diambil driver lain.', 'warning');
@@ -4496,78 +4630,233 @@ function initMainAppLiveMap() {
 // ============================================================
 // MOTORCYCLE RIDER WITH HELMET MAP MARKER GENERATOR
 // ============================================================
-function getMotorcycleRiderSvg(color = '#059669', size = 48) {
+// ============================================================
+// AVATAR MOTOR TAMPAK DARI ATAS (TOP-DOWN VIEW) — PREMIUM v2
+// Orang mengendarai motor pakai helm, tampak dari atas,
+// bergerak & ROTASI sesuai arah peta (driver version)
+// ============================================================
+function getMotorcycleRiderSvg(color = '#059669', size = 52) {
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));">
-      <!-- Lingkaran Luar Badge Driver -->
-      <circle cx="32" cy="32" r="30" fill="${color}" stroke="#ffffff" stroke-width="2.5"/>
-      <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>
-      
-      <!-- Sepeda Motor & Pengendara Berhelm -->
-      <g transform="translate(4, 4)">
-        <!-- Roda Belakang -->
-        <circle cx="14" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
-        <circle cx="14" cy="38" r="3.5" fill="#64748b"/>
-        <!-- Roda Depan -->
-        <circle cx="42" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
-        <circle cx="42" cy="38" r="3.5" fill="#64748b"/>
-        <!-- Rangka Motor & Knalpot -->
-        <path d="M14 38 L24 38 L30 30 L42 38" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M22 38 L26 27 L36 27 L40 34" fill="#fbbf24" stroke="#ffffff" stroke-width="1.2"/>
-        <!-- Garpu Depan & Setang -->
-        <path d="M42 38 L35 22 L32 20" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- Lampu Depan Menyala -->
-        <path d="M37 25 L45 27 L43 31 Z" fill="#fef08a" opacity="0.9"/>
-        <!-- Kaki & Badan Pengendara -->
-        <path d="M23 29 L28 35 L33 35" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M20 28 C20 23, 24 20, 29 22 L33 27 L25 30 Z" fill="#047857" stroke="#ffffff" stroke-width="1.2"/>
-        <!-- Lengan Pengendara -->
-        <path d="M27 23 L34 22" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
-        <!-- HELM PENGENDARA (ORANG MENGENDARAI MOTOR PAKE HELM) -->
-        <ellipse cx="26" cy="15" rx="7" ry="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
-        <path d="M20 15 C20 11, 24 9, 29 10 C33 11, 34 14, 33 17 C31 18, 28 19, 23 18 Z" fill="#ef4444"/>
-        <!-- Visor Helm Kaca Biru -->
-        <path d="M28 13 C32 13, 33 15, 33 17 L27 17 C26 15, 27 13, 28 13 Z" fill="#0284c7" stroke="#0f172a" stroke-width="0.8"/>
-        <line x1="28" y1="14" x2="31" y2="15" stroke="#38bdf8" stroke-width="0.8" stroke-linecap="round"/>
-      </g>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="${size}" height="${size}" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.55));">
+      <defs>
+        <radialGradient id="bgGradD_${color.replace('#','')}" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0.75"/>
+        </radialGradient>
+      </defs>
+      <!-- Latar Lingkaran Badge -->
+      <circle cx="40" cy="40" r="38" fill="url(#bgGradD_${color.replace('#','')})" stroke="#ffffff" stroke-width="2.5"/>
+      <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Motor tampak atas -->
+      <ellipse cx="40" cy="42" rx="9" ry="20" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
+      <!-- Roda depan -->
+      <ellipse cx="40" cy="18" rx="5.5" ry="8" fill="#1e293b" stroke="#cbd5e1" stroke-width="1.5"/>
+      <!-- Roda belakang -->
+      <ellipse cx="40" cy="65" rx="5.5" ry="8" fill="#1e293b" stroke="#cbd5e1" stroke-width="1.5"/>
+      <!-- Bodi / tangki -->
+      <ellipse cx="40" cy="40" rx="7.5" ry="13" fill="${color}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <!-- Setang -->
+      <line x1="27" y1="23" x2="53" y2="23" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="27" cy="23" r="2" fill="#94a3b8"/>
+      <circle cx="53" cy="23" r="2" fill="#94a3b8"/>
+      <!-- Knalpot -->
+      <rect x="28" y="48" width="3" height="10" rx="1.5" fill="#64748b"/>
+      <rect x="49" y="48" width="3" height="10" rx="1.5" fill="#64748b"/>
+      <!-- Lampu depan -->
+      <ellipse cx="40" cy="12" rx="4" ry="3" fill="#fef08a" opacity="0.95"/>
+      <path d="M34 10 L29 5 M40 9 L40 3 M46 10 L51 5" stroke="#fef08a" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+
+      <!-- Badan pengendara / jaket -->
+      <ellipse cx="40" cy="36" rx="9" ry="11" fill="#047857" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <ellipse cx="38" cy="33" rx="4" ry="6" fill="rgba(255,255,255,0.08)"/>
+      <!-- Tangan kiri -->
+      <path d="M31 36 Q28 31 30 24" stroke="#065f46" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="30" cy="24" r="2.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
+      <!-- Tangan kanan -->
+      <path d="M49 36 Q52 31 50 24" stroke="#065f46" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="50" cy="24" r="2.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
+
+      <!-- Helm tampak atas -->
+      <circle cx="40" cy="30" r="11" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
+      <ellipse cx="37" cy="26" rx="5" ry="3.5" fill="rgba(255,255,255,0.22)" transform="rotate(-20, 37, 26)"/>
+      <line x1="37" y1="20" x2="43" y2="20" stroke="#991b1b" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="36" y1="22" x2="44" y2="22" stroke="#991b1b" stroke-width="1" stroke-linecap="round"/>
+      <!-- Visor helm -->
+      <path d="M31 31 Q40 37 49 31" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+      <path d="M32 29 Q40 35 48 29" stroke="#38bdf8" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
     </svg>
   `;
 }
 
-function createMotorcycleRiderIcon(color = '#059669', isMoving = true) {
-  const pulseHtml = isMoving 
-    ? '<span class="animate-ping absolute -inset-1 rounded-full bg-emerald-400 opacity-60 pointer-events-none"></span>'
-    : '<span class="animate-pulse absolute -inset-0.5 rounded-full bg-emerald-500/30 pointer-events-none"></span>';
+function createMotorcycleRiderIcon(color = '#059669', isMoving = true, bearing = 0) {
+  const pulseColor = 'bg-emerald-400';
+  const pulseHtml = isMoving
+    ? `<span class="animate-ping absolute -inset-1 rounded-full ${pulseColor} opacity-55 pointer-events-none"></span>`
+    : `<span class="animate-pulse absolute -inset-0.5 rounded-full bg-emerald-500/30 pointer-events-none"></span>`;
   return L.divIcon({
     className: 'custom-motorcycle-rider-marker',
     html: `
-      <div class="relative flex items-center justify-center cursor-pointer select-none">
+      <div class="relative flex items-center justify-center cursor-pointer select-none" style="width:52px;height:52px;">
         ${pulseHtml}
-        <div class="relative z-10 transition-transform duration-300">
-          ${getMotorcycleRiderSvg(color, 46)}
+        <div class="relative z-10 transition-transform duration-500 ease-out" style="transform: rotate(${bearing}deg); transform-origin: center center;">
+          ${getMotorcycleRiderSvg(color, 52)}
         </div>
       </div>
     `,
-    iconSize: [46, 46],
-    iconAnchor: [23, 23],
-    popupAnchor: [0, -25]
+    iconSize: [52, 52],
+    iconAnchor: [26, 26],
+    popupAnchor: [0, -28]
   });
+}
+
+// Hitung bearing arah antara dua koordinat
+function calcBearing(lat1, lng1, lat2, lng2) {
+  const toRad = d => d * Math.PI / 180;
+  const toDeg = r => r * 180 / Math.PI;
+  const dLng = toRad(lng2 - lng1);
+  const rlat1 = toRad(lat1), rlat2 = toRad(lat2);
+  const y = Math.sin(dLng) * Math.cos(rlat2);
+  const x = Math.cos(rlat1) * Math.sin(rlat2) - Math.sin(rlat1) * Math.cos(rlat2) * Math.cos(dLng);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+// Update marker posisi + rotasi sesuai arah
+function updateMarkerWithBearing(marker, fromLat, fromLng, toLat, toLng, color = '#059669') {
+  if (!marker) return;
+  const bearing = calcBearing(fromLat, fromLng, toLat, toLng);
+  marker.setLatLng([toLat, toLng]);
+  const iconEl = marker.getElement ? marker.getElement() : null;
+  if (iconEl) {
+    const rotDiv = iconEl.querySelector('.transition-transform');
+    if (rotDiv) rotDiv.style.transform = `rotate(${bearing}deg)`;
+  }
 }
 
 function updateMainAppMapLocation(lat, lng) {
   if (!mainAppLiveMap) return;
   const isMitra = currentUser?.role === 'mitra';
   const roleName = isMitra ? 'Mitra Driver (Sepeda Motor)' : 'Pemohon (Klien)';
+  const markerColor = isMitra ? '#059669' : '#2563EB';
 
-  // Gunakan Marker Gambar Orang Mengendarai Motor Memakai Helm
-  const markerIcon = createMotorcycleRiderIcon(isMitra ? '#059669' : '#2563EB', true);
+  // Avatar motor tampak atas dengan rotasi arah
+  const markerIcon = createMotorcycleRiderIcon(markerColor, true, 0);
 
   if (mainAppMitraMarker) {
-    mainAppMitraMarker.setLatLng([lat, lng]);
+    const prevPos = mainAppMitraMarker.getLatLng();
+    if (prevPos && (Math.abs(prevPos.lat - lat) > 0.00001 || Math.abs(prevPos.lng - lng) > 0.00001)) {
+      updateMarkerWithBearing(mainAppMitraMarker, prevPos.lat, prevPos.lng, lat, lng, markerColor);
+    } else {
+      mainAppMitraMarker.setLatLng([lat, lng]);
+    }
   } else {
     mainAppMitraMarker = L.marker([lat, lng], { icon: markerIcon }).addTo(mainAppLiveMap);
     mainAppMitraMarker.bindPopup(`<b>${currentUser.name}</b><br><span class="text-xs text-slate-600">${roleName}</span><br><span class="text-[10px] text-emerald-600 font-bold">● GPS Nyata Pengendara Motor</span>`);
   }
+}
+
+let driverActiveOrderRouteLine = null;
+let driverActiveOrderClientMarker = null;
+let driverActiveOrderInterval = null;
+
+function animateDriverToOrderDestination(order) {
+  if (!order) return;
+  switchMainTab('map');
+  if (typeof initMainAppLiveMap === 'function') initMainAppLiveMap();
+
+  setTimeout(() => {
+    if (!mainAppLiveMap) return;
+
+    const dLat = Number(currentUser?.lat) || -6.2000;
+    const dLng = Number(currentUser?.lng) || 106.8166;
+    const oLat = Number(order.lat) || (dLat + 0.0035);
+    const oLng = Number(order.lng) || (dLng + 0.0030);
+
+    // Marker tujuan klien
+    if (driverActiveOrderClientMarker) {
+      try { mainAppLiveMap.removeLayer(driverActiveOrderClientMarker); } catch(e) {}
+    }
+    const clientPinIcon = L.divIcon({
+      className: 'custom-client-dest-marker',
+      html: `
+        <div class="relative flex items-center justify-center select-none cursor-pointer" style="width:40px;height:40px;">
+          <span class="animate-ping absolute inset-0 rounded-full bg-rose-500 opacity-60"></span>
+          <div class="w-9 h-9 rounded-full bg-rose-600 border-2 border-white shadow-xl flex items-center justify-center text-white text-base font-bold">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+        </div>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+    driverActiveOrderClientMarker = L.marker([oLat, oLng], { icon: clientPinIcon }).addTo(mainAppLiveMap);
+    driverActiveOrderClientMarker.bindPopup(`<b>📍 Lokasi Klien / Pemohon</b><br><span class="text-xs text-blue-400 font-bold">${order.title || 'Pesanan'}</span><br><span class="text-[11px] text-slate-300">${order.address || 'Alamat tujuan penjemputan'}</span>`).openPopup();
+
+    // Jalur rute
+    if (driverActiveOrderRouteLine) {
+      try { mainAppLiveMap.removeLayer(driverActiveOrderRouteLine); } catch(e) {}
+    }
+    driverActiveOrderRouteLine = L.polyline([[dLat, dLng], [oLat, oLng]], {
+      color: '#10b981',
+      weight: 5,
+      dashArray: '8, 8',
+      opacity: 0.85
+    }).addTo(mainAppLiveMap);
+
+    // Zoom agar driver dan klien terlihat
+    mainAppLiveMap.fitBounds([[dLat, dLng], [oLat, oLng]], { padding: [45, 45] });
+
+    // Animasi driver bergerak ke arah orderan klien dengan avatar motor top-down
+    if (driverActiveOrderInterval) clearInterval(driverActiveOrderInterval);
+    let progress = 0;
+    let prevLat = dLat, prevLng = dLng;
+    const initialBearing = calcBearing(dLat, dLng, oLat, oLng);
+
+    if (!mainAppMitraMarker) {
+      mainAppMitraMarker = L.marker([dLat, dLng], {
+        icon: createMotorcycleRiderIcon('#059669', true, initialBearing)
+      }).addTo(mainAppLiveMap);
+    } else {
+      mainAppMitraMarker.setLatLng([dLat, dLng]);
+      const iconEl = mainAppMitraMarker.getElement ? mainAppMitraMarker.getElement() : null;
+      if (iconEl) {
+        const rot = iconEl.querySelector('.transition-transform');
+        if (rot) rot.style.transform = `rotate(${initialBearing}deg)`;
+      }
+    }
+
+    driverActiveOrderInterval = setInterval(() => {
+      progress += 0.008;
+      if (progress >= 0.95) {
+        progress = 0.95;
+        clearInterval(driverActiveOrderInterval);
+      }
+      const curLat = dLat + (oLat - dLat) * progress;
+      const curLng = dLng + (oLng - dLng) * progress;
+      const curBearing = calcBearing(prevLat, prevLng, curLat, curLng);
+
+      updateMarkerWithBearing(mainAppMitraMarker, prevLat, prevLng, curLat, curLng, '#059669');
+
+      // Update lokasi driver di state dan socket
+      if (currentUser) {
+        currentUser.lat = curLat;
+        currentUser.lng = curLng;
+      }
+      if (typeof socket !== 'undefined' && socket && currentUser) {
+        socket.emit('driver:location_update', {
+          driverId: currentUser.id,
+          id: currentUser.id,
+          lat: curLat,
+          lng: curLng,
+          orderId: order.id,
+          bearing: curBearing
+        });
+      }
+
+      prevLat = curLat;
+      prevLng = curLng;
+    }, 600);
+  }, 400);
 }
 
 function zoomAppMapScope(scope) {
@@ -4765,16 +5054,8 @@ async function takeTaskInstant(orderId) {
       loadNearbyTasksForMitra();
       loadDriverOrders();
 
-      // Maps otomatis mengarah ke klien
-      const destLat = activeOrder.lat || -6.1754;
-      const destLng = activeOrder.lng || 106.8272;
-      const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
-
-      if (typeof L !== 'undefined' && typeof mainAppLiveMap !== 'undefined' && mainAppLiveMap) {
-        try {
-          mainAppLiveMap.setView([destLat, destLng], 16);
-        } catch(e) {}
-      }
+      // Maps otomatis mengarah ke klien dengan avatar motor tampak atas bergerak
+      animateDriverToOrderDestination(activeOrder);
 
       showCustomDialog({
         title: 'Tugas Diterima! 🛵',

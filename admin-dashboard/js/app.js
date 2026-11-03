@@ -591,7 +591,9 @@ async function loadInitialData() {
 
 async function loadMarketplaceUsers() {
   try {
-    const res = await fetch(`${API_BASE}/api/admin/users`).then(r => r.json());
+    const res = await fetch(`${API_BASE}/api/admin/users`, {
+      headers: { 'Authorization': `Bearer ${adminToken}`, 'x-admin-token': adminToken }
+    }).then(r => r.json());
     if (!res.success) return;
     const allUsers = res.data || [];
     const klienUsers = allUsers.filter(u => u.role === 'klien');
@@ -869,74 +871,89 @@ function initLiveMap() {
   setTimeout(() => liveMap.invalidateSize(), 300);
 }
 
-function createMarkerIcon(status, isPremium) {
+// ============================================================
+// AVATAR MOTOR TAMPAK DARI ATAS — ADMIN MAP (TOP-DOWN VIEW)
+// ============================================================
+function getAdminMotorcycleSvg(bgColor = '#10B981', size = 52) {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="${size}" height="${size}" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.55));">
+      <defs>
+        <radialGradient id="adminGrad_${bgColor.replace('#','')}" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="${bgColor}" stop-opacity="1"/>
+          <stop offset="100%" stop-color="${bgColor}" stop-opacity="0.75"/>
+        </radialGradient>
+      </defs>
+      <circle cx="40" cy="40" r="38" fill="url(#adminGrad_${bgColor.replace('#','')})" stroke="#ffffff" stroke-width="2.5"/>
+      <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- Motor tampak atas -->
+      <ellipse cx="40" cy="42" rx="9" ry="20" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
+      <ellipse cx="40" cy="18" rx="5.5" ry="8" fill="#1e293b" stroke="#cbd5e1" stroke-width="1.5"/>
+      <ellipse cx="40" cy="65" rx="5.5" ry="8" fill="#1e293b" stroke="#cbd5e1" stroke-width="1.5"/>
+      <ellipse cx="40" cy="40" rx="7.5" ry="13" fill="${bgColor}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="27" y1="23" x2="53" y2="23" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="27" cy="23" r="2" fill="#94a3b8"/>
+      <circle cx="53" cy="23" r="2" fill="#94a3b8"/>
+      <rect x="28" y="48" width="3" height="10" rx="1.5" fill="#64748b"/>
+      <rect x="49" y="48" width="3" height="10" rx="1.5" fill="#64748b"/>
+      <ellipse cx="40" cy="12" rx="4" ry="3" fill="#fef08a" opacity="0.95"/>
+      <path d="M34 10 L29 5 M40 9 L40 3 M46 10 L51 5" stroke="#fef08a" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+      <!-- Badan pengendara -->
+      <ellipse cx="40" cy="36" rx="9" ry="11" fill="#047857" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <ellipse cx="38" cy="33" rx="4" ry="6" fill="rgba(255,255,255,0.08)"/>
+      <path d="M31 36 Q28 31 30 24" stroke="#065f46" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="30" cy="24" r="2.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
+      <path d="M49 36 Q52 31 50 24" stroke="#065f46" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="50" cy="24" r="2.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
+      <!-- Helm tampak atas -->
+      <circle cx="40" cy="30" r="11" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
+      <ellipse cx="37" cy="26" rx="5" ry="3.5" fill="rgba(255,255,255,0.22)" transform="rotate(-20, 37, 26)"/>
+      <line x1="37" y1="20" x2="43" y2="20" stroke="#991b1b" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M31 31 Q40 37 49 31" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+      <path d="M32 29 Q40 35 48 29" stroke="#38bdf8" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+    </svg>
+  `;
+}
+
+// Hitung bearing/arah antara dua koordinat
+function calcBearing(lat1, lng1, lat2, lng2) {
+  const toRad = d => d * Math.PI / 180;
+  const toDeg = r => r * 180 / Math.PI;
+  const dLng = toRad(lng2 - lng1);
+  const rlat1 = toRad(lat1), rlat2 = toRad(lat2);
+  const y = Math.sin(dLng) * Math.cos(rlat2);
+  const x = Math.cos(rlat1) * Math.sin(rlat2) - Math.sin(rlat1) * Math.cos(rlat2) * Math.cos(dLng);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function createMarkerIcon(status, isPremium, bearing = 0) {
   let bgColor = '#10B981'; // Ready: Hijau
   let pulseClass = 'pulse-marker-green';
-  let iconHtml = '<i class="fa-solid fa-user-check text-white text-[10px]"></i>';
 
   if (status === 'working') {
     bgColor = '#F59E0B'; // Working: Kuning
     pulseClass = 'pulse-marker-yellow';
-    iconHtml = '<i class="fa-solid fa-screwdriver-wrench text-slate-900 text-[10px]"></i>';
   } else if (status === 'offline') {
     bgColor = '#EF4444'; // Offline: Merah
     pulseClass = '';
-    iconHtml = '<i class="fa-solid fa-power-off text-white text-[10px]"></i>';
   }
 
   const crownHtml = isPremium ? '<span class="absolute -top-1 -right-1 text-amber-300 text-[10px] z-20"><i class="fa-solid fa-crown"></i></span>' : '';
-
-  // Icon Orang Mengendarai Sepeda Motor dengan Helm (Motorcycle Rider with Helmet)
-  const riderSvg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="46" height="46" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.45));">
-      <!-- Lingkaran Dasar & Glow -->
-      <circle cx="32" cy="32" r="30" fill="${bgColor}" stroke="#ffffff" stroke-width="2.5"/>
-      <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>
-      
-      <!-- Grafik Sepeda Motor & Pengendara Berhelm -->
-      <g transform="translate(4, 4)">
-        <!-- Roda Belakang -->
-        <circle cx="14" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
-        <circle cx="14" cy="38" r="3.5" fill="#64748b"/>
-        <!-- Roda Depan -->
-        <circle cx="42" cy="38" r="7.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="2"/>
-        <circle cx="42" cy="38" r="3.5" fill="#64748b"/>
-        <!-- Rangka & Knalpot Motor -->
-        <path d="M14 38 L24 38 L30 30 L42 38" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M22 38 L26 27 L36 27 L40 34" fill="#fbbf24" stroke="#ffffff" stroke-width="1.2"/>
-        <!-- Garpu Depan & Setang -->
-        <path d="M42 38 L35 22 L32 20" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- Lampu Depan Motor -->
-        <path d="M37 25 L45 27 L43 31 Z" fill="#fef08a" opacity="0.9"/>
-        <!-- Kaki & Badan Pengendara (Jaket) -->
-        <path d="M23 29 L28 35 L33 35" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M20 28 C20 23, 24 20, 29 22 L33 27 L25 30 Z" fill="#047857" stroke="#ffffff" stroke-width="1.2"/>
-        <!-- Lengan Memegang Setang -->
-        <path d="M27 23 L34 22" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
-        <!-- HELM PENGENDARA DENGAN KACA VISOR -->
-        <ellipse cx="26" cy="15" rx="7" ry="6.5" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
-        <path d="M20 15 C20 11, 24 9, 29 10 C33 11, 34 14, 33 17 C31 18, 28 19, 23 18 Z" fill="#ef4444"/>
-        <!-- Kaca Helm (Visor) -->
-        <path d="M28 13 C32 13, 33 15, 33 17 L27 17 C26 15, 27 13, 28 13 Z" fill="#0284c7" stroke="#0f172a" stroke-width="0.8"/>
-        <line x1="28" y1="14" x2="31" y2="15" stroke="#38bdf8" stroke-width="0.8" stroke-linecap="round"/>
-      </g>
-    </svg>
-  `;
+  const riderSvg = getAdminMotorcycleSvg(bgColor, 52);
 
   return L.divIcon({
     className: 'custom-motorcycle-rider-marker',
     html: `
-      <div class="relative flex items-center justify-center cursor-pointer select-none">
-        <span class="${pulseClass} absolute inline-flex h-12 w-12 rounded-full opacity-60"></span>
-        <div class="relative z-10">
+      <div class="relative flex items-center justify-center cursor-pointer select-none" style="width:52px;height:52px;">
+        <span class="${pulseClass} absolute inline-flex h-14 w-14 rounded-full opacity-55 pointer-events-none"></span>
+        <div class="relative z-10 transition-transform duration-500 ease-out" style="transform: rotate(${bearing}deg); transform-origin: center center;">
           ${riderSvg}
         </div>
         ${crownHtml}
       </div>
     `,
-    iconSize: [46, 46],
-    iconAnchor: [23, 23],
-    popupAnchor: [0, -25]
+    iconSize: [52, 52],
+    iconAnchor: [26, 26],
+    popupAnchor: [0, -28]
   });
 }
 
@@ -1044,21 +1061,22 @@ function updateGeofenceCircle() {
   const radiusKm = systemConfig.maxRadiusKm || 10;
   const radiusMeters = radiusKm * 1000;
 
-  if (geofenceCircle) {
-    liveMap.removeLayer(geofenceCircle);
+  if (geofenceCircle && liveMap) {
+    try { liveMap.removeLayer(geofenceCircle); } catch(e) {}
   }
 
   const isChecked = document.getElementById('toggleGeofenceRadius')?.checked ?? true;
-  if (isChecked) {
-    // Center geofence on active area
-    geofenceCircle = L.circle([-6.1754, 106.8272], {
-      color: '#3B82F6',
-      fillColor: '#3B82F6',
-      fillOpacity: 0.08,
-      weight: 1.5,
-      dashArray: '6, 6',
-      radius: radiusMeters
-    }).addTo(liveMap);
+  if (isChecked && liveMap && typeof L !== 'undefined') {
+    try {
+      geofenceCircle = L.circle([-6.1754, 106.8272], {
+        color: '#3B82F6',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.08,
+        weight: 1.5,
+        dashArray: '6, 6',
+        radius: radiusMeters
+      }).addTo(liveMap);
+    } catch(e) {}
   }
 }
 
@@ -1132,9 +1150,20 @@ function handleLiveGpsUpdate(data) {
   if (!mId) return;
 
   const mIndex = mitraList.findIndex(m => m.id === mId);
+  const newLat = Number(data.lat);
+  const newLng = Number(data.lng);
+  if (isNaN(newLat) || isNaN(newLng)) return;
+
+  let bearing = Number(data.bearing) || 0;
+
   if (mIndex !== -1) {
-    if (data.lat !== undefined) mitraList[mIndex].lat = Number(data.lat);
-    if (data.lng !== undefined) mitraList[mIndex].lng = Number(data.lng);
+    const prevLat = Number(mitraList[mIndex].lat) || newLat;
+    const prevLng = Number(mitraList[mIndex].lng) || newLng;
+    if (!bearing && (Math.abs(prevLat - newLat) > 0.00001 || Math.abs(prevLng - newLng) > 0.00001)) {
+      bearing = calcBearing(prevLat, prevLng, newLat, newLng);
+    }
+    mitraList[mIndex].lat = newLat;
+    mitraList[mIndex].lng = newLng;
     if (data.status) mitraList[mIndex].status = data.status;
   } else {
     // Mitra baru mendaftar / online
@@ -1142,10 +1171,14 @@ function handleLiveGpsUpdate(data) {
     return;
   }
 
-  // If marker exists, animate pan
+  // If marker exists, update position and rotate avatar with bearing
   if (mapMarkers[mId]) {
-    mapMarkers[mId].setLatLng([Number(data.lat), Number(data.lng)]);
-    mapMarkers[mId].setIcon(createMarkerIcon(mitraList[mIndex]?.status || data.status, mitraList[mIndex]?.isPremium));
+    mapMarkers[mId].setLatLng([newLat, newLng]);
+    const iconEl = mapMarkers[mId].getElement ? mapMarkers[mId].getElement() : null;
+    if (iconEl && bearing) {
+      const rot = iconEl.querySelector('.transition-transform');
+      if (rot) rot.style.transform = `rotate(${bearing}deg)`;
+    }
   } else {
     renderMitraOnMap();
   }
@@ -1339,6 +1372,20 @@ function switchTab(tabId) {
   }
   if (tabId === 'broadcast') {
     loadBroadcastHistory();
+  }
+  if (tabId === 'cms-config') {
+    fetch(`${API_BASE}/api/config`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          systemConfig = res.data;
+          applyConfigToUI(systemConfig);
+        }
+      })
+      .catch(e => console.error('Gagal muat konfigurasi:', e));
+  }
+  if (tabId === 'marketplace-users') {
+    loadMarketplaceUsers();
   }
   // Re-render categories setiap kali tab dibuka agar selalu fresh
   if (tabId === 'categories') {
@@ -2161,55 +2208,80 @@ function applyConfigToUI(cfg) {
   if (!cfg) return;
 
   // Header info
-  document.getElementById('headerAppName').innerHTML = `${cfg.appName.slice(0, 5)}<span class="text-blue-500">${cfg.appName.slice(5) || ''}</span>`;
-  document.getElementById('headerAppTagline').innerText = cfg.appTagline || '';
+  const hAppName = document.getElementById('headerAppName');
+  if (hAppName && cfg.appName) {
+    const splitIndex = Math.min(5, cfg.appName.length);
+    hAppName.innerHTML = `${cfg.appName.slice(0, splitIndex)}<span class="text-blue-500">${cfg.appName.slice(splitIndex) || ''}</span>`;
+  }
+  const hTagline = document.getElementById('headerAppTagline');
+  if (hTagline) {
+    hTagline.innerText = cfg.appTagline || '';
+  }
   
   if (cfg.logoUrl) {
-    document.getElementById('appHeaderLogo').src = cfg.logoUrl.startsWith('http') ? cfg.logoUrl : `${API_BASE}${cfg.logoUrl}`;
-    document.getElementById('cmsLogoPreview').src = cfg.logoUrl.startsWith('http') ? cfg.logoUrl : `${API_BASE}${cfg.logoUrl}`;
+    const headerLogo = document.getElementById('appHeaderLogo');
+    if (headerLogo) headerLogo.src = cfg.logoUrl.startsWith('http') ? cfg.logoUrl : `${API_BASE}${cfg.logoUrl}`;
+    const cmsLogo = document.getElementById('cmsLogoPreview');
+    if (cmsLogo) cmsLogo.src = cfg.logoUrl.startsWith('http') ? cfg.logoUrl : `${API_BASE}${cfg.logoUrl}`;
   }
   if (cfg.appIconUrl) {
     const iconPreview = document.getElementById('cmsIconPreview');
     if (iconPreview) iconPreview.src = cfg.appIconUrl.startsWith('http') ? cfg.appIconUrl : `${API_BASE}${cfg.appIconUrl}`;
   }
 
-  // Inputs
-  document.getElementById('cmsAppNameInput').value = cfg.appName || '';
-  document.getElementById('cmsAppTaglineInput').value = cfg.appTagline || '';
-  const rVal = cfg.radarRadiusMeters || ((cfg.maxRadiusKm || 2) * 1000);
+  // Inputs safely populated with fallback
+  const appNameInp = document.getElementById('cmsAppNameInput');
+  if (appNameInp) appNameInp.value = cfg.appName || 'SobatSerabut';
+
+  const appTaglineInp = document.getElementById('cmsAppTaglineInput');
+  if (appTaglineInp) appTaglineInp.value = cfg.appTagline || 'Solusi Cepat Serabutan & Jasa Harian';
+
+  const rVal = cfg.radarRadiusMeters || ((cfg.maxRadiusKm || 10) * 1000);
   const rSlider = document.getElementById('cmsRadiusSlider');
   if (rSlider) rSlider.value = rVal;
   updateRadarSliderVal(rVal);
-  document.getElementById('cmsBaseFareInput').value = cfg.baseFare || 25000;
-  document.getElementById('cmsFarePerKmInput').value = cfg.farePerKm || 3500;
-  document.getElementById('cmsPlatformFeeInput').value = cfg.platformFee || 3000;
-  document.getElementById('cmsCommissionInput').value = cfg.serviceFeePercentage || 10;
-  document.getElementById('cmsPremiumPriceInput').value = cfg.premiumSubscriptionPrice || 50000;
-  document.getElementById('cmsMaintenanceMessageInput').value = cfg.maintenanceMessage || '';
 
-  if (document.getElementById('cmsOtpSenderInput')) {
-    document.getElementById('cmsOtpSenderInput').value = cfg.otpSenderNumber || '087791201091';
-  }
-  if (document.getElementById('cmsFonnteTokenInput')) {
-    document.getElementById('cmsFonnteTokenInput').value = cfg.fonnteToken || '';
-  }
-  if (document.getElementById('cmsOtpMessageFormatInput')) {
-    document.getElementById('cmsOtpMessageFormatInput').value = cfg.otpMessageFormat || 
-      '🤖 [BOT RESMI SOBATSERABUT - 087791201091]\nKODE VERIFIKASI OTP ANDA: *{otpCode}*\n\n⚠️ PERINGATAN RESMI:\n"jangan berikan kode otp ini kepada siapapun"\n\nKode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 menit.';
-  }
-  if (document.getElementById('cmsAnnouncementInput')) {
-    document.getElementById('cmsAnnouncementInput').value = cfg.announcement || '';
-  }
-  if (document.getElementById('cmsContactPhoneInput')) {
-    document.getElementById('cmsContactPhoneInput').value = cfg.contactPhone || '087791201091';
-  }
+  const baseFareInp = document.getElementById('cmsBaseFareInput');
+  if (baseFareInp) baseFareInp.value = cfg.baseFare || 25000;
+
+  const farePerKmInp = document.getElementById('cmsFarePerKmInput');
+  if (farePerKmInp) farePerKmInp.value = cfg.farePerKm || 3500;
+
+  const platformFeeInp = document.getElementById('cmsPlatformFeeInput');
+  if (platformFeeInp) platformFeeInp.value = cfg.platformFee || 3000;
+
+  const commissionInp = document.getElementById('cmsCommissionInput');
+  if (commissionInp) commissionInp.value = cfg.serviceFeePercentage || 10;
+
+  const premiumPriceInp = document.getElementById('cmsPremiumPriceInput');
+  if (premiumPriceInp) premiumPriceInp.value = 0;
+
+  const maintMsgInp = document.getElementById('cmsMaintenanceMessageInput');
+  if (maintMsgInp) maintMsgInp.value = cfg.maintenanceMessage || 'Aplikasi SobatSerabut sedang menjalani pemeliharaan berkala untuk peningkatan server. Kami akan segera kembali!';
+
+  const otpSenderInp = document.getElementById('cmsOtpSenderInput');
+  if (otpSenderInp) otpSenderInp.value = cfg.otpSenderNumber || '087791201091';
+
+  const fonnteTokenInp = document.getElementById('cmsFonnteTokenInput');
+  if (fonnteTokenInp) fonnteTokenInp.value = cfg.fonnteToken || 'G7pBKmdnGMyfnLoEkv7g';
+
+  const otpMsgFmtInp = document.getElementById('cmsOtpMessageFormatInput');
+  if (otpMsgFmtInp) otpMsgFmtInp.value = cfg.otpMessageFormat || 
+    '🤖 [BOT RESMI SOBATSERABUT - 087791201091]\nKODE VERIFIKASI OTP ANDA: *{otpCode}*\n\n⚠️ PERINGATAN RESMI:\n"jangan berikan kode otp ini kepada siapapun"\n\nKode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 menit. Petugas SobatSerabut tidak pernah meminta kode ini.';
+
+  const announcementInp = document.getElementById('cmsAnnouncementInput');
+  if (announcementInp) announcementInp.value = cfg.announcement || 'Selamat datang di SobatSerabut! Layanan serabutan & pekerjaan harian terpercaya siap membantu Anda kapan saja.';
+
+  const contactPhoneInp = document.getElementById('cmsContactPhoneInput');
+  if (contactPhoneInp) contactPhoneInp.value = cfg.contactPhone || '087791201091';
 
   const apiKeyInput = document.getElementById('cmsGoogleMapsApiKeyInput');
   if (apiKeyInput) apiKeyInput.value = cfg.googleMapsApiKey || '';
+
   const providerSelect = document.getElementById('cmsMapProviderSelect');
   if (providerSelect) {
     providerSelect.value = cfg.mapProvider || 'google_roadmap';
-    switchAdminMapLayer(cfg.mapProvider || 'google_roadmap');
+    if (typeof switchAdminMapLayer === 'function') switchAdminMapLayer(cfg.mapProvider || 'google_roadmap');
   }
 
   updateMaintenanceUI(cfg.maintenanceMode, cfg.maintenanceMessage);
@@ -2217,7 +2289,7 @@ function applyConfigToUI(cfg) {
 }
 
 function updateRadarSliderVal(val) {
-  const num = Number(val) || 2000;
+  const num = Number(val) || 10000;
   const el = document.getElementById('radiusSliderVal');
   if (el) {
     if (num >= 1000) {
@@ -2234,29 +2306,50 @@ function updateMaintenanceUI(isMaintenance, message) {
   const toggleBtn = document.getElementById('cmsMaintenanceToggleBtn');
 
   if (isMaintenance) {
-    badge.classList.remove('hidden');
-    badge.classList.add('flex');
-    statusLabel.innerText = 'MODE PEMELIHARAAN AKTIF (MITRA DIBATASI)';
-    statusLabel.className = 'text-xs text-rose-400 font-semibold';
-    toggleBtn.innerText = 'Matikan Mode Maintenance';
-    toggleBtn.className = 'px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow';
+    if (badge) {
+      badge.classList.remove('hidden');
+      badge.classList.add('flex');
+    }
+    if (statusLabel) {
+      statusLabel.innerText = 'MODE PEMELIHARAAN AKTIF (MITRA DIBATASI)';
+      statusLabel.className = 'text-xs text-rose-400 font-semibold';
+    }
+    if (toggleBtn) {
+      toggleBtn.innerText = 'Matikan Mode Maintenance';
+      toggleBtn.className = 'px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow';
+    }
   } else {
-    badge.classList.add('hidden');
-    badge.classList.remove('flex');
-    statusLabel.innerText = 'Sistem Berjalan Normal (Aktif)';
-    statusLabel.className = 'text-xs text-emerald-400 font-semibold';
-    toggleBtn.innerText = 'Aktifkan Mode Maintenance';
-    toggleBtn.className = 'px-4 py-2 rounded-xl bg-slate-700 hover:bg-rose-600 text-white font-bold text-xs transition-all shadow';
+    if (badge) {
+      badge.classList.add('hidden');
+      badge.classList.remove('flex');
+    }
+    if (statusLabel) {
+      statusLabel.innerText = 'Sistem Berjalan Normal (Aktif)';
+      statusLabel.className = 'text-xs text-emerald-400 font-semibold';
+    }
+    if (toggleBtn) {
+      toggleBtn.innerText = 'Aktifkan Mode Maintenance';
+      toggleBtn.className = 'px-4 py-2 rounded-xl bg-slate-700 hover:bg-rose-600 text-white font-bold text-xs transition-all shadow';
+    }
   }
 }
 
 async function toggleServerMaintenance() {
   try {
+    const token = getAdminAuthToken();
+    if (!token) {
+      alert('⚠️ Sesi admin tidak valid. Silakan login kembali.');
+      return;
+    }
     const isCurrentlyMaintenance = systemConfig.maintenanceMode;
-    const msg = document.getElementById('cmsMaintenanceMessageInput').value;
+    const msg = document.getElementById('cmsMaintenanceMessageInput')?.value || '';
     const res = await fetch(`${API_BASE}/api/config/toggle-maintenance`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'x-admin-token': token
+      },
       body: JSON.stringify({
         maintenanceMode: !isCurrentlyMaintenance,
         maintenanceMessage: msg
@@ -2264,7 +2357,11 @@ async function toggleServerMaintenance() {
     }).then(r => r.json());
 
     if (res.success) {
-      alert(res.message);
+      systemConfig = { ...systemConfig, maintenanceMode: !isCurrentlyMaintenance, maintenanceMessage: msg };
+      updateMaintenanceUI(systemConfig.maintenanceMode, systemConfig.maintenanceMessage);
+      alert(res.message || '✅ Mode maintenance berhasil diubah!');
+    } else {
+      alert('❌ ' + (res.message || 'Gagal mengubah mode maintenance. Silakan login kembali.'));
     }
   } catch (err) {
     alert('Gagal mengubah mode maintenance: ' + err.message);
@@ -2272,24 +2369,25 @@ async function toggleServerMaintenance() {
 }
 
 async function saveAllCmsConfig() {
-  const sliderMeters = Number(document.getElementById('cmsRadiusSlider').value) || 2000;
+  const token = getAdminAuthToken();
+  const sliderMeters = Number(document.getElementById('cmsRadiusSlider')?.value) || 10000;
   const payload = {
-    appName: document.getElementById('cmsAppNameInput').value,
-    appTagline: document.getElementById('cmsAppTaglineInput').value,
+    appName: document.getElementById('cmsAppNameInput')?.value || 'SobatSerabut',
+    appTagline: document.getElementById('cmsAppTaglineInput')?.value || 'Solusi Cepat Serabutan & Jasa Harian',
     radarRadiusMeters: sliderMeters,
     maxRadiusKm: Number((sliderMeters / 1000).toFixed(2)),
-    baseFare: Number(document.getElementById('cmsBaseFareInput').value),
-    farePerKm: Number(document.getElementById('cmsFarePerKmInput').value),
-    platformFee: Number(document.getElementById('cmsPlatformFeeInput').value),
-    serviceFeePercentage: Number(document.getElementById('cmsCommissionInput').value),
-    premiumSubscriptionPrice: Number(document.getElementById('cmsPremiumPriceInput').value),
-    maintenanceMessage: document.getElementById('cmsMaintenanceMessageInput').value,
+    baseFare: Number(document.getElementById('cmsBaseFareInput')?.value) || 25000,
+    farePerKm: Number(document.getElementById('cmsFarePerKmInput')?.value) || 3500,
+    platformFee: Number(document.getElementById('cmsPlatformFeeInput')?.value) || 3000,
+    serviceFeePercentage: Number(document.getElementById('cmsCommissionInput')?.value) || 10,
+    premiumSubscriptionPrice: 0,
+    maintenanceMessage: document.getElementById('cmsMaintenanceMessageInput')?.value || 'Aplikasi SobatSerabut sedang menjalani pemeliharaan berkala untuk peningkatan server. Kami akan segera kembali!',
     googleMapsApiKey: (document.getElementById('cmsGoogleMapsApiKeyInput')?.value || '').trim(),
     mapProvider: document.getElementById('cmsMapProviderSelect')?.value || 'google_roadmap',
     otpSenderNumber: (document.getElementById('cmsOtpSenderInput')?.value || '087791201091').trim(),
-    fonnteToken: (document.getElementById('cmsFonnteTokenInput')?.value || '').trim(),
-    otpMessageFormat: document.getElementById('cmsOtpMessageFormatInput')?.value || '',
-    announcement: document.getElementById('cmsAnnouncementInput')?.value || '',
+    fonnteToken: (document.getElementById('cmsFonnteTokenInput')?.value || 'G7pBKmdnGMyfnLoEkv7g').trim(),
+    otpMessageFormat: document.getElementById('cmsOtpMessageFormatInput')?.value || '🤖 [BOT RESMI SOBATSERABUT - 087791201091]\nKODE VERIFIKASI OTP ANDA: *{otpCode}*\n\n⚠️ PERINGATAN RESMI:\n"jangan berikan kode otp ini kepada siapapun"\n\nKode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 menit. Petugas SobatSerabut tidak pernah meminta kode ini.',
+    announcement: document.getElementById('cmsAnnouncementInput')?.value || 'Selamat datang di SobatSerabut! Layanan serabutan & pekerjaan harian terpercaya siap membantu Anda kapan saja.',
     contactPhone: (document.getElementById('cmsContactPhoneInput')?.value || '087791201091').trim()
   };
 
@@ -2299,7 +2397,7 @@ async function saveAllCmsConfig() {
     if (fileInput && fileInput.files && fileInput.files.length > 0) {
       const formData = new FormData();
       formData.append('logo', fileInput.files[0]);
-      await fetch(`${API_BASE}/api/config/upload-logo`, { method: 'POST', body: formData });
+      await fetch(`${API_BASE}/api/config/upload-logo`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'x-admin-token': token }, body: formData });
     }
 
     // 2. Handle App Icon sobatserabut.com upload if selected
@@ -2307,24 +2405,42 @@ async function saveAllCmsConfig() {
     if (iconInput && iconInput.files && iconInput.files.length > 0) {
       const iconFormData = new FormData();
       iconFormData.append('icon', iconInput.files[0]);
-      await fetch(`${API_BASE}/api/config/upload-icon`, { method: 'POST', body: iconFormData });
+      await fetch(`${API_BASE}/api/config/upload-icon`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'x-admin-token': token }, body: iconFormData });
+    }
+
+    // 2b. Handle Unified Launcher Icon upload if selected
+    const unifiedInput = document.getElementById('cmsUnifiedIconFileInput');
+    if (unifiedInput && unifiedInput.files && unifiedInput.files.length > 0) {
+      const unifiedFormData = new FormData();
+      unifiedFormData.append('file', unifiedInput.files[0]);
+      unifiedFormData.append('target', 'all');
+      await fetch(`${API_BASE}/api/admin/config/icon`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'x-admin-token': token },
+        body: unifiedFormData
+      });
     }
 
     // 3. Save full configuration to server database
     const res = await fetch(`${API_BASE}/api/config`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'x-admin-token': token },
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
     if (res.success) {
+      systemConfig = res.data || payload;
+      applyConfigToUI(systemConfig);
+
       // 4. Trigger build APK Android if checked
       const buildApkCb = document.getElementById('cmsTriggerBuildApkCheckbox');
       if (buildApkCb && buildApkCb.checked) {
-        fetch(`${API_BASE}/api/admin/trigger-build-apk`, { method: 'POST' });
+        fetch(`${API_BASE}/api/admin/trigger-build-apk`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } });
       }
 
-      alert('🎉 BERHASIL DISIMPAN & DISINKRONKAN!\n\nSeluruh konfigurasi, icon aplikasi sobatserabut.com, nomor bot OTP (087791201091), tarif, dan pengumuman berhasil disimpan ke server dan langsung aktif secara real-time ke seluruh aplikasi mitra & pemohon jasa!');
+      alert('🎉 BERHASIL DISIMPAN & DISINKRONKAN!\n\nSeluruh konfigurasi (Nama Aplikasi, Slogan, Pesan Maintenance, Gateway WhatsApp Fonnte, Format Pesan OTP, dan Radius 10 KM) berhasil disimpan ke server dan langsung aktif secara real-time ke seluruh aplikasi driver & pemohon jasa!');
+    } else {
+      alert('❌ Gagal menyimpan konfigurasi: ' + (res.message || 'Akses ditolak. Silakan login kembali.'));
     }
   } catch (err) {
     alert('Gagal menyimpan konfigurasi: ' + err.message);
@@ -2955,22 +3071,34 @@ async function deleteKycUser(kycId, userId, userName) {
 async function refreshActiveMitraList(showAlert = true) {
   const btnIcon = document.getElementById('btnRefreshMitraIcon');
   if (btnIcon) btnIcon.classList.add('fa-spin');
+  const token = getAdminAuthToken();
   try {
-    const res = await fetch(`${API_BASE}/api/mitra`).then(r => r.json());
-    if (res.success && Array.isArray(res.data)) {
-      mitraList = res.data;
+    const [mRes, usersRes] = await Promise.all([
+      fetch(`${API_BASE}/api/mitra`, { headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {} }).then(r => r.json()),
+      fetch(`${API_BASE}/api/admin/users`, { headers: token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {} }).then(r => r.json()).catch(() => ({ success: false }))
+    ]);
+
+    if (mRes.success && Array.isArray(mRes.data)) {
+      mitraList = mRes.data;
       renderMitraOnMap();
       renderMitraListSidebar();
       renderDashboardCounters();
       renderLeaderboard();
+      if (usersRes.success) {
+        loadMarketplaceUsers();
+      }
       if (showAlert) {
         showKycToast(`✅ Daftar mitra aktif diperbarui (${mitraList.length} mitra)`, 'success');
+      }
+    } else {
+      if (showAlert) {
+        showKycToast('⚠️ ' + (mRes.message || 'Gagal memperbarui data mitra'), 'warning');
       }
     }
   } catch (err) {
     console.error('Failed to refresh active mitra list:', err);
     if (showAlert) {
-      showKycToast('❌ Gagal memperbarui daftar mitra', 'error');
+      showKycToast('❌ Gagal memperbarui daftar mitra: ' + err.message, 'error');
     }
   } finally {
     if (btnIcon) {
