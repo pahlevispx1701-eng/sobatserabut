@@ -708,9 +708,9 @@ function initSocket() {
       if (!data.target || data.target === 'all' || data.target === 'driver') {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.21.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '8.20.0',
+          version: data.latestVersion || '8.21.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }
@@ -5725,7 +5725,7 @@ function showBroadcastModal(data) {
     const updateModal = document.getElementById('updateNotifModal');
     const versionEl = document.getElementById('updateModalVersion');
     const notesEl = document.getElementById('updateModalNotes');
-    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '8.20.0'} siap diunduh`;
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '8.21.0'} siap diunduh`;
     if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
     if (updateModal) {
       updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
@@ -5789,9 +5789,9 @@ if (typeof io !== 'undefined') {
       if (data && (!data.target || data.target === 'all' || data.target === 'driver')) {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.21.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '8.20.0',
+          version: data.latestVersion || '8.21.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }

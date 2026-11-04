@@ -1,14 +1,26 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="background-color:#020810;background:#020810;color:#F0FDF4;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Driver SobatSerabut - Aplikasi Mitra Kerja</title>
+  <title>Driver SobatSerabut v8.21.0 - Aplikasi Mitra Kerja</title>
+
+  <!-- Anti-White-Flash Critical Style (Renders dark background before any external font or CSS loads) -->
+  <style id="critical-anti-flash">
+    html, body {
+      background-color: #020810 !important;
+      background: #020810 !important;
+      color: #F0FDF4 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  </style>
   
   <!-- Web App Manifest for Android Play Store PWA / TWA -->
   <link rel="manifest" href="manifest.json">
   <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="/uploads/logo_icon.svg">
-  <link id="dynamicAppleIcon" rel="apple-touch-icon" href="/uploads/logo_icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/uploads/logo_icon.png">
+  <link id="dynamicAppleIcon" rel="apple-touch-icon" href="/uploads/logo_icon.png">
   <meta name="theme-color" content="#059669">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,13 +31,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v8.20.0 -->
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v8.21.0 -->
   <script>
     try {
       if ('serviceWorker' in navigator) {
         // Daftar Service Worker baru untuk background running & push notif
         navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
-          console.log('[SW] Driver SW v8.20.0 terdaftar:', reg.scope);
+          console.log('[SW] Driver SW v8.21.0 terdaftar:', reg.scope);
           // Periodic Background Sync (Android Chrome)
           if ('periodicSync' in reg) {
             reg.periodicSync.register('driver-keepalive', { minInterval: 60000 }).catch(function() {});
@@ -41,9 +53,9 @@
         }).catch(function(err) { console.warn('[SW] Gagal daftar:', err); });
       }
       if ('caches' in window) {
-        // Bersihkan cache lama (non v8.20.0)
+        // Bersihkan cache lama (non v8.21.0)
         caches.keys().then(function(keys) {
-          keys.filter(function(k) { return k !== 'sobatserabut-driver-v8191'; })
+          keys.filter(function(k) { return k !== 'sobatserabut-driver-v8210'; })
               .forEach(function(k) { caches.delete(k); });
         });
       }
@@ -51,7 +63,7 @@
   </script>
 
   <!-- SobatSerabut Server Configuration -->
-  <script src="js/config.js?v=8.20.0"></script>
+  <script src="js/config.js?v=8.21.0"></script>
 
   <!-- Tailwind CSS Local + Fallback CDN -->
   <script src="vendor/tailwind/tailwind.min.js"></script>
@@ -548,7 +560,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ====================================================
-   FULL-SCREEN NO-SCROLL — Auth Screens v8.20.0
+   FULL-SCREEN NO-SCROLL — Auth Screens v8.21.0
    ==================================================== */
 html, body {
   height: 100dvh !important;
@@ -611,7 +623,7 @@ html, body {
 }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="height:100dvh;overflow:hidden">
+<body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="background-color:#020810;background:#020810;height:100dvh;overflow:hidden">
 
 
 
@@ -641,7 +653,7 @@ html, body {
             <img src="uploads/logo_icon.svg" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
             <span class="font-black text-xl text-white tracking-tight">sobatserabut driver</span>
           </div>
-          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.20.0</span>
+          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.21.0</span>
         </div>
         <!-- Message -->
         <div class="p-5 rounded-2xl text-left space-y-3" style="background:rgba(13,31,56,0.8);border:1px solid rgba(16,185,129,0.2)">
@@ -779,7 +791,7 @@ html, body {
           </div>
           <div>
             <h3 class="font-black text-white text-sm">sobatserabut driver</h3>
-            <p class="text-xs text-slate-400">Versi 8.20.0</p>
+            <p class="text-xs text-slate-400">Versi 8.21.0</p>
           </div>
         </div>
 
@@ -847,7 +859,7 @@ html, body {
         <div class="space-y-2">
           <h1 id="splashAppName" class="font-black text-3xl tracking-tight capitalize" style="background:linear-gradient(90deg,#ffffff,#a7f3d0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">sobatserabut driver</h1>
           <p class="text-slate-400 text-sm font-medium">Driver &amp; Mitra Kerja Resmi</p>
-          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.20.0</span>
+          <span class="inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">v8.21.0</span>
         </div>
       </div>
       <!-- Bottom CTA: log in & Daftar di sini -->
@@ -3630,7 +3642,7 @@ html, body {
   </div>
 
   <!-- SCRIPT -->
-  <script src="js/app.js?v=8.20.0"></script>
+  <script src="js/app.js?v=8.21.0"></script>
 
   <!-- ========================================================
        SLIDING DRAWER / PERSISTENT BOTTOM SHEET PANEL
@@ -3648,7 +3660,7 @@ html, body {
         </div>
         <div>
           <h2 class="text-sm font-black text-white tracking-tight">sobatserabut driver</h2>
-          <span class="inline-block px-2 py-0.2 rounded-full text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">v8.20.0</span>
+          <span class="inline-block px-2 py-0.2 rounded-full text-[9px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">v8.21.0</span>
         </div>
       </div>
       <button onclick="closeDriverDrawer()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors" style="background: rgba(30,41,59,0.6);" title="Tutup Menu">
@@ -3766,7 +3778,7 @@ html, body {
 
     <!-- Footer Drawer -->
     <div class="p-4 border-t border-slate-800/80 safe-bottom flex items-center justify-between text-[11px] text-slate-500">
-      <span>Versi 8.20.0</span>
+      <span>Versi 8.21.0</span>
       <span class="text-emerald-400 font-bold flex items-center space-x-1">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
         <span>Terhubung ke Admin</span>
@@ -4286,8 +4298,8 @@ html, body {
     </div>
   </div>
 
-  <!-- SCRIPT ENGINE V8.20.0 -->
-  <script src="js/driver-v8191.js?v=8.20.0"></script>
+  <!-- SCRIPT ENGINE V8.21.0 -->
+  <script src="js/driver-v8191.js?v=8.21.0"></script>
 </body>
 </html>
 

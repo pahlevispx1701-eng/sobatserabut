@@ -87,13 +87,13 @@ app.get('/api/app-version', (req, res) => {
   const origin = `${proto}://${host}`;
 
   const versionData = db.data.appVersion || {
-    latestVersion: '8.20.0',
-    driverVersion: '8.20.0',
-    clientVersion: '6.3.0',
+    latestVersion: '8.21.0',
+    driverVersion: '8.21.0',
+    clientVersion: '6.4.0',
     minRequiredVersion: '6.0.0',
     driverApkUrl: `${origin}/download/driver-apk`,
     clientApkUrl: `${origin}/download/client-apk`,
-    releaseNotes: 'Pembaruan resmi SobatSerabut: Driver v8.20.0 & Client v6.3.0. Radar Order 15s, Izin 1x perangkat, In-App Chat & Call terproteksi status order, dan performa optimal.',
+    releaseNotes: 'Pembaruan resmi SobatSerabut: Driver v8.21.0 & Client v6.4.0. Perbaikan startup layar berkedip putih, update launcher icon resmi, dan performa optimal.',
     forceUpdate: false,
     updatedAt: new Date().toISOString()
   };

@@ -1,16 +1,28 @@
 {
   "name": "SobatSerabut",
   "short_name": "SobatSerabut",
-  "version": "6.3.0",
+  "version": "6.4.0",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#08060A",
+  "background_color": "#060308",
   "theme_color": "#EE4D2D",
   "orientation": "portrait",
   "description": "SobatSerabut — Pesan Jasa Harian Terpercaya: Tukang, Cleaning, AC & Lebih",
   "categories": ["lifestyle", "utilities", "shopping"],
   "lang": "id",
   "icons": [
+    {
+      "src": "/uploads/logo_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/uploads/logo_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/uploads/logo_icon.svg",
       "sizes": "48x48",

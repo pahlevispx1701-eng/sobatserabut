@@ -34,10 +34,12 @@ public class SplashActivity extends Activity {
             Intent intent = new Intent(SplashActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
+            overridePendingTransition(0, 0);
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
             finish();
+            overridePendingTransition(0, 0);
         }
     }
 

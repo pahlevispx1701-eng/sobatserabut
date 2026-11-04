@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.sobatserabut.driver"
-    android:versionCode="82000"
-    android:versionName="8.20.0">
+    android:versionCode="82100"
+    android:versionName="8.21.0">
 
     <!-- Min SDK 24 (Android 7+) and Target SDK 34 (Android 14) for Play Store -->
     <uses-sdk

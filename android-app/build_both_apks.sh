@@ -108,7 +108,7 @@ window.SOBATSERABUT_CONFIG = {
   VERSION: "$VERSION_NAME",
   BUILD_DATE: "$(date '+%Y-%m-%d %H:%M:%S')",
   APP_NAME: "$APP_LABEL",
-  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true }
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true, topdownAvatar: true, bearingRotation: true }
 };
 EOF
 
@@ -203,7 +203,7 @@ EOF
 
 # === BUILD APK 1: DRIVER / MITRA ===
 build_apk "Driver SobatSerabut" "Aplikasi Mitra Kerja & Pengemudi" \
-    "/home/jinny21/SobatSerabut/driver-app" "Driver-SobatSerabut.apk" "82000" "com.sobatserabut.driver" "8.20.0"
+    "/home/jinny21/SobatSerabut/driver-app" "Driver-SobatSerabut.apk" "82100" "com.sobatserabut.driver" "8.21.0"
 
 # Salin sebagai SobatSerabut-Mitra.apk juga (kompatibilitas nama lama)
 cp "$PROJECT_DIR/Driver-SobatSerabut.apk" "$PROJECT_DIR/SobatSerabut-Mitra.apk"
@@ -213,7 +213,7 @@ cp "$PROJECT_DIR/Driver-SobatSerabut.apk" "/home/jinny21/SobatSerabut/backend/up
 
 # === BUILD APK 2: CLIENT / KLIEN ===
 build_apk "SobatSerabut" "Solusi Cepat Serabutan & Jasa Harian" \
-    "/home/jinny21/SobatSerabut/client-app" "SobatSerabut.apk" "60300" "com.sobatserabut.client" "6.3.0"
+    "/home/jinny21/SobatSerabut/client-app" "SobatSerabut.apk" "60400" "com.sobatserabut.client" "6.4.0"
 
 echo ""
 echo "========================================================"

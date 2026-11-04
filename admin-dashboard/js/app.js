@@ -874,42 +874,70 @@ function initLiveMap() {
 // ============================================================
 // AVATAR MOTOR TAMPAK DARI ATAS — ADMIN MAP (TOP-DOWN VIEW)
 // ============================================================
-function getAdminMotorcycleSvg(bgColor = '#10B981', size = 52) {
+function getAdminMotorcycleSvg(bgColor = '#10B981', size = 56) {
+  const c = bgColor || '#10B981';
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="${size}" height="${size}" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.55));">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}" style="filter: drop-shadow(0 6px 14px rgba(0,0,0,0.65));">
       <defs>
-        <radialGradient id="adminGrad_${bgColor.replace('#','')}" cx="50%" cy="40%" r="55%">
-          <stop offset="0%" stop-color="${bgColor}" stop-opacity="1"/>
-          <stop offset="100%" stop-color="${bgColor}" stop-opacity="0.75"/>
+        <linearGradient id="adminHeadlightBeam" x1="50%" y1="100%" x2="50%" y2="0%">
+          <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="adminBikeBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#0f172a"/>
+          <stop offset="50%" stop-color="#334155"/>
+          <stop offset="100%" stop-color="#0f172a"/>
+        </linearGradient>
+        <radialGradient id="adminHelmetGrad" cx="45%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#ef4444"/>
+          <stop offset="40%" stop-color="#dc2626"/>
+          <stop offset="100%" stop-color="#7f1d1d"/>
+        </radialGradient>
+        <radialGradient id="adminJacketGrad_${c.replace('#','')}" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="${c}"/>
+          <stop offset="100%" stop-color="#0f172a"/>
         </radialGradient>
       </defs>
-      <circle cx="40" cy="40" r="38" fill="url(#adminGrad_${bgColor.replace('#','')})" stroke="#ffffff" stroke-width="2.5"/>
-      <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
-      <!-- Motor tampak atas -->
-      <ellipse cx="40" cy="42" rx="9" ry="20" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
-      <ellipse cx="40" cy="18" rx="5.5" ry="8" fill="#1e293b" stroke="#cbd5e1" stroke-width="1.5"/>
-      <ellipse cx="40" cy="65" rx="5.5" ry="8" fill="#1e293b" stroke="#cbd5e1" stroke-width="1.5"/>
-      <ellipse cx="40" cy="40" rx="7.5" ry="13" fill="${bgColor}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-      <line x1="27" y1="23" x2="53" y2="23" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="27" cy="23" r="2" fill="#94a3b8"/>
-      <circle cx="53" cy="23" r="2" fill="#94a3b8"/>
-      <rect x="28" y="48" width="3" height="10" rx="1.5" fill="#64748b"/>
-      <rect x="49" y="48" width="3" height="10" rx="1.5" fill="#64748b"/>
-      <ellipse cx="40" cy="12" rx="4" ry="3" fill="#fef08a" opacity="0.95"/>
-      <path d="M34 10 L29 5 M40 9 L40 3 M46 10 L51 5" stroke="#fef08a" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
-      <!-- Badan pengendara -->
-      <ellipse cx="40" cy="36" rx="9" ry="11" fill="#047857" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-      <ellipse cx="38" cy="33" rx="4" ry="6" fill="rgba(255,255,255,0.08)"/>
-      <path d="M31 36 Q28 31 30 24" stroke="#065f46" stroke-width="3" stroke-linecap="round" fill="none"/>
-      <circle cx="30" cy="24" r="2.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
-      <path d="M49 36 Q52 31 50 24" stroke="#065f46" stroke-width="3" stroke-linecap="round" fill="none"/>
-      <circle cx="50" cy="24" r="2.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
-      <!-- Helm tampak atas -->
-      <circle cx="40" cy="30" r="11" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
-      <ellipse cx="37" cy="26" rx="5" ry="3.5" fill="rgba(255,255,255,0.22)" transform="rotate(-20, 37, 26)"/>
-      <line x1="37" y1="20" x2="43" y2="20" stroke="#991b1b" stroke-width="1.2" stroke-linecap="round"/>
-      <path d="M31 31 Q40 37 49 31" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.9"/>
-      <path d="M32 29 Q40 35 48 29" stroke="#38bdf8" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+      <!-- 1. Ring Transparan Sleek -->
+      <circle cx="50" cy="50" r="46" fill="rgba(15, 23, 42, 0.45)" stroke="${c}" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4,4"/>
+
+      <!-- 2. Sorot Lampu Depan Menyala -->
+      <polygon points="50,22 32,2 68,2" fill="url(#adminHeadlightBeam)"/>
+
+      <!-- 3. Rangka & Komponen Motor Tampak Atas -->
+      <rect x="46" y="74" width="8" height="20" rx="4" fill="#020617" stroke="#64748b" stroke-width="1.5"/>
+      <ellipse cx="50" cy="72" rx="7" ry="5" fill="#1e293b"/>
+      <rect x="37" y="60" width="4" height="18" rx="2" fill="#475569" stroke="#94a3b8" stroke-width="0.8"/>
+      <rect x="59" y="60" width="4" height="18" rx="2" fill="#475569" stroke="#94a3b8" stroke-width="0.8"/>
+
+      <path d="M42,32 Q50,26 58,32 L57,70 Q50,73 43,70 Z" fill="url(#adminBikeBodyGrad)" stroke="#64748b" stroke-width="1.5"/>
+      <ellipse cx="50" cy="38" rx="7" ry="9" fill="${c}" stroke="#ffffff" stroke-width="1.2"/>
+
+      <rect x="46" y="10" width="8" height="18" rx="4" fill="#020617" stroke="#64748b" stroke-width="1.5"/>
+      <ellipse cx="50" cy="22" rx="6.5" ry="4" fill="#1e293b"/>
+      <ellipse cx="50" cy="18" rx="5" ry="3.5" fill="#fef08a" stroke="#ffffff" stroke-width="1"/>
+
+      <line x1="26" y1="26" x2="74" y2="26" stroke="#f1f5f9" stroke-width="3.5" stroke-linecap="round"/>
+      <rect x="22" y="24" width="7" height="4" rx="1.5" fill="#0f172a" stroke="#94a3b8" stroke-width="0.8"/>
+      <rect x="71" y="24" width="7" height="4" rx="1.5" fill="#0f172a" stroke="#94a3b8" stroke-width="0.8"/>
+      <circle cx="22" cy="20" r="3" fill="#38bdf8" stroke="#ffffff" stroke-width="1"/>
+      <circle cx="78" cy="20" r="3" fill="#38bdf8" stroke="#ffffff" stroke-width="1"/>
+
+      <!-- 4. Badan Pengendara Tampak Atas -->
+      <ellipse cx="50" cy="50" rx="15" ry="13" fill="url(#adminJacketGrad_${c.replace('#','')})" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <path d="M38,48 Q30,40 28,27" stroke="${c}" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+      <circle cx="28" cy="27" r="3.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
+      <path d="M62,48 Q70,40 72,27" stroke="${c}" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+      <circle cx="72" cy="27" r="3.5" fill="#047857" stroke="#ffffff" stroke-width="1"/>
+
+      <!-- 5. Helm Pengendara Tampak Atas -->
+      <circle cx="50" cy="42" r="14" fill="url(#adminHelmetGrad)" stroke="#450a0a" stroke-width="2"/>
+      <ellipse cx="46" cy="36" rx="6" ry="3.5" fill="rgba(255,255,255,0.4)" transform="rotate(-25, 46, 36)"/>
+      <path d="M46,31 Q50,29 54,31" stroke="#fee2e2" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M38,40 Q50,47 62,40" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+      <path d="M40,38 Q50,44 60,38" stroke="#7dd3fc" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.8"/>
     </svg>
   `;
 }
@@ -925,6 +953,36 @@ function calcBearing(lat1, lng1, lat2, lng2) {
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 
+let adminGpsMarker = null;
+function detectAdminCurrentGps() {
+  if (!navigator.geolocation) {
+    alert('Sensor GPS/Geolocation tidak didukung pada browser ini.');
+    return;
+  }
+  showKycToast('Mendeteksi sinyal GPS lokasi admin...', 'info');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = Number(pos.coords.latitude.toFixed(6));
+      const lng = Number(pos.coords.longitude.toFixed(6));
+      if (!liveMap) return;
+      liveMap.setView([lat, lng], 17);
+      if (adminGpsMarker) {
+        adminGpsMarker.setLatLng([lat, lng]);
+      } else {
+        adminGpsMarker = L.marker([lat, lng], {
+          icon: createMarkerIcon('ready', true, 0)
+        }).addTo(liveMap);
+        adminGpsMarker.bindPopup('<b>👑 Admin SobatSerabut (Pusat Kontrol)</b><br><span class="text-xs text-emerald-400 font-mono">● GPS Nyata Perangkat Admin</span>').openPopup();
+      }
+      showKycToast(`✅ Lokasi Admin: ${lat}, ${lng} (Akurasi ±${Math.round(pos.coords.accuracy)}m)`, 'success');
+    },
+    (err) => {
+      showKycToast('Gagal mendeteksi lokasi GPS admin: ' + err.message, 'warning');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
 function createMarkerIcon(status, isPremium, bearing = 0) {
   let bgColor = '#10B981'; // Ready: Hijau
   let pulseClass = 'pulse-marker-green';
@@ -938,22 +996,22 @@ function createMarkerIcon(status, isPremium, bearing = 0) {
   }
 
   const crownHtml = isPremium ? '<span class="absolute -top-1 -right-1 text-amber-300 text-[10px] z-20"><i class="fa-solid fa-crown"></i></span>' : '';
-  const riderSvg = getAdminMotorcycleSvg(bgColor, 52);
+  const riderSvg = getAdminMotorcycleSvg(bgColor, 56);
 
   return L.divIcon({
     className: 'custom-motorcycle-rider-marker',
     html: `
-      <div class="relative flex items-center justify-center cursor-pointer select-none" style="width:52px;height:52px;">
-        <span class="${pulseClass} absolute inline-flex h-14 w-14 rounded-full opacity-55 pointer-events-none"></span>
-        <div class="relative z-10 transition-transform duration-500 ease-out" style="transform: rotate(${bearing}deg); transform-origin: center center;">
+      <div class="relative flex items-center justify-center cursor-pointer select-none" style="width:56px;height:56px;">
+        <span class="${pulseClass} absolute inline-flex h-14 w-14 rounded-full opacity-40 pointer-events-none"></span>
+        <div class="relative z-10 transition-transform duration-500 ease-out" style="transform: rotate(${bearing}deg); transform-origin: 50% 50%;">
           ${riderSvg}
         </div>
         ${crownHtml}
       </div>
     `,
-    iconSize: [52, 52],
-    iconAnchor: [26, 26],
-    popupAnchor: [0, -28]
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
+    popupAnchor: [0, -30]
   });
 }
 
@@ -3902,8 +3960,8 @@ function handleBroadcastTypeChange(type) {
 
   if (type === 'app_update') {
     if (vContainer) vContainer.classList.remove('hidden');
-    if (titleInput) titleInput.value = '🚀 Pembaruan Aplikasi SobatSerabut v8.20.0 Siap!';
-    if (messageInput) messageInput.value = 'Versi terbaru SobatSerabut telah dirilis dengan performa lebih cepat, animasi halus tanpa lag, peta penjemputan motor real-time, dan fitur audio suara notifikasi orderan!';
+    if (titleInput) titleInput.value = '🚀 Pembaruan Aplikasi SobatSerabut v8.21.0 Siap!';
+    if (messageInput) messageInput.value = 'Versi terbaru SobatSerabut v8.21.0 / v6.4.0 telah dirilis dengan perbaikan performa, tampilan awal halus tanpa kedip putih, dan pembaruan sistem.';
   } else {
     if (vContainer) vContainer.classList.add('hidden');
     if (type === 'promo') {
@@ -3948,7 +4006,7 @@ async function handleSendBroadcastSubmit(e) {
   const type = document.getElementById('broadcastTypeSelect')?.value || 'promo';
   const title = document.getElementById('broadcastTitleInput')?.value.trim();
   const message = document.getElementById('broadcastMessageInput')?.value.trim();
-  const version = document.getElementById('broadcastVersionInput')?.value.trim() || '8.20.0';
+  const version = document.getElementById('broadcastVersionInput')?.value.trim() || '8.21.0';
   const forceReload = document.getElementById('broadcastForceReloadCheck')?.checked || false;
 
   if (!title || !message) {

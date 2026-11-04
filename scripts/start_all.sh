@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # SOBATSERABUT — ULTRA PREMIUM CLOUD DOMAINESIA ECOSYSTEM
-# Driver App  : Dark Emerald Genesis Edition v8.20.0
-# Client App  : Volcanic Ember Phoenix Edition v6.3.0
-# Update: ✅ Radar Order 15 Detik Countdown — Modal hilang otomatis jika tidak direspons
-#         ✅ Izin Kamera, Lokasi, Notifikasi, Mikrofon — Diminta SEKALI per perangkat
-#            (localStorage-based: tidak muncul lagi jika sudah diizinkan)
-#            (Tetap muncul di HP yang belum mengizinkan)
-#         ✅ Chat In-App — Terbuka saat order diterima driver, terkunci setelah selesai
-#         ✅ Call In-App — Terbuka saat order diterima driver, terkunci setelah selesai
-#         ✅ Socket Room-Based — Chat & Call hanya ke peserta order aktif
-#         ✅ KYC Admin Panel v2.0 — Panel Verifikasi Identitas Ketat
-#         Sinkronisasi Cloud DomaiNesia & APK Otomatis
-# Build Date: 2026-11-02 ChatCall-v1.0 Permission-OneTime
+# Driver App  : Dark Emerald Genesis Edition v8.21.0
+# Client App  : Volcanic Ember Phoenix Edition v6.4.0
+# Update: ✅ Fix Admin: toggleServerMaintenance kini mengirim auth token (fix 401 error)
+#         ✅ Fix Admin: Simpan Pengaturan berhasil tanpa "Gagal memperbarui konfigurasi"
+#         ✅ Fix Client: Tombol Beranda, Maps, Pesanan, Profil bisa diklik normal kembali
+#         ✅ Avatar Motor: TOP-DOWN VIEW (tampak dari atas) — orang mengendarai motor pakai helm
+#         ✅ Avatar Motor: Animasi ROTASI otomatis sesuai arah gerakan di peta (bearing)
+#         ✅ Avatar Motor: Berlaku di Admin, Driver, dan Client app
+#         ✅ Fix Maps: Avatar motor tampak atas muncul di semua peta (driver, client, admin) saat GPS aktif
+#         ✅ Fix CMS Admin: Sinkronisasi penuh ke driver & client (tarif, radius, pengumuman, maintenance, provider peta)
+#         ✅ Deploy ke DomaiNesia VPS 160.19.166.231
+# Build Date: 2026-11-04 v8.21.0-AvatarFix-CMSSync
 # VPS DomaiNesia: 160.19.166.231
 # Domain Resmi: https://sobatserabut.160.19.166.231.sslip.io
 # Domain Kustom: https://app.sobatserabut.id
@@ -48,8 +48,8 @@ clear 2>/dev/null || true
 echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║   🚀 SOBATSERABUT — ULTRA PREMIUM LAUNCH                    ║"
-echo "║   Driver App: Dark Emerald Genesis Edition v8.20.0           ║"
-echo "║   Client App: Volcanic Ember Phoenix Edition v6.3.0          ║"
+echo "║   Driver App: Dark Emerald Genesis Edition v8.21.0           ║"
+echo "║   Client App: Volcanic Ember Phoenix Edition v6.4.0          ║"
 echo "║   🆕  Radar 15s | Izin Sekali | Chat In-App | Call In-App  ║"
 echo "║   Cloud VPS  : DomaiNesia ($VPS_IP)               ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
@@ -92,16 +92,16 @@ echo -e "${BOLD}${CYAN}⚙️  2. Menyinkronkan konfigurasi domain produksi...${
 
 BUILD_TS="$(date '+%Y-%m-%d %H:%M:%S WIB')"
 
-# Config Driver App (v8.20.0)
+# Config Driver App (v8.21.0)
 cat > "$PROJECT_DIR/driver-app/js/config.js" <<EOF
-// SobatSerabut Driver v8.20.0 — Auto-generated config — $BUILD_TS
+// SobatSerabut Driver v8.21.0 — Auto-generated config — $BUILD_TS
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: "$PUBLIC_URL",
-  VERSION: "8.20.0",
+  VERSION: "8.21.0",
   BUILD_DATE: "$BUILD_TS",
   APP_NAME: "SobatSerabut Driver",
   VPS_IP: "$VPS_IP",
-  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true }
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true, topdownAvatar: true, bearingRotation: true }
 };
 EOF
 
@@ -113,11 +113,11 @@ cat > "$PROJECT_DIR/client-app/js/config.js" <<EOF
 // SobatSerabut Klien — Auto-generated config — $BUILD_TS
 window.SOBATSERABUT_CONFIG = {
   DEFAULT_API_URL: "$PUBLIC_URL",
-  VERSION: "6.3.0",
+  VERSION: "6.4.0",
   BUILD_DATE: "$BUILD_TS",
   APP_NAME: "SobatSerabut",
   VPS_IP: "$VPS_IP",
-  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true }
+  FEATURES: { aiAssistant: true, helpCenter: true, autoUpdate: true, customBroadcast: true, audioOrderAlert: true, motorcycleMapMarker: true, inAppChat: true, inAppCall: true, orderRadar15s: true, permissionOnce: true, topdownAvatar: true, bearingRotation: true }
 };
 EOF
 
@@ -126,7 +126,7 @@ cp "$PROJECT_DIR/driver-app/js/config.js" "$PROJECT_DIR/android-app/app/src/main
 # Sinkronkan assets client-app ke android-app assets
 cp "$PROJECT_DIR/client-app/index.html" "$PROJECT_DIR/android-app/app/src/main/assets/www/index.html" 2>/dev/null || true
 cp "$PROJECT_DIR/client-app/js/app.js" "$PROJECT_DIR/android-app/app/src/main/assets/www/js/app.js" 2>/dev/null || true
-ok "config.js tersinkronisasi (Driver v8.20.0 & Klien v6.3.0) → $PUBLIC_URL"
+ok "config.js tersinkronisasi (Driver v8.21.0 & Klien v6.4.0) → $PUBLIC_URL"
 
 # ── STEP 2b: Update Branding Strings ─────────────────────────────────
 echo -e "${BOLD}${CYAN}🎨 2b. Memperbarui branding SobatSerabut...${RESET}"
@@ -135,10 +135,10 @@ cat > "$PROJECT_DIR/android-app/app/src/main/res/values/strings.xml" << 'STREOF'
 <resources>
     <string name="app_name">SobatSerabut</string>
     <string name="app_tagline">Solusi Cepat Serabutan &amp; Jasa Harian</string>
-    <string name="app_version">v8.20.0</string>
+    <string name="app_version">v8.21.0</string>
 </resources>
 STREOF
-ok "Branding strings.xml diperbarui → Driver SobatSerabut v8.20.0 | Client v6.3.0"
+ok "Branding strings.xml diperbarui → Driver SobatSerabut v8.21.0 | Client v6.4.0"
 
 # ── STEP 2c: Sinkronisasi Logo & Favicon ─────────────────────────────
 echo -e "${BOLD}${CYAN}🖼️  2c. Sinkronisasi logo & favicon premium...${RESET}"
@@ -264,7 +264,7 @@ try:
             scp_send(p, f'{webroot}/backend/uploads/{apk}', vps_ip, vps_usr, pwd)
             scp_send(p, f'{webroot}/{apk}', vps_ip, vps_usr, pwd)
 
-    print('   ✅ Seluruh update Driver v8.20.0 & Klien v6.3.0 berhasil disinkronkan ke Cloud DomaiNesia!')
+    print('   ✅ Seluruh update Driver v8.21.0 & Klien v6.4.0 berhasil disinkronkan ke Cloud DomaiNesia!')
 except Exception as e:
     print(f'   ⚠️  Sinkronisasi cloud gagal: {e}')
 PYEOF
@@ -288,7 +288,7 @@ done
 echo ""
 echo -e "${BOLD}${MAGENTA}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║   🎉 DRIVER v8.20.0 & CLIENT v6.3.0 AKTIF 24 JAM — DOMAINESIA! ║"
+echo "║   🎉 DRIVER v8.21.0 & CLIENT v6.4.0 AKTIF 24 JAM — DOMAINESIA! ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${RESET}"
 echo -e "${BOLD}🌐 VPS Cloud DomaiNesia : ${GREEN}$VPS_IP${RESET}"
@@ -296,11 +296,11 @@ echo -e "${BOLD}🔗 Domain Aktif         : ${GREEN}$PUBLIC_URL${RESET}"
 echo ""
 echo -e "${BOLD}${CYAN}🔗 LINK AKSES PRODUKSI (Aktif 24 Jam Walau Laptop Mati):${RESET}"
 echo ""
-echo -e "  ${BOLD}1️⃣  DRIVER MITRA${RESET} (Dark Emerald Genesis v8.20.0)"
+echo -e "  ${BOLD}1️⃣  DRIVER MITRA${RESET} (Dark Emerald Genesis v8.21.0)"
 echo -e "      👉 ${GREEN}$PUBLIC_URL/driver${RESET}"
 echo -e "      👉 Lokal: ${CYAN}http://localhost:4000/driver${RESET}"
 echo ""
-echo -e "  ${BOLD}2️⃣  CLIENT APP${RESET} (Volcanic Ember Phoenix v6.3.0)"
+echo -e "  ${BOLD}2️⃣  CLIENT APP${RESET} (Volcanic Ember Phoenix v6.4.0)"
 echo -e "      👉 ${GREEN}$PUBLIC_URL${RESET}"
 echo -e "      👉 Lokal: ${CYAN}http://localhost:4000${RESET}"
 echo ""

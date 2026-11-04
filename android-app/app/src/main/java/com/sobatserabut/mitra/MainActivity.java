@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,11 +30,23 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        overridePendingTransition(0, 0);
         try {
+            // Paksa background gelap pada window SEBELUM layout inflate
+            // agar tidak ada white flash meskipun layout belum selesai render
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
+                android.graphics.Color.parseColor("#020810")));
+
             setContentView(R.layout.activity_main);
 
             webView = findViewById(R.id.webView);
             progressBar = findViewById(R.id.progressBar);
+            if (webView != null) {
+                // Set background gelap WebView sedini mungkin
+                webView.setBackgroundColor(android.graphics.Color.parseColor("#020810"));
+                // Hardware layer untuk rendering lebih mulus tanpa flicker
+                webView.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null);
+            }
 
             createNotificationChannel();
             requestAppPermissions();
@@ -114,6 +127,8 @@ public class MainActivity extends Activity {
 
     private void setupWebView() {
         if (webView == null) return;
+        // ── Anti-White-Flash: Paksa background gelap sebelum konten dimuat ──
+        webView.setBackgroundColor(android.graphics.Color.parseColor("#020810"));
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -125,7 +140,8 @@ public class MainActivity extends Activity {
         settings.setAllowUniversalAccessFromFileURLs(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // LOAD_NO_CACHE: paksa reload fresh agar ikon & aset terbaru selalu tampil
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             settings.setMediaPlaybackRequiresUserGesture(false);

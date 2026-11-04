@@ -1,9 +1,24 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="background-color:#020810;background:#020810;color:#F8FAFC;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SobatSerabut - Dashboard Admin Terpusat & Sistem Otomasi Data</title>
+
+  <!-- Anti-White-Flash Critical Style -->
+  <style id="critical-anti-flash">
+    html, body {
+      background-color: #020810 !important;
+      background: #020810 !important;
+      color: #F8FAFC !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  </style>
+
+  <link rel="icon" type="image/svg+xml" href="/uploads/logo_icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/uploads/logo_icon.png">
+  <link rel="apple-touch-icon" href="/uploads/logo_icon.png">
   
   <!-- Anti-Cache Meta Tags: Menghindari cache browser & webview -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -728,6 +743,10 @@ input:focus, select:focus, textarea:focus {
               <i class="fa-solid fa-crosshairs text-[10px]"></i>
               <span>Fokus Mitra</span>
             </button>
+            <button onclick="detectAdminCurrentGps()" title="Deteksi GPS Laptop/HP Admin" class="px-2 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold flex items-center space-x-1 transition-all shadow">
+              <i class="fa-solid fa-location-crosshairs text-[10px]"></i>
+              <span>GPS Saya</span>
+            </button>
           </div>
 
           <!-- MAP ELEMENT -->
@@ -1404,6 +1423,62 @@ Kode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 
             </button>
           </div>
         </div>
+
+        <!-- 5. PENGATURAN REKENING BERSAMA (REKBER) & QRIS RESMI -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4 md:col-span-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+            <h3 class="font-bold text-white text-sm flex items-center space-x-2">
+              <i class="fa-solid fa-shield-halved text-purple-400"></i>
+              <span>Pengaturan Rekening Bersama (Rekber) SeaBank, GoPay &amp; QRIS Pembayaran</span>
+            </h3>
+            <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-mono font-bold">Sinkron Real-Time</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- SeaBank Settings -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
+              <span class="font-bold text-xs text-blue-400 block"><i class="fa-solid fa-building-columns mr-1"></i> Bank SeaBank (Rekber Utama)</span>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Nomor Rekening SeaBank</label>
+                <input type="text" id="cmsSeaBankNumberInput" value="901771223812" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono font-bold focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Nama Pemilik Rekening</label>
+                <input type="text" id="cmsSeaBankHolderInput" value="Reza Pahlevi" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+
+            <!-- GoPay Settings -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
+              <span class="font-bold text-xs text-emerald-400 block"><i class="fa-solid fa-wallet mr-1"></i> E-Wallet GoPay</span>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Nomor HP Akun GoPay</label>
+                <input type="text" id="cmsGopayNumberInput" value="087735170386" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono font-bold focus:outline-none focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Nama Akun GoPay</label>
+                <input type="text" id="cmsGopayHolderInput" value="SobatSerabut Admin" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-500">
+              </div>
+            </div>
+
+            <!-- QRIS Settings -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
+              <span class="font-bold text-xs text-purple-400 block"><i class="fa-solid fa-qrcode mr-1"></i> QRIS Pembayaran Nasional</span>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-0.5">Path / URL File Gambar QRIS</label>
+                <input type="text" id="cmsQrisUrlInput" value="/uploads/qris_sobatserabut.svg" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono focus:outline-none focus:border-purple-500">
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">Muncul pada modal pembayaran rekber klien dan opsi top-up dompet.</p>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button onclick="saveAllCmsConfig()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 flex items-center space-x-2 transition-all">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Simpan Rekber &amp; Seluruh Pengaturan CMS</span>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1549,8 +1624,8 @@ Kode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 
               <span class="font-bold text-white">Bank SeaBank</span>
               <span class="text-[10px] text-blue-400 font-bold">Admin Utama</span>
             </div>
-            <div class="font-mono text-sm font-extrabold text-emerald-400 tracking-wider">901771223812</div>
-            <p class="text-[10px] text-slate-400">a.n. SobatSerabut Admin</p>
+            <div id="escrowSeaBankDisplay" class="font-mono text-sm font-extrabold text-emerald-400 tracking-wider">901771223812</div>
+            <p id="escrowSeaBankHolderDisplay" class="text-[10px] text-slate-400">a.n. Reza Pahlevi</p>
           </div>
           <!-- GoPay -->
           <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700 space-y-1">
@@ -1558,8 +1633,8 @@ Kode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 
               <span class="font-bold text-white">E-Wallet GoPay</span>
               <span class="text-[10px] text-emerald-400 font-bold">Admin Resmi</span>
             </div>
-            <div class="font-mono text-sm font-extrabold text-emerald-400 tracking-wider">087735170386</div>
-            <p class="text-[10px] text-slate-400">a.n. SobatSerabut Admin</p>
+            <div id="escrowGopayDisplay" class="font-mono text-sm font-extrabold text-emerald-400 tracking-wider">087735170386</div>
+            <p id="escrowGopayHolderDisplay" class="text-[10px] text-slate-400">a.n. SobatSerabut Admin</p>
           </div>
           <!-- QRIS -->
           <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700 space-y-1">
@@ -1660,7 +1735,7 @@ Kode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                 <div>
                   <span class="text-[10px] text-slate-400 block mb-1">Versi Target:</span>
-                  <input type="text" id="broadcastVersionInput" value="8.20.0" placeholder="8.20.0" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:border-red-500">
+                  <input type="text" id="broadcastVersionInput" value="8.21.0" placeholder="8.21.0" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:border-red-500">
                 </div>
                 <div class="pt-3">
                   <label class="flex items-center space-x-2 text-slate-300 cursor-pointer text-xs">
@@ -2068,7 +2143,7 @@ Kode rahasia ini bersifat pribadi untuk keamanan akun Anda dan berlaku selama 5 
 
         <div>
           <label class="block font-bold text-slate-300 mb-1">Judul Notifikasi</label>
-          <input type="text" id="quickModalTitle" placeholder="Contoh: 🚀 Update Versi Baru SobatSerabut v8.20.0!" required maxlength="60" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs focus:border-red-500 focus:outline-none">
+          <input type="text" id="quickModalTitle" placeholder="Contoh: 🚀 Update Versi Baru SobatSerabut v8.21.0!" required maxlength="60" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-black text-xs focus:border-red-500 focus:outline-none">
         </div>
 
         <div>

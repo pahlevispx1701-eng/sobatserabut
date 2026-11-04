@@ -64,13 +64,13 @@ const defaultState = {
     { id: "cat-9", name: "Servis Mesin Cuci", icon: "gear", image: "/uploads/service_washing.png", baseFare: 60000, description: "Perbaikan & perawatan langsung di rumah", durationMinutes: 60, estimatedMinutes: 60, active: true }
   ],
   appVersion: {
-    latestVersion: '8.20.0',
-    driverVersion: '8.20.0',
-    clientVersion: '6.3.0',
+    latestVersion: '8.21.0',
+    driverVersion: '8.21.0',
+    clientVersion: '6.4.0',
     minRequiredVersion: '6.0.0',
     driverApkUrl: '/download/driver-apk',
     clientApkUrl: '/download/client-apk',
-    releaseNotes: 'SobatSerabut Driver v8.20.0 & Client v6.3.0 — Fitur baru: Radar Order 15s, Izin 1x perangkat, In-App Chat & Call terproteksi status order, dan performa optimal.',
+    releaseNotes: 'SobatSerabut Driver v8.21.0 & Client v6.4.0 — Pembaruan resmi: Perbaikan tampilan awal tanpa kedipan putih, pembaruan ikon aplikasi, dan peningkatan performa.',
     forceUpdate: false,
     updatedAt: new Date().toISOString()
   },

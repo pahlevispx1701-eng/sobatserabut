@@ -2,6 +2,7 @@ package com.sobatserabut.mitra;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -14,6 +15,36 @@ public class AppWebViewClient extends WebViewClient {
 
     public AppWebViewClient(Context context) {
         this.context = context;
+    }
+
+    /**
+     * onPageStarted — set background gelap SEBELUM halaman dimuat
+     * mencegah flash putih saat WebView pertama kali render.
+     */
+    @Override
+    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        super.onPageStarted(view, url, favicon);
+        // Paksa background gelap sebelum konten tampil
+        view.setBackgroundColor(android.graphics.Color.parseColor("#020810"));
+    }
+
+    /**
+     * onPageFinished — pastikan background tetap gelap setelah halaman selesai
+     */
+    @Override
+    public void onPageFinished(WebView view, String url) {
+        super.onPageFinished(view, url);
+        view.setBackgroundColor(android.graphics.Color.parseColor("#020810"));
+        // Inject CSS anti-flash tambahan lewat JS agar halaman tidak flicker
+        view.evaluateJavascript(
+            "(function(){" +
+            "  var s=document.documentElement.style;" +
+            "  s.backgroundColor='#020810';" +
+            "  s.background='#020810';" +
+            "  document.body && (document.body.style.backgroundColor='#020810');" +
+            "})();",
+            null
+        );
     }
 
     private boolean handleExternalUri(String url) {

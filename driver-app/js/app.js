@@ -880,9 +880,9 @@ function initSocket() {
       if (!data.target || data.target === 'all' || data.target === 'driver') {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.21.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '8.20.0',
+          version: data.latestVersion || '8.21.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }
@@ -3080,6 +3080,14 @@ function applyConfigToUI(cfg) {
   }
   if (cfg.maxRadiusKm) {
     document.getElementById('mitraRadiusLabel').innerText = `${cfg.maxRadiusKm} km`;
+    // Sinkronkan radius radar driver sesuai config admin
+    currentRadarRadiusKm = Number(cfg.maxRadiusKm);
+  }
+  if (cfg.radarRadiusMeters) {
+    // Jika admin set radarRadiusMeters, konversi ke km untuk radar driver
+    currentRadarRadiusKm = Math.round(cfg.radarRadiusMeters / 1000 * 10) / 10;
+    const label = document.getElementById('mitraRadiusLabel');
+    if (label) label.innerText = `${currentRadarRadiusKm} km`;
   }
   if (cfg.mapProvider) {
     if (typeof switchAppMapLayer === 'function') switchAppMapLayer(cfg.mapProvider);
@@ -4622,6 +4630,8 @@ function initMainAppLiveMap() {
 
   if (currentUser?.lat && currentUser?.lng) {
     updateMainAppMapLocation(currentUser.lat, currentUser.lng);
+    // Backup: pastikan avatar muncul setelah map selesai load
+    setTimeout(() => updateMainAppMapLocation(currentUser.lat, currentUser.lng), 500);
   }
 
   setTimeout(() => mainAppLiveMap.invalidateSize(), 300);
@@ -4749,6 +4759,8 @@ function updateMainAppMapLocation(lat, lng) {
     } else {
       mainAppMitraMarker.setLatLng([lat, lng]);
     }
+    // Selalu update icon agar avatar motor tampak atas selalu muncul
+    mainAppMitraMarker.setIcon(markerIcon);
   } else {
     mainAppMitraMarker = L.marker([lat, lng], { icon: markerIcon }).addTo(mainAppLiveMap);
     mainAppMitraMarker.bindPopup(`<b>${currentUser.name}</b><br><span class="text-xs text-slate-600">${roleName}</span><br><span class="text-[10px] text-emerald-600 font-bold">● GPS Nyata Pengendara Motor</span>`);
@@ -6819,7 +6831,7 @@ function showBroadcastModal(data) {
     const updateModal = document.getElementById('updateNotifModal');
     const versionEl = document.getElementById('updateModalVersion');
     const notesEl = document.getElementById('updateModalNotes');
-    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '8.20.0'} siap diunduh`;
+    if (versionEl) versionEl.textContent = `Versi ${data.version || data.latestVersion || '8.21.0'} siap diunduh`;
     if (notesEl) notesEl.textContent = data.message || data.releaseNotes || 'Update terbaru tersedia!';
     if (updateModal) {
       updateModal.dataset.apkUrl = data.actionUrl || data.driverApkUrl || `${API_BASE}/download/driver-apk`;
@@ -7007,7 +7019,7 @@ function renderDriverNotificationList() {
           <div class="pt-1">
             <a href="${n.actionUrl || `${API_BASE}/download/driver-apk`}" target="_blank" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-600/30 active:scale-95 transition-all">
               <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
-              <span>Unduh Update Versi ${n.version || '8.20.0'} Sekarang</span>
+              <span>Unduh Update Versi ${n.version || '8.21.0'} Sekarang</span>
             </a>
           </div>
         ` : ''}
@@ -7068,9 +7080,9 @@ if (typeof io !== 'undefined') {
       if (data && (!data.target || data.target === 'all' || data.target === 'driver')) {
         showBroadcastModal({
           type: 'app_update',
-          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.20.0'} Tersedia!`,
+          title: data.title || `Pembaruan Versi ${data.latestVersion || '8.21.0'} Tersedia!`,
           message: data.releaseNotes || 'Update terbaru SobatSerabut resmi dirilis oleh admin.',
-          version: data.latestVersion || '8.20.0',
+          version: data.latestVersion || '8.21.0',
           actionUrl: data.driverApkUrl || `${API_BASE}/download/driver-apk`
         });
       }

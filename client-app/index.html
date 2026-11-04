@@ -1,14 +1,26 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="background-color:#060308;background:#060308;color:#FFF5F0;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SobatSerabut - Marketplace Jasa Serabutan</title>
+  <title>SobatSerabut v6.4.0 - Marketplace Jasa Serabutan</title>
+
+  <!-- Anti-White-Flash Critical Style (Renders dark background before any external font or CSS loads) -->
+  <style id="critical-anti-flash">
+    html, body {
+      background-color: #060308 !important;
+      background: #060308 !important;
+      color: #FFF5F0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  </style>
   
   <!-- Web App Manifest for Android Play Store PWA / TWA -->
   <link rel="manifest" href="manifest.json">
   <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="/uploads/logo_icon.svg">
-  <link id="dynamicAppleIcon" rel="apple-touch-icon" href="/uploads/logo_icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/uploads/logo_icon.png">
+  <link id="dynamicAppleIcon" rel="apple-touch-icon" href="/uploads/logo_icon.png">
   <meta name="theme-color" content="#1E40AF">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,13 +31,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v6.3.0 -->
+  <!-- Auto-Clear Legacy CacheStorage & ServiceWorker + Register New SW v6.4.0 -->
   <script>
     try {
       if ('serviceWorker' in navigator) {
         // Daftar Service Worker untuk background running & push notif
         navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg) {
-          console.log('[SW] Client SW v6.3.0 terdaftar:', reg.scope);
+          console.log('[SW] Client SW v6.4.0 terdaftar:', reg.scope);
           // Periodic Background Sync (Android Chrome)
           if ('periodicSync' in reg) {
             reg.periodicSync.register('client-keepalive', { minInterval: 60000 }).catch(function() {});
@@ -37,7 +49,7 @@
       }
       if ('caches' in window) {
         caches.keys().then(function(keys) {
-          keys.filter(function(k) { return k !== 'sobatserabut-client-v620'; })
+          keys.filter(function(k) { return k !== 'sobatserabut-client-v640'; })
               .forEach(function(k) { caches.delete(k); });
         });
       }
@@ -45,7 +57,7 @@
   </script>
 
   <!-- SobatSerabut Server Configuration -->
-  <script src="js/config.js?v=6.1.1"></script>
+  <script src="js/config.js?v=6.4.0"></script>
 
   <!-- Tailwind CSS Local + Fallback CDN -->
   <script src="vendor/tailwind/tailwind.min.js"></script>
@@ -547,7 +559,7 @@ input[class*="bg-white"], input.bg-white {
 }
 
 /* ====================================================
-   FULL-SCREEN NO-SCROLL — Auth & Register Screens v6.3.0
+   FULL-SCREEN NO-SCROLL — Auth & Register Screens v6.4.0
    ==================================================== */
 html, body {
   height: 100dvh !important;
@@ -603,7 +615,7 @@ nav.fixed.bottom-0 {
 }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="height:100dvh;overflow:hidden">
+<body class="bg-slate-950 text-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-800 antialiased overflow-x-hidden" style="background-color:#060308;background:#060308;height:100dvh;overflow:hidden">
 
 
 
@@ -3108,7 +3120,7 @@ nav.fixed.bottom-0 {
   </div>
 
   <!-- SCRIPT -->
-  <script src="js/app.js?v=7.0.0"></script>
+  <script src="js/app.js?v=6.4.0"></script>
 </body>
 </html>
 
